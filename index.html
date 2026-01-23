@@ -948,6 +948,7 @@ body {
 <audio id="destroy-sfx"><source src="target_destory.mp3" type="audio/mpeg"></audio>
 
 <script>
+    let lastProcessedTimestamp = 0; // ★ 新增：防止重複處理同一手棋
 let battleUnsubscribe = null; // ★ 新增：專門管理戰鬥中的監聽器
 let turnCounter = 0; // 回合計數器
     // --- 1. Firebase 設定 (已填入你的資料) ---
@@ -1265,42 +1266,64 @@ function joinRoom() {
 function initPVPListeners() {
         const { ref, onValue, off } = window.firebaseModules;
         
+        // 1. 先移除舊的監聽 (防止累積)
         const roomRef = ref(db, 'rooms/' + currentRoomId);
         off(roomRef); 
 
+        // 2. 啟動新監聽
         onValue(roomRef, (snapshot) => {
             const data = snapshot.val();
             if (!data) return;
 
-            // 檢查是否有人贏咗
+            // --- 勝利/失敗 判斷 ---
             if (data.winner) {
+                if (currentPhase === 'GAME_OVER') return; // 如果已經完咗就唔好再彈
+                
                 if (data.winner === playerRole) {
                     document.getElementById('end-title').innerText = "VICTORY";
                     document.getElementById('end-title').style.color = "var(--success)";
                     document.getElementById('end-title').style.textShadow = "0 0 30px var(--success)";
                     
-                    const reason = data.endReason === 'disconnected' ? "CONNECTION LOST" : "SURRENDERED";
+                    const reason = data.endReason === 'disconnected' ? "CONNECTION LOST" : 
+                                   data.endReason === 'surrendered' ? "SURRENDERED" : "DESTROYED";
                     document.getElementById('end-msg').innerText = `ENEMY ${reason}`;
                     
                     document.getElementById('end-screen').style.display = "flex";
-                    playSound('hit-sfx'); 
-                    currentPhase = 'GAME_OVER';
+                    playSound('deploy-sfx'); 
+                } else {
+                    document.getElementById('end-title').innerText = "DEFEAT";
+                    document.getElementById('end-title').style.color = "var(--warning)";
+                    document.getElementById('end-title').style.textShadow = "0 0 30px var(--warning)";
+                    document.getElementById('end-msg').innerText = "FLEET DESTROYED";
+                    
+                    document.getElementById('end-screen').style.display = "flex";
+                    playSound('wrong-sfx');
                 }
+                currentPhase = 'GAME_OVER';
                 return; 
             }
 
+            // --- 戰鬥邏輯 ---
             if (!data.lastMove) return;
             const move = data.lastMove;
+            
+            // ★ 關鍵修正 1：檢查 Timestamp，防止重複處理同一手棋 ★
+            if (move.timestamp <= lastProcessedTimestamp) {
+                return; // 已經處理過呢一手，忽略！
+            }
             
             // 如果這一手唔係我打嘅，即係對手打過嚟
             if (move.attacker !== playerRole) {
                 
+                // 更新時間戳記
+                lastProcessedTimestamp = move.timestamp;
+
                 // 對手超時
                 if (move.index === -1) {
                     const status = document.getElementById('game-status');
                     status.innerHTML = `OPPONENT TIMED OUT!`;
                     status.style.color = "var(--success)";
-                    playSound('timeout-sfx');
+                    playSound('time-out-sfx'); // 修正音效名
                     setGameTimeout(startPlayerTurn, 1500);
                     return;
                 }
@@ -1308,8 +1331,10 @@ function initPVPListeners() {
                 const idx = move.index;
                 const cell = document.getElementById('player-grid').children[idx];
                 
+                // 如果該格已經開過，都要忽略 (雙重保險)
                 if (cell.classList.contains('revealed')) return;
 
+                // 執行被擊中動畫
                 cell.classList.add('revealed');
                 playSound('laser-sfx');
                 triggerAnimation(cell, 'blue');
@@ -1323,19 +1348,26 @@ function initPVPListeners() {
                         
                         myDamage++;
                         
-                        // ★ 必須確認這行存在 ★
+                        // 檢查自己有無船沉咗
                         checkMyShipDestruction(idx); 
 
                         if (checkGameOver()) return;
                     } else {
-                        // ...
+                        cell.classList.add('miss');
+                        cell.innerText = "X";
                     }
                 }, 500);
                 
-                setGameTimeout(startPlayerTurn, 1200);
+                // ★ 關鍵修正 2：確保只呼叫一次 startPlayerTurn ★
+                setGameTimeout(() => {
+                    if (currentPhase !== 'GAME_OVER') {
+                        startPlayerTurn();
+                    }
+                }, 1200);
             }
         });
-    }    // --- 7. 佈陣邏輯 ---
+    }   
+    // --- 7. 佈陣邏輯 ---
     function createGrid(elementId) {
         const board = document.getElementById(elementId);
         board.innerHTML = '';
@@ -1736,6 +1768,7 @@ function playerFire(success) {
                 playSound('laser-sfx');
                 triggerAnimation(cell, 'blue');
                 
+                // 動畫延遲 (0.5秒)
                 setGameTimeout(() => {
                     if (enemyGrid[currentTargetIndex] === 1) {
                         cell.classList.add('hit');
@@ -1743,7 +1776,7 @@ function playerFire(success) {
                         
                         enemyDamage++;
                         
-                        // ★ 關鍵：這時候棋盤必須是可見的，offsetLeft 才會準確 ★
+                        // 檢查擊沉
                         const isSunk = checkEnemyShipDestruction(currentTargetIndex);
                         if (!isSunk) playSound('hit-sfx');
 
@@ -1753,18 +1786,18 @@ function playerFire(success) {
                         cell.innerText = "X";
                     }
 
-                    // ★ 修正：將「切換場景」延遲執行，確保上面個殘骸位置算好先 ★
+                    // ★ 關鍵修正：將這裡的延遲由 1500 改為 3000 (3秒) ★
+                    // 讓你慢慢欣賞完戰果，先至轉場
                     setGameTimeout(() => {
                         currentPhase = 'ENEMY_TURN';
                         document.getElementById('game-status').innerHTML = "OPPONENT'S TURN";
                         switchScene('ENEMY'); 
-                    }, 1500); // 延遲 1.5 秒，讓玩家欣賞戰果
+                    }, 3000); 
 
                 }, 500);
 
-                // ★ 刪除了這裡原本同步執行的 switchScene ★
             } 
-            // 單機 AI 模式 (保持不變，因為邏輯本來就是對的)
+            // 單機 AI 模式 (保持不變)
             else {
                 playSound('laser-sfx');
                 const cell = document.getElementById('enemy-grid').children[currentTargetIndex];
@@ -1787,12 +1820,13 @@ function playerFire(success) {
                     }
 
                     if (!isGameOver) {
+                        // AI 模式通常節奏快啲，這裡維持 0.7秒 (你可以隨意加長，例如 1500)
                         setGameTimeout(startEnemyTurn, 700);
                     }
                 }, 500);
             }
         }
-    }
+    }df
 
     function startEnemyTurn() {
         currentPhase = 'ENEMY_TURN';
@@ -1905,6 +1939,7 @@ function startPlayerTurn() {
     }
 
  // ★ 最終修復版：顯示我自己嘅戰艦殘骸 (移除 absolute，加入智能檢測) ★
+    // ★ 修正版：顯示我自己嘅戰艦殘骸 (並隱藏原本完好嘅船) ★
     function revealMyShip(ship, index) {
         ship.revealed = true;
         const grid = document.getElementById('player-grid');
@@ -1912,24 +1947,15 @@ function startPlayerTurn() {
         const startCell = grid.children[ship.indices[0]];
 
         // --- 1. 智能測量 (Smart Measurement) ---
-        // 先檢查棋盤係咪已經顯示緊 (offsetParent 不為 null 代表可見)
-        // 如果 Guest 睇緊自己個盤，呢度會係 true，咁就唔好搞佢個 Style！
         const isVisible = (container.offsetParent !== null);
-        
         let prevDisplay = '';
         let prevVisibility = '';
 
         if (!isVisible) {
-            // 只有當真的隱藏時 (例如你睇緊敵人個盤)，先至用幽靈模式
             prevDisplay = container.style.display;
             prevVisibility = container.style.visibility;
-            
-            container.style.visibility = 'hidden'; // 隱形 (費事閃一下)
-            container.style.display = 'block';     // 佔位 (撐開個 Grid)
-            
-            // ★ 關鍵修正：移除 position: absolute ★
-            // 之前加咗 absolute 令到個 Grid 寬度塌陷變成 0，所以座標錯晒。
-            // 而家移除佢，讓它自然撐開，座標先會準。
+            container.style.visibility = 'hidden'; 
+            container.style.display = 'block';     
         }
 
         // 2. 讀取真實座標
@@ -1937,41 +1963,49 @@ function startPlayerTurn() {
         const cellTop = startCell.offsetTop;
         const cellSize = startCell.offsetWidth;
 
-        // 3. 還原 (如果剛才係隱藏嘅話)
+        // 3. 還原
         if (!isVisible) {
             container.style.display = prevDisplay;
             container.style.visibility = prevVisibility;
         }
 
-        // --- 4. 建立殘骸圖片 ---
+        // --- ★ 關鍵修正 1：隱藏原本完好嘅船 (否則會遮住戰損圖) ★ ---
+        // 我們在部署時有設定 ID: board-ship-0, board-ship-1...
+        const originalShipImg = document.getElementById(`board-ship-${index}`);
+        if (originalShipImg) {
+            originalShipImg.style.display = 'none'; // 隱藏舊圖
+        }
+
+        // --- 4. 建立戰損圖片 ---
         const img = document.createElement('img');
         
+        // ★ 關鍵修正 2：確保使用戰損圖片 (Damaged Image) ★
         if (typeof DAMAGED_IMAGES !== 'undefined' && DAMAGED_IMAGES[index]) {
             img.src = DAMAGED_IMAGES[index];
         } else {
-            img.src = ship.img;
+            img.src = ship.img; // 如果無戰損圖，先用原圖
         }
         
         img.classList.add('enemy-ship-revealed'); 
         
-        // 使用剛才度出黎嘅 cellSize 計算大細 (手機版都會準)
+        // ★ 關鍵修正 3：提升層級 (確保佢係最頂) ★
+        img.style.zIndex = "10"; 
+
+        // 計算大細
         const pW = cellSize * ship.width + 2 * (ship.width - 1);
         const pH = cellSize * ship.height + 2 * (ship.height - 1);
         
         img.style.width = pW + 'px';
         img.style.height = pH + 'px';
-        
-        // ★ 應用正確座標 ★
         img.style.left = cellLeft + 'px';
         img.style.top = cellTop + 'px';
         
-        // 判斷方向
+        // Transform
         let isVertical = false;
         if (ship.indices.length > 1) {
             isVertical = (ship.indices[1] === ship.indices[0] + 10);
         }
         
-        // Transform 修正
         if (!isVertical) {
             const shift = (pH - pW) / 2;
             img.style.transform = `translate(${shift}px, -${shift}px) rotate(-90deg)`;
@@ -2271,6 +2305,7 @@ function resetGame() {
         currentPhase = 'DEPLOY';
         myDamage = 0;
         enemyDamage = 0;
+        lastProcessedTimestamp = 0;
 
         if (typeof turnCounter !== 'undefined') {
             turnCounter = 0;
@@ -2570,6 +2605,7 @@ updateEnemyIndicator(ship.shipId);
 </body>
 
 </html>
+
 
 
 
