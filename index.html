@@ -2222,14 +2222,16 @@ function resetGame() {
             unsubscribeRoom();
             unsubscribeRoom = null;
         }
-if (battleUnsubscribe) {
-            battleUnsubscribe(); // 停止監聽
-            battleUnsubscribe = null; // 清空變數
+        if (battleUnsubscribe) {
+            battleUnsubscribe(); 
+            battleUnsubscribe = null; 
         }
-if (currentRoomId) {
+        // 額外保險
+        if (currentRoomId) {
              const { ref, off } = window.firebaseModules;
              off(ref(db, 'rooms/' + currentRoomId));
         }
+
         // 2. 清除所有計時器
         if (turnTimerInterval) clearInterval(turnTimerInterval);
         if (timerInterval) clearInterval(timerInterval);
@@ -2261,7 +2263,6 @@ if (currentRoomId) {
         myDamage = 0;
         enemyDamage = 0;
 
-        // 重置回合數
         if (typeof turnCounter !== 'undefined') {
             turnCounter = 0;
             const turnDisplay = document.getElementById('turn-count');
@@ -2272,29 +2273,29 @@ if (currentRoomId) {
         createGrid('player-grid');
         createGrid('enemy-grid');
         
-        // 顯示番側邊欄
+        // ★ 關鍵修復：強制將鏡頭轉回 My Fleet (玩家棋盤) ★
+        // 如果唔加呢兩句，Abort 完之後你可能會望住個空的敵人棋盤，咩都做唔到
+        document.getElementById('player-board').classList.add('active');
+        document.getElementById('enemy-board').classList.remove('active');
+
+        // 顯示番側邊欄 (Sidebar)
         const sidebar = document.getElementById('fleet-sidebar');
         if(sidebar) sidebar.style.display = 'flex'; 
+        document.getElementById('deploy-controls').style.display = 'inline'; 
+        
         renderSidebar(); 
         
         // 7. 重置文字 & 按鈕
         document.getElementById('game-status').innerHTML = `PHASE: <span style="color: var(--warning);">DEPLOYMENT</span>`;
         document.getElementById('control-panel').style.borderColor = "var(--primary)";
-        document.getElementById('deploy-controls').style.display = "inline"; 
         document.getElementById('start-btn').disabled = true;
-document.getElementById('fleet-sidebar').style.display = 'flex'; 
-        document.getElementById('deploy-controls').style.display = 'inline';
         
-// 8. 重置艦隊設定 & AI
+        // 8. 重置艦隊設定
         FLEET.forEach(ship => {
             ship.indices = null;
-            ship.revealed = false; // ★ 記得加呢句！重置擊沉狀態 ★
+            ship.revealed = false; 
         });
         placeEnemyShips();
-        
-        // ★ 關鍵修正：這裡千萬不要呼叫 startDeploymentTimer() ★
-        // 刪除了 startDeploymentTimer(); 
-        // 因為計時器只應該在 enterGameUI() 裡面啟動
     }
 
 function handleTurnTimeout() {
@@ -2560,6 +2561,7 @@ updateEnemyIndicator(ship.shipId);
 </body>
 
 </html>
+
 
 
 
