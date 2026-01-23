@@ -772,6 +772,50 @@ body {
             margin-bottom: 20vh; 
         }
     }
+        /* --- 等級選擇畫面樣式 --- */
+    .level-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr); /* 兩列排開 */
+        gap: 20px;
+        width: 90%;
+        max-width: 500px;
+    }
+
+    .level-btn {
+        background: rgba(15, 23, 42, 0.8);
+        border: 2px solid var(--primary);
+        color: #fff;
+        padding: 20px;
+        font-family: 'Orbitron', sans-serif;
+        font-size: 18px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.2s;
+        text-shadow: 0 0 5px var(--primary);
+        box-shadow: 0 0 10px rgba(14, 165, 233, 0.2);
+    }
+
+    .level-btn:hover {
+        background: var(--primary);
+        color: #000;
+        transform: scale(1.05);
+        box-shadow: 0 0 20px var(--primary);
+    }
+
+    /* Level 5* 特別樣式 (紅色/紫色霸氣) */
+    .level-btn.star-level {
+        border-color: #a855f7; /* 紫色邊框 */
+        color: #e879f9;
+        text-shadow: 0 0 10px #a855f7;
+        box-shadow: 0 0 15px rgba(168, 85, 247, 0.3);
+        grid-column: span 2; /* 佔滿兩格 */
+    }
+
+    .level-btn.star-level:hover {
+        background: #a855f7;
+        color: #fff;
+        box-shadow: 0 0 40px #a855f7;
+    }
     </style>
 </head>
 <body>
@@ -784,7 +828,20 @@ body {
         </div>
         <div style="margin-top: 20px; color: #94a3b8; font-size: 12px;">SYSTEM READY // SELECT COMBAT MODE</div>
     </div>
+<div id="level-screen" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 250; background: rgba(0,0,0,0.9); flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(5px);">
+        <h2 style="font-family: 'Black Ops One'; color: var(--primary); font-size: 40px; margin-bottom: 30px; text-shadow: 0 0 20px var(--primary);">SELECT DIFFICULTY</h2>
+        
+        <div class="level-grid">
+            <button class="level-btn" onclick="selectLevel('L1')">LEVEL 1</button>
+            <button class="level-btn" onclick="selectLevel('L2')">LEVEL 2</button>
+            <button class="level-btn" onclick="selectLevel('L3')">LEVEL 3</button>
+            <button class="level-btn" onclick="selectLevel('L4')">LEVEL 4</button>
+            <button class="level-btn" onclick="selectLevel('L5')">LEVEL 5</button>
+            <button class="level-btn star-level" onclick="selectLevel('L5_STAR')">LEVEL 5 <span style="color:yellow">★</span></button>
+        </div>
 
+        <button class="btn" onclick="closeLevelScreen()" style="margin-top: 30px; border-color: #64748b; color: #94a3b8;">&lt; BACK</button>
+    </div>
     <div id="lobby-screen" style="display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index: 150; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(5px);">
         <h2 style="font-family: 'Black Ops One'; color: var(--primary); font-size: 40px;">MULTIPLAYER LOBBY</h2>
         
@@ -959,16 +1016,39 @@ const DAMAGED_IMAGES = [
         '2x4_damaged.png',
         '1x3+1_damaged.png' // 暫時用原圖頂住先，如果你有 1x3+1_damaged.png 就改呢度
     ];
-    const vocabList = [
-        { ch: "蘋果", en: "APPLE" }, 
-        { ch: "香蕉", en: "BANANA" },
-        { ch: "學校", en: "SCHOOL" }, 
-        { ch: "朋友", en: "FRIEND" },
-        { ch: "快樂", en: "HAPPY" }, 
-        { ch: "危險", en: "DANGER" },
-        { ch: "宇宙", en: "UNIVERSE" }, 
-        { ch: "星系", en: "GALAXY" }
-    ];
+// --- 題目資料庫 (分級) ---
+    const VOCAB_DB = {
+        'L1': [
+            { ch: "蘋果", en: "APPLE" }, { ch: "貓", en: "CAT" }, { ch: "狗", en: "DOG" },
+            { ch: "紅色", en: "RED" }, { ch: "大", en: "BIG" }
+        ],
+        'L2': [
+            { ch: "學校", en: "SCHOOL" }, { ch: "朋友", en: "FRIEND" }, { ch: "快樂", en: "HAPPY" },
+            { ch: "夏日", en: "SUMMER" }, { ch: "花園", en: "GARDEN" }
+        ],
+        'L3': [
+            { ch: "危險", en: "DANGER" }, { ch: "行星", en: "PLANET" }, { ch: "系統", en: "SYSTEM" },
+            { ch: "火箭", en: "ROCKET" }, { ch: "能量", en: "ENERGY" }
+        ],
+        'L4': [
+            { ch: "宇宙", en: "UNIVERSE" }, { ch: "星系", en: "GALAXY" }, { ch: "氧氣", en: "OXYGEN" },
+            { ch: "重力", en: "GRAVITY" }, { ch: "流星", en: "METEOR" }
+        ],
+        'L5': [
+            { ch: "小行星", en: "ASTEROID" }, { ch: "衛星", en: "SATELLITE" }, { ch: "黑洞", en: "BLACKHOLE" },
+            { ch: "太空人", en: "ASTRONAUT" }, { ch: "維度", en: "DIMENSION" }
+        ],
+        'L5_STAR': [
+            { ch: "星際穿越", en: "INTERSTELLAR" }, { ch: "奇點", en: "SINGULARITY" }, 
+            { ch: "光年", en: "LIGHTYEAR" }, { ch: "超新星", en: "SUPERNOVA" },
+            { ch: "量子力學", en: "QUANTUM" }
+        ]
+    };
+
+    // 全局變數：當前使用的生字表
+    let activeVocabList = []; 
+    let selectedLevel = 'L1'; // 預設
+    let tempGameMode = 'AI';  // 暫存模式選擇
 
     // --- 3. 全局變數 ---
 let deploymentTimerInterval = null; // 佈陣倒數器
@@ -1050,20 +1130,36 @@ const roomInput = document.getElementById('room-id-input');
 
     // --- 5. 流程控制 ---
 function selectMode(mode) {
-        gameMode = mode;
+        tempGameMode = mode; // 先記低你想玩乜 Mode
         playSound('deploy-sfx');
         
-        // ★ 新增：顯示下方返回掣 ★
-        document.getElementById('global-back-btn').style.display = 'block';
+        // 顯示等級選單
+        document.getElementById('level-screen').style.display = 'flex';
+    }
+    
+    function closeLevelScreen() {
+        document.getElementById('level-screen').style.display = 'none';
+    }
+function selectLevel(level) {
+        selectedLevel = level;
+        activeVocabList = VOCAB_DB[level]; // 設定題庫
+        
+        playSound('enter-sfx');
+        closeLevelScreen(); // 關閉選單
 
-        if (mode === 'AI') {
+        // 根據剛才揀嘅 Mode 決定去邊
+        if (tempGameMode === 'AI') {
+            gameMode = 'AI';
+            document.getElementById('global-back-btn').style.display = 'block';
             enterGameUI();
         } else {
+            // PVP 模式
+            gameMode = 'PVP';
+            document.getElementById('global-back-btn').style.display = 'block';
             document.getElementById('start-screen').style.display = 'none';
             document.getElementById('lobby-screen').style.display = 'flex';
         }
     }
-
 function enterGameUI() {
         const bgm = document.getElementById('bgm');
         if (bgm) { bgm.volume = 0.5; bgm.play().then(()=>isMusicPlaying=true).catch(e=>{}); }
@@ -1091,8 +1187,12 @@ function createRoom() {
         currentRoomId = roomId;
         playerRole = 'host';
 
-        set(ref(db, 'rooms/' + roomId), {
-            host: myPlayerId, guest: null, status: 'waiting', turn: 'host'
+set(ref(db, 'rooms/' + roomId), {
+            host: myPlayerId, 
+            guest: null, 
+            status: 'waiting', 
+            turn: 'host',
+            level: selectedLevel // ★ 新增：儲存等級設定 ★
         });
         
         const msg = document.getElementById('lobby-msg');
@@ -1136,9 +1236,16 @@ if (!data.guest) {
                     playSound('open-room-sfx');
                     currentRoomId = inputId;
                     playerRole = 'guest';
+
+                    // ★ 新增：Guest 跟隨 Host 的等級設定 ★
+                    if (data.level && VOCAB_DB[data.level]) {
+                        selectedLevel = data.level;
+                        activeVocabList = VOCAB_DB[data.level];
+                        showNotification(`SYNCED: ${data.level}`, 'success');
+                    }
+
                     update(roomRef, { guest: myPlayerId, status: 'deploying' });
                     
-                    // ★ 新增：設定斷線處理 ★
                     setupDisconnectHandler();
 
                     if (typeof showNotification === 'function') {
@@ -1510,8 +1617,9 @@ function openLaunchModal(index) {
         const input = document.getElementById('hidden-input');
         const timerBar = document.getElementById('timer-bar');
         
-        // --- 2. 準備題目 ---
-        currentVocab = vocabList[Math.floor(Math.random() * vocabList.length)];
+// --- 2. 準備題目 ---
+        // ★ 修改：從 activeVocabList 抽題目，而唔係 vocabList ★
+        currentVocab = activeVocabList[Math.floor(Math.random() * activeVocabList.length)];
         document.getElementById('q-text').innerText = currentVocab.ch;
         document.getElementById('msg-area').innerText = "";
         input.value = "";
@@ -2441,4 +2549,5 @@ updateEnemyIndicator(ship.shipId);
     }
 </script>
 </body>
+
 </html>
