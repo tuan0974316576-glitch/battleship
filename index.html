@@ -821,6 +821,28 @@ body {
             text-shadow: 0 0 15px var(--warning);
         }
     }
+        /* --- VS PLAYER 按鈕專屬樣式 --- */
+    .btn-pvp {
+        border-color: var(--warning) !important;
+        color: var(--warning) !important;
+        box-shadow: 0 0 15px var(--warning);
+        text-shadow: 0 0 5px var(--warning);
+        background: rgba(245, 158, 11, 0.1); /* 預設淡淡的橙色背景 */
+    }
+
+    /* ★ 修正重點：Hover 時中間變橙色，字變白色 ★ */
+    .btn-pvp:hover {
+        background: var(--warning) !important;
+        color: #fff !important; /* 文字變白色 */
+        transform: scale(1.1);
+        box-shadow: 0 0 30px var(--warning);
+        text-shadow: none; /* 實色背景下不需要文字發光 */
+    }
+
+    /* 保持你的呼吸燈動畫 */
+    .btn-pvp {
+        animation: pvpReadyPulse 1.5s infinite alternate;
+    }
     </style>
 </head>
 <body>
@@ -829,11 +851,9 @@ body {
         <div class="main-title">VOCAB<br>BATTLESHIP</div>
         <div style="display: flex; gap: 20px;">
             <button class="start-btn-large" onclick="selectMode('AI')">VS A.I.</button>
-            <button class="start-btn-large" 
-                    style="border-color: var(--warning); color: var(--warning); box-shadow: 0 0 15px var(--warning); text-shadow: 0 0 5px var(--warning);" 
-                    onclick="selectMode('PVP')">
-                VS PLAYER
-            </button>
+<button class="start-btn-large btn-pvp" onclick="selectMode('PVP')">
+    VS PLAYER
+</button>
         </div>
         <div style="margin-top: 20px; color: #94a3b8; font-size: 12px;">SYSTEM READY // SELECT COMBAT MODE</div>
     </div>
@@ -2617,6 +2637,7 @@ updateEnemyIndicator(ship.shipId);
 </body>
 
 </html>
+
 
 
 
