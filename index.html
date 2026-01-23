@@ -839,7 +839,7 @@ body {
         <div style="background: rgba(15, 23, 42, 0.9); padding: 30px; border: 1px solid var(--primary); border-radius: 10px; text-align: center;">
             <div style="margin-bottom: 20px; color: #fff;">Your ID: <span id="player-id-display" style="color: var(--warning);">Connecting...</span></div>
             
-            <button class="btn" onclick="createRoom()" style="width: 100%; margin-bottom: 20px; font-size: 18px;">CREATE NEW ROOM</button>
+<button class="btn" onclick="prepareCreateRoom()" style="width: 100%; margin-bottom: 20px; font-size: 18px;">CREATE NEW ROOM</button>
             
             <div style="color: #94a3b8; margin: 10px 0;">-- OR JOIN ROOM --</div>
             
@@ -1114,32 +1114,45 @@ function selectMode(mode) {
         tempGameMode = mode; // 先記低你想玩乜 Mode
         playSound('deploy-sfx');
         
-        // 顯示等級選單
-        document.getElementById('level-screen').style.display = 'flex';
+        if (mode === 'AI') {
+            // AI 模式：照舊，先揀 Level
+            document.getElementById('level-screen').style.display = 'flex';
+        } else {
+            // PVP 模式：直接入 Lobby，唔好揀 Level 住
+            document.getElementById('start-screen').style.display = 'none';
+            document.getElementById('lobby-screen').style.display = 'flex';
+            document.getElementById('global-back-btn').style.display = 'block';
+        }
     }
     
     // 新增：關閉等級選單
     function closeLevelScreen() {
         document.getElementById('level-screen').style.display = 'none';
     }
-function selectLevel(level) {
+
+    function prepareCreateRoom() {
+        playSound('deploy-sfx');
+        // 彈出 Level 選單畀場主揀
+        document.getElementById('level-screen').style.display = 'flex';
+    }
+
+    function selectLevel(level) {
         selectedLevel = level;
         activeVocabList = VOCAB_DB[level]; // 設定題庫
         
         playSound('enter-sfx');
         closeLevelScreen(); // 關閉選單
 
-        // 根據剛才揀嘅 Mode 決定去邊
         if (tempGameMode === 'AI') {
             gameMode = 'AI';
             document.getElementById('global-back-btn').style.display = 'block';
             enterGameUI();
         } else {
-            // PVP 模式
+            // PVP 模式：來到這裡代表係 Host 剛揀完 Level
             gameMode = 'PVP';
-            document.getElementById('global-back-btn').style.display = 'block';
-            document.getElementById('start-screen').style.display = 'none';
-            document.getElementById('lobby-screen').style.display = 'flex';
+            
+            // ★ 修改重點：選完 Level 即刻執行開房 ★
+            createRoom(); 
         }
     }
 function enterGameUI() {
@@ -2547,6 +2560,7 @@ updateEnemyIndicator(ship.shipId);
 </body>
 
 </html>
+
 
 
 
