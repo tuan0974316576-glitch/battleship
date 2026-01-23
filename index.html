@@ -1217,7 +1217,7 @@ function joinRoom() {
         
         // 簡單檢查長度
         if (inputId.length !== 4) {
-            playSound('wrong-sfx'); // 長度唔啱播錯誤聲
+            playSound('wrong-sfx'); 
             return;
         }
         
@@ -1227,12 +1227,16 @@ function joinRoom() {
                 const data = snapshot.val();
                 
                 // 檢查房間是否未滿
-if (!data.guest) {
+                if (!data.guest) {
                     playSound('open-room-sfx');
                     currentRoomId = inputId;
                     playerRole = 'guest';
+                    
+                    // ★ 關鍵修復：必須在這裡強制設定為 PVP 模式！ ★
+                    // 因為 Guest 跳過了 selectLevel，如果唔加呢句，系統會以為係玩 AI
+                    gameMode = 'PVP'; 
 
-                    // ★ 新增：Guest 跟隨 Host 的等級設定 ★
+                    // Guest 跟隨 Host 的等級設定
                     if (data.level && VOCAB_DB[data.level]) {
                         selectedLevel = data.level;
                         activeVocabList = VOCAB_DB[data.level];
@@ -1247,14 +1251,13 @@ if (!data.guest) {
                         showNotification(`LINKING TO ROOM ${inputId}...`);
                     }
                     enterGameUI();
-                }
- else {
+                } else {
                     document.getElementById('lobby-msg').innerText = "ROOM FULL";
-                    playSound('wrong-sfx'); // 滿咗播錯誤聲
+                    playSound('wrong-sfx'); 
                 }
             } else {
                 document.getElementById('lobby-msg').innerText = "ROOM NOT FOUND";
-                playSound('wrong-sfx'); // 搵唔到播錯誤聲
+                playSound('wrong-sfx'); 
             }
         });
     }
@@ -2561,6 +2564,7 @@ updateEnemyIndicator(ship.shipId);
 </body>
 
 </html>
+
 
 
 
