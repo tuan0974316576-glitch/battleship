@@ -2184,7 +2184,9 @@ function confirmExit() {
         }
     }
 // ★ 補回這個函數，否則兩個掣都會死火 ★
+// ★ 修正版：關閉確認窗 (播放取消聲) ★
     function closeConfirmModal() {
+        playSound('delete-sfx'); // 播 Delete 聲
         document.getElementById('confirm-modal').style.display = 'none';
     }
 
@@ -2199,23 +2201,27 @@ function confirmExit() {
         resetGame(); 
     }
     // 3. 按下 "Confirm Abort" (執行重置)
-function executeAbort() {
-        closeConfirmModal();
+// ★ 修正版：執行放棄任務 (播放部署聲) ★
+    function executeAbort() {
+        // 1. 播放確認音效
+        playSound('deploy-sfx'); 
 
-        // 如果是 PVP 模式，通知對手我投降
+        // 2. 手動關閉視窗 (唔好 Call closeConfirmModal，費事播錯 Delete 聲)
+        document.getElementById('confirm-modal').style.display = 'none';
+
+        // 3. 處理 PVP 投降邏輯
         if (gameMode === 'PVP' && currentRoomId) {
             const { ref, update } = window.firebaseModules;
             const opponentRole = (playerRole === 'host') ? 'guest' : 'host';
             
             // 寫入數據：贏家是對手，原因係投降
-            // 這裡不需要 catch error，因為我們馬上就會 resetGame
             update(ref(db, 'rooms/' + currentRoomId), {
                 winner: opponentRole,
                 endReason: 'surrendered'
             });
         }
 
-        // 然後先重置自己
+        // 4. 重置遊戲
         resetGame(); 
     }
 
@@ -2564,6 +2570,7 @@ updateEnemyIndicator(ship.shipId);
 </body>
 
 </html>
+
 
 
 
