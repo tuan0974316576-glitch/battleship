@@ -773,19 +773,20 @@ body {
         }
     }
         /* --- 等級選擇畫面樣式 --- */
+/* --- 等級選擇畫面樣式 --- */
     .level-grid {
         display: grid;
-        grid-template-columns: repeat(2, 1fr); /* 兩列排開 */
+        grid-template-columns: repeat(2, 1fr); /* 強制兩列 */
         gap: 20px;
         width: 90%;
-        max-width: 500px;
+        max-width: 400px; /* 稍微縮窄一點，讓按鈕看起來更緊湊 */
     }
 
     .level-btn {
         background: rgba(15, 23, 42, 0.8);
         border: 2px solid var(--primary);
         color: #fff;
-        padding: 20px;
+        padding: 15px; /* 調整高度 */
         font-family: 'Orbitron', sans-serif;
         font-size: 18px;
         font-weight: bold;
@@ -793,6 +794,11 @@ body {
         transition: all 0.2s;
         text-shadow: 0 0 5px var(--primary);
         box-shadow: 0 0 10px rgba(14, 165, 233, 0.2);
+        
+        /* 確保文字置中 */
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
 
     .level-btn:hover {
@@ -800,21 +806,6 @@ body {
         color: #000;
         transform: scale(1.05);
         box-shadow: 0 0 20px var(--primary);
-    }
-
-    /* Level 5* 特別樣式 (紅色/紫色霸氣) */
-    .level-btn.star-level {
-        border-color: #a855f7; /* 紫色邊框 */
-        color: #e879f9;
-        text-shadow: 0 0 10px #a855f7;
-        box-shadow: 0 0 15px rgba(168, 85, 247, 0.3);
-        grid-column: span 2; /* 佔滿兩格 */
-    }
-
-    .level-btn.star-level:hover {
-        background: #a855f7;
-        color: #fff;
-        box-shadow: 0 0 40px #a855f7;
     }
     </style>
 </head>
@@ -837,7 +828,7 @@ body {
             <button class="level-btn" onclick="selectLevel('L3')">LEVEL 3</button>
             <button class="level-btn" onclick="selectLevel('L4')">LEVEL 4</button>
             <button class="level-btn" onclick="selectLevel('L5')">LEVEL 5</button>
-            <button class="level-btn star-level" onclick="selectLevel('L5_STAR')">LEVEL 5 <span style="color:yellow">★</span></button>
+            <button class="level-btn" onclick="selectLevel('L5_STAR')">LEVEL 5*</button>
         </div>
 
         <button class="btn" onclick="closeLevelScreen()" style="margin-top: 30px; border-color: #64748b; color: #94a3b8;">&lt; BACK</button>
@@ -2551,3 +2542,4 @@ updateEnemyIndicator(ship.shipId);
 </body>
 
 </html>
+
