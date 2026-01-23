@@ -807,15 +807,33 @@ body {
         transform: scale(1.05);
         box-shadow: 0 0 20px var(--primary);
     }
+    .start-btn-large[onclick*="PVP"] {
+        animation: pvpReadyPulse 1.5s infinite alternate;
+    }
+
+    @keyframes pvpReadyPulse {
+        from {
+            box-shadow: 0 0 10px var(--warning);
+            text-shadow: 0 0 5px var(--warning);
+        }
+        to {
+            box-shadow: 0 0 25px var(--warning), 0 0 10px var(--warning) inset;
+            text-shadow: 0 0 15px var(--warning);
+        }
+    }
     </style>
 </head>
 <body>
 
-    <div id="start-screen">
+<div id="start-screen">
         <div class="main-title">VOCAB<br>BATTLESHIP</div>
         <div style="display: flex; gap: 20px;">
             <button class="start-btn-large" onclick="selectMode('AI')">VS A.I.</button>
-            <button class="start-btn-large" style="border-color: var(--warning); color: var(--warning);" onclick="selectMode('PVP')">VS PLAYER</button>
+            <button class="start-btn-large" 
+                    style="border-color: var(--warning); color: var(--warning); box-shadow: 0 0 15px var(--warning); text-shadow: 0 0 5px var(--warning);" 
+                    onclick="selectMode('PVP')">
+                VS PLAYER
+            </button>
         </div>
         <div style="margin-top: 20px; color: #94a3b8; font-size: 12px;">SYSTEM READY // SELECT COMBAT MODE</div>
     </div>
@@ -2605,6 +2623,7 @@ updateEnemyIndicator(ship.shipId);
 </body>
 
 </html>
+
 
 
 
