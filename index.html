@@ -935,17 +935,7 @@ body {
         <div class="scan-line"></div>
     </div>
 
-    <div id="confirm-modal" class="tech-modal-overlay">
-        <div class="tech-modal-box">
-            <div class="tech-warning-title">⚠ WARNING // ABORT?</div>
-            <div class="tech-warning-msg">ALL MISSION PROGRESS WILL BE LOST.<br>CONFIRM ABORT SEQUENCE?</div>
-            
-            <div class="tech-btn-group">
-                <button class="tech-btn cancel" onclick="closeConfirmModal()">CANCEL</button>
-                <button class="tech-btn confirm" onclick="executeAbort()">CONFIRM ABORT</button>
-            </div>
-        </div>
-    </div>
+
     <audio id="bgm" loop><source src="bgm.mp3" type="audio/mpeg"></audio>
     <audio id="deploy-sfx"><source src="deploy.mp3" type="audio/mpeg"></audio>
     <audio id="enter-sfx"><source src="enter_word.mp3" type="audio/mpeg"></audio>
@@ -2177,7 +2167,21 @@ function confirmExit() {
             playSound('wrong-sfx'); // 播警報聲
         }
     }
+// ★ 補回這個函數，否則兩個掣都會死火 ★
+    function closeConfirmModal() {
+        document.getElementById('confirm-modal').style.display = 'none';
+    }
 
+    // 3. 按下 "Confirm Abort" (執行重置)
+    function executeAbort() {
+        closeConfirmModal(); // 之前因為搵唔到上面個函數，所以這裡卡住了
+        
+        // ... (原本的 executeAbort 內容不用改) ...
+        if (gameMode === 'PVP' && currentRoomId) {
+             // ...
+        }
+        resetGame(); 
+    }
     // 3. 按下 "Confirm Abort" (執行重置)
 function executeAbort() {
         closeConfirmModal();
@@ -2543,5 +2547,6 @@ updateEnemyIndicator(ship.shipId);
 </body>
 
 </html>
+
 
 
