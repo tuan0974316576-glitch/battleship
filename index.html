@@ -1264,21 +1264,50 @@ function startEnemyTurn() {
     let unsubscribeRoom = null; // 用來儲存 Firebase 監聽器
 
     // --- 4. 初始化 ---
-// --- 4. 初始化 (修正版：釋放全局變數) ---
+// --- 4. 初始化 (修正版) ---
+    // 解構 Firebase 模組
+    const { initializeApp, getDatabase, getAuth, signInAnonymously, onAuthStateChanged } = window.firebaseModules;
     
-    // ★ 修正 1：立即啟動 Firebase (不要包在 window.load 裡面) ★
-    const { initializeApp, getDatabase, getAuth, signInAnonymously } = window.firebaseModules;
-    
+    // 初始化 Global 變數
     app = initializeApp(firebaseConfig);
     db = getDatabase(app);
     auth = getAuth(app);
 
-    // 啟動匿名登入 (作為後備)
+    // 啟動匿名登入 (後備)
     signInAnonymously(auth).catch(e => console.error("Login Error:", e));
 
-    // ★ 修正 2：舊的 onAuthStateChanged 已經刪除 ★
-    // 我們將所有登入後的 UI 邏輯，統一交給最底部的代碼處理，避免衝突。
-
+    // 監聽登入狀態 (用來顯示 Start Screen 的名字)
+    onAuthStateChanged(auth, u => {
+        if (u) {
+            myPlayerId = u.uid;
+            // 1. 切換介面
+            if (!u.isAnonymous) {
+                const loginPanel = document.getElementById('login-panel');
+                const profilePanel = document.getElementById('user-profile-panel');
+                if(loginPanel) loginPanel.style.display = 'none';
+                if(profilePanel) profilePanel.style.display = 'block';
+            }
+            // 2. 讀取資料
+            const { ref, get, update } = window.firebaseModules;
+            const userRef = ref(db, 'users/' + u.uid);
+            get(userRef).then((snapshot) => {
+                if (snapshot.exists()) {
+                    const data = snapshot.val();
+                    playerXP = data.xp || 0;
+                    const displayName = data.nickname || u.displayName || "OPERATOR";
+                    const nameEl = document.getElementById('hud-player-name');
+                    if(nameEl) nameEl.innerText = displayName.toUpperCase();
+                } else {
+                    playerXP = 0;
+                    const defaultName = u.displayName || "NOVICE";
+                    const nameEl = document.getElementById('hud-player-name');
+                    if(nameEl) nameEl.innerText = defaultName.toUpperCase();
+                    if(!u.isAnonymous) update(userRef, { nickname: defaultName.toUpperCase(), xp: 0 });
+                }
+                if(typeof updateRankUI === 'function') updateRankUI(); 
+            });
+        }
+    });
     // --- 5. 流程控制 ---
 function selectMode(mode) {
         tempGameMode = mode; // 先記低你想玩乜 Mode
@@ -2903,81 +2932,7 @@ updateEnemyIndicator(ship.shipId);
         document.getElementById('system-status-text').style.color = "var(--primary)";
         document.getElementById('system-status-text').style.opacity = "1";
     }
-
-    // --- 2. 更新 Auth 監聽器 (控制按鈕顯示) ---
-    // 請用這段取代舊的 onAuthStateChanged
-    const { onAuthStateChanged } = window.firebaseModules; // 確保有引用
-    const auth = window.firebaseModules.getAuth();
-
-    onAuthStateChanged(auth, u => {
-        if (u) {
-            myPlayerId = u.uid;
-            
-            // ★ 邏輯更新：如果已登入，自動切換畫面 ★
-            if (!u.isAnonymous) {
-                // 1. 隱藏 Login Panel，顯示 Profile Panel
-                document.getElementById('login-panel').style.display = 'none';
-                document.getElementById('user-profile-panel').style.display = 'block';
-                
-                // 2. ★ 關鍵：顯示遊戲模式按鈕 ★
-                document.getElementById('game-mode-selection').style.display = 'flex';
-                
-                // 3. 更新狀態文字
-                document.getElementById('system-status-text').innerText = "IDENTITY CONFIRMED // READY FOR BATTLE";
-                document.getElementById('system-status-text').style.color = "var(--success)";
-                document.getElementById('system-status-text').style.opacity = "1";
-            }
-
-            // --- 讀取資料 (XP & 名稱) ---
-            const { ref, get, update } = window.firebaseModules;
-            const userRef = ref(db, 'users/' + u.uid);
-            
-            get(userRef).then((snapshot) => {
-                if (snapshot.exists()) {
-                    const data = snapshot.val();
-                    playerXP = data.xp || 0;
-                    
-                    // 設定名字
-                    const displayName = data.nickname || u.displayName || "OPERATOR";
-                    const nameEl = document.getElementById('hud-player-name');
-                    if(nameEl) nameEl.innerText = displayName.toUpperCase();
-                    
-                } else {
-                    // 新用戶初始化
-                    playerXP = 0;
-                    const defaultName = u.displayName || "NOVICE";
-                    const nameEl = document.getElementById('hud-player-name');
-                    if(nameEl) nameEl.innerText = defaultName.toUpperCase();
-                    
-                    // 只在非匿名時才寫入資料庫
-                    if(!u.isAnonymous) {
-                        update(userRef, { nickname: defaultName.toUpperCase(), xp: 0 });
-                    }
-                }
-                if(typeof updateRankUI === 'function') updateRankUI(); 
-            });
-        }
-    });
 </script>
 </body>
 
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
