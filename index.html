@@ -1264,51 +1264,20 @@ function startEnemyTurn() {
     let unsubscribeRoom = null; // 用來儲存 Firebase 監聽器
 
     // --- 4. 初始化 ---
-window.addEventListener('load', () => {
-        // --- Firebase Init ---
-        const { initializeApp, getDatabase, getAuth, signInAnonymously, onAuthStateChanged } = window.firebaseModules;
-        
-        app = initializeApp(firebaseConfig);
-        db = getDatabase(app);
-        auth = getAuth(app);
+// --- 4. 初始化 (修正版：釋放全局變數) ---
+    
+    // ★ 修正 1：立即啟動 Firebase (不要包在 window.load 裡面) ★
+    const { initializeApp, getDatabase, getAuth, signInAnonymously } = window.firebaseModules;
+    
+    app = initializeApp(firebaseConfig);
+    db = getDatabase(app);
+    auth = getAuth(app);
 
-        signInAnonymously(auth).catch(e => console.error("Login Error:", e));
-        
-       onAuthStateChanged(auth, u => {
-            if (u) {
-                myPlayerId = u.uid;
-                
-                // --- 1. 切換 HUD 介面 (已登入) ---
-                if (!u.isAnonymous) {
-                    document.getElementById('login-panel').style.display = 'none';
-                    document.getElementById('user-profile-panel').style.display = 'block';
-                }
+    // 啟動匿名登入 (作為後備)
+    signInAnonymously(auth).catch(e => console.error("Login Error:", e));
 
-                // --- 2. 讀取資料 (XP & 名稱) ---
-                const { ref, get, update } = window.firebaseModules;
-                const userRef = ref(db, 'users/' + u.uid);
-                
-                get(userRef).then((snapshot) => {
-                    if (snapshot.exists()) {
-                        const data = snapshot.val();
-                        playerXP = data.xp || 0;
-                        
-                        // 設定名字 (優先用資料庫的 nickname)
-                        const displayName = data.nickname || u.displayName || "OPERATOR";
-                        document.getElementById('hud-player-name').innerText = displayName.toUpperCase();
-                        
-                    } else {
-                        // 新用戶初始化
-                        playerXP = 0;
-                        const defaultName = u.displayName || "NOVICE";
-                        update(userRef, { nickname: defaultName.toUpperCase(), xp: 0 });
-                        document.getElementById('hud-player-name').innerText = defaultName.toUpperCase();
-                    }
-                    // 更新軍階顯示 (包括 Start Screen 和 HUD)
-                    updateRankUI(); 
-                });
-            }
-        });
+    // ★ 修正 2：舊的 onAuthStateChanged 已經刪除 ★
+    // 我們將所有登入後的 UI 邏輯，統一交給最底部的代碼處理，避免衝突。
 
     // --- 5. 流程控制 ---
 function selectMode(mode) {
@@ -2993,6 +2962,7 @@ updateEnemyIndicator(ship.shipId);
 </body>
 
 </html>
+
 
 
 
