@@ -1483,89 +1483,78 @@ function getShipIndices(idx, conf, v) {
         document.querySelectorAll('.cell').forEach(c => c.classList.remove('valid-hover', 'invalid-hover')); 
     }
 
-function handleClick(index) {
-        if (currentPhase !== 'DEPLOY') {
-            if (currentPhase === 'PLAYER_TURN') {
-                const cell = document.getElementById('enemy-grid').children[index];
-                if (!cell.classList.contains('revealed')) openLaunchModal(index);
-            }
-            return;
-        }
+// ★ 修正版：handleClick (加入 isVertical 記錄) ★
+    function handleClick(index) {
+        if (currentPhase === 'DEPLOY') {
+            // 如果點擊的是側邊欄 (部署新船)
+            if (index >= 100) return; 
 
-        // 回收船隻邏輯
-        if (myGrid[index] === 1) {
-            let targetShipId = -1;
-            FLEET.forEach((ship, i) => {
-                if (ship.indices && ship.indices.includes(index)) {
-                    targetShipId = i;
-                }
-            });
-
-            if (targetShipId !== -1) {
-                FLEET[targetShipId].indices.forEach(idx => myGrid[idx] = 0);
-                FLEET[targetShipId].indices = null; 
-
-                const img = document.getElementById(`board-ship-${targetShipId}`);
-                if (img) img.remove();
-
-                playSound('delete-sfx');
-
-                if (deployIndex < FLEET.length) {
-                    const currentHolding = document.getElementById(`ship-unit-${deployIndex}`);
-                    if (currentHolding) {
-                        currentHolding.classList.remove('current');
-                        currentHolding.classList.add('pending');
-                    }
-                }
-
-                deployIndex = targetShipId;
-                const newCurrent = document.getElementById(`ship-unit-${deployIndex}`);
-                if (newCurrent) {
-                    newCurrent.classList.remove('deployed', 'pending');
-                    newCurrent.classList.add('current');
-                }
-
-                document.getElementById('start-btn').disabled = true;
+            // 處理放置邏輯
+            if (deployIndex < FLEET.length) {
+                // 檢查是否點擊了有效格子
+                const conf = FLEET[deployIndex];
+                const r = Math.floor(index / 10);
+                const c = index % 10;
                 
-                // ★ 已刪除 status.innerHTML 更新代碼，防止閃爍 ★
-                return;
+                // 這裡會檢查能不能放
+                const indices = getShipIndices(r, c, conf.width, conf.height, isVertical);
+                
+                // 如果位置合法 (isValid)
+                if (indices.every(idx => idx >= 0 && idx < 100 && myGrid[idx] === 0)) {
+                    
+                    playSound('deploy-sfx');
+
+                    // 1. 標記格子
+                    indices.forEach(idx => myGrid[idx] = 1);
+                    
+                    // 2. 儲存船的數據
+                    FLEET[deployIndex].indices = indices;
+                    
+                    // ★ 關鍵修改：在這裡記低它是直還是橫！ ★
+                    FLEET[deployIndex].isVertical = isVertical; 
+
+                    // 3. 放置圖片
+                    placeShipImage('player-grid', index, conf, isVertical);
+                    
+                    // 4. 更新 UI
+                    const sidebarItem = document.getElementById(`ship-unit-${deployIndex}`);
+                    if(sidebarItem) {
+                        sidebarItem.classList.remove('current');
+                        sidebarItem.classList.add('deployed');
+                        sidebarItem.style.opacity = "0.5";
+                    }
+
+                    deployIndex++;
+                    
+                    // 5. 準備下一隻船
+                    if (deployIndex < FLEET.length) {
+                        const nextItem = document.getElementById(`ship-unit-${deployIndex}`);
+                        if(nextItem) nextItem.classList.add('current');
+                        
+                        // 重置旋轉狀態 (預設變回橫)
+                        isVertical = false; 
+                        updateGhost(); 
+                    } else {
+                        // 全部放完
+                        document.getElementById('deploy-controls').style.display = 'none';
+                        document.getElementById('start-btn').disabled = false;
+                        document.getElementById('game-status').innerHTML = "FLEET READY. <span style='color:#4ade80'>AWAITING ORDERS</span>";
+                        playSound('enter-sfx');
+                        
+                        // 清除 Ghost
+                        document.querySelectorAll('.ghost-cell').forEach(el => el.remove());
+                    }
+                } else {
+                    playSound('wrong-sfx'); // 放不到
+                }
             }
-        }
-
-        // 放置船隻邏輯
-        if (deployIndex >= FLEET.length) return;
-
-        const conf = FLEET[deployIndex];
-        const indices = getShipIndices(index, conf, isVertical);
-
-        if (!indices || indices.some(idx => myGrid[idx] === 1)) return;
-
-        indices.forEach(idx => myGrid[idx] = 1);
-        FLEET[deployIndex].indices = indices;
-
-        placeShipImage('player-grid', index, conf, isVertical);
-        playSound('deploy-sfx');
-
-        const justPlaced = document.getElementById(`ship-unit-${deployIndex}`);
-        if (justPlaced) {
-            justPlaced.classList.remove('current');
-            justPlaced.classList.add('deployed');
-        }
-
-        deployIndex = findNextUnplaced();
-
-        if (deployIndex < FLEET.length) {
-            const nextShip = document.getElementById(`ship-unit-${deployIndex}`);
-            if (nextShip) {
-                nextShip.classList.remove('pending');
-                nextShip.classList.add('current');
+        } else if (currentPhase === 'PLAYER_TURN') {
+            // 攻擊階段 (VS AI / PVP)
+            if (gameMode === 'PVP') {
+                handlePVPClick(index);
+            } else {
+                handleAIClick(index);
             }
-            // ★ 已刪除 status.innerHTML 更新代碼，防止閃爍 ★
-        } else {
-            // 全部放晒
-            const btn = document.getElementById('start-btn');
-            // ★ 已刪除 status.innerHTML 更新代碼，防止閃爍 ★
-            btn.disabled = false;
         }
     }
 
@@ -1623,6 +1612,7 @@ initEnemyFleetIndicator();
                 indices: s.indices,
                 width: s.width,
                 height: s.height
+                isVertical: s.isVertical
             }));
             updates[field + 'Ships'] = myShipsForSending;
             
@@ -1975,15 +1965,13 @@ function startPlayerTurn() {
         }
     }
 
- // ★ 最終修復版：顯示我自己嘅戰艦殘骸 (移除 absolute，加入智能檢測) ★
-    // ★ 修正版：顯示我自己嘅戰艦殘骸 (並隱藏原本完好嘅船) ★
     function revealMyShip(ship, index) {
         ship.revealed = true;
         const grid = document.getElementById('player-grid');
         const container = document.getElementById('player-board');
         const startCell = grid.children[ship.indices[0]];
 
-        // --- 1. 智能測量 (Smart Measurement) ---
+        // 1. 處理隱藏中的容器 (確保能讀取尺寸)
         const isVisible = (container.offsetParent !== null);
         let prevDisplay = '';
         let prevVisibility = '';
@@ -1995,40 +1983,34 @@ function startPlayerTurn() {
             container.style.display = 'block';     
         }
 
-        // 2. 讀取真實座標
+        // 2. 讀取座標
         const cellLeft = startCell.offsetLeft;
         const cellTop = startCell.offsetTop;
         const cellSize = startCell.offsetWidth;
 
-        // 3. 還原
+        // 3. 還原容器狀態
         if (!isVisible) {
             container.style.display = prevDisplay;
             container.style.visibility = prevVisibility;
         }
 
-        // --- ★ 關鍵修正 1：隱藏原本完好嘅船 (否則會遮住戰損圖) ★ ---
-        // 我們在部署時有設定 ID: board-ship-0, board-ship-1...
+        // 4. 隱藏原本完好的船圖
         const originalShipImg = document.getElementById(`board-ship-${index}`);
         if (originalShipImg) {
-            originalShipImg.style.display = 'none'; // 隱藏舊圖
+            originalShipImg.style.display = 'none'; 
         }
 
-        // --- 4. 建立戰損圖片 ---
+        // 5. 建立戰損圖片
         const img = document.createElement('img');
-        
-        // ★ 關鍵修正 2：確保使用戰損圖片 (Damaged Image) ★
         if (typeof DAMAGED_IMAGES !== 'undefined' && DAMAGED_IMAGES[index]) {
             img.src = DAMAGED_IMAGES[index];
         } else {
-            img.src = ship.img; // 如果無戰損圖，先用原圖
+            img.src = ship.img; 
         }
         
         img.classList.add('enemy-ship-revealed'); 
-        
-        // ★ 關鍵修正 3：提升層級 (確保佢係最頂) ★
         img.style.zIndex = "10"; 
 
-        // 計算大細
         const pW = cellSize * ship.width + 2 * (ship.width - 1);
         const pH = cellSize * ship.height + 2 * (ship.height - 1);
         
@@ -2037,12 +2019,19 @@ function startPlayerTurn() {
         img.style.left = cellLeft + 'px';
         img.style.top = cellTop + 'px';
         
-        // Transform
-        let isVertical = false;
-        if (ship.indices.length > 1) {
-            isVertical = (ship.indices[1] === ship.indices[0] + 10);
+        // ★ 關鍵：優先使用儲存的 isVertical ★
+        let isVertical = ship.isVertical;
+        
+        // 如果是舊存檔沒有這個變數，才使用舊的估算方法
+        if (typeof isVertical === 'undefined') {
+             if (ship.indices.length > 1) {
+                isVertical = (ship.indices[1] === ship.indices[0] + 10);
+             } else {
+                isVertical = false;
+             }
         }
         
+        // 旋轉與位移修正
         if (!isVertical) {
             const shift = (pH - pW) / 2;
             img.style.transform = `translate(${shift}px, -${shift}px) rotate(-90deg)`;
@@ -2051,13 +2040,9 @@ function startPlayerTurn() {
         }
         
         grid.appendChild(img);
-        
         playSound('destroy-sfx'); 
     }
-// ★ 新增全局變數 (請確保放在 global 區域，例如 let enemyShots = []; 附近) ★
-// ★ 新增：初始化敵軍狀態欄 ★
-// ★ 新版：初始化敵軍狀態欄 (生成能量方塊) ★
-    // ★ 2.0 版：根據戰艦形狀生成方塊 ★
+
     function initEnemyFleetIndicator() {
         const container = document.getElementById('enemy-fleet-indicator');
         container.innerHTML = ''; 
@@ -2509,7 +2494,7 @@ function handleDeploymentTimeout() {
             endReason: 'disconnected'
         });
     }
-// 1. 處理 PVP 收到的敵人艦隊數據
+
     function processEnemyFleetData(shipsData) {
         enemyFleetData = [];
         if(!shipsData) return;
@@ -2517,18 +2502,25 @@ function handleDeploymentTimeout() {
         shipsData.forEach(ship => {
             if(!ship.indices) return;
             const root = ship.indices[0];
-            // 推算方向
-            let isV = false;
-            if (ship.indices.length > 1) {
-                isV = (ship.indices[1] === root + GRID_SIZE);
+            
+            // ★ 關鍵：優先讀取傳過來的 isVertical ★
+            let isV = ship.isVertical;
+            
+            // 如果對方是舊版 (無傳過來)，才用估算
+            if (typeof isV === 'undefined') {
+                if (ship.indices.length > 1) {
+                    isV = (ship.indices[1] === root + 10);
+                } else {
+                    isV = false;
+                }
             }
             
             enemyFleetData.push({
-                shipId: ship.shipId, // 從對手那邊收到的 ID
+                shipId: ship.shipId, 
                 indices: ship.indices,
-                conf: FLEET[ship.shipId], // 取得基本設定
+                conf: FLEET[ship.shipId], 
                 rootIndex: root,
-                isVertical: isV,
+                isVertical: isV, // <-- 儲存正確方向
                 revealed: false
             });
         });
@@ -2637,6 +2629,7 @@ updateEnemyIndicator(ship.shipId);
 </body>
 
 </html>
+
 
 
 
