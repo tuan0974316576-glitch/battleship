@@ -2789,18 +2789,29 @@ updateEnemyIndicator(ship.shipId);
 
     function loginWithGoogle() {
         const { getAuth, signInWithPopup, GoogleAuthProvider } = window.firebaseModules;
-        const auth = getAuth();
+        
+        // ★ 改進：傳入 app 變數，確保捉到正確的 Firebase App ★
+        const auth = getAuth(app); 
         const provider = new GoogleAuthProvider();
         
-        playSound('deploy-sfx'); // 播放音效
+        playSound('deploy-sfx'); 
+        console.log("Attempting Google Login..."); // Debug Log
         
         signInWithPopup(auth, provider)
             .then((result) => {
-                showNotification("IDENTITY CONFIRMED", "success");
+                console.log("Login Success:", result.user.displayName);
+                // 確保 showNotification 存在才調用
+                if (typeof showNotification === 'function') {
+                    showNotification("IDENTITY CONFIRMED", "success");
+                }
             }).catch((error) => {
-                console.error(error);
-                showNotification("ACCESS DENIED", "error");
+                console.error("Login Error:", error); // 顯示詳細錯誤
                 playSound('wrong-sfx');
+                if (typeof showNotification === 'function') {
+                    showNotification("ACCESS DENIED: " + error.code, "error");
+                } else {
+                    alert("LOGIN FAILED: " + error.message); // 後備方案
+                }
             });
     }
 
@@ -2937,5 +2948,6 @@ updateEnemyIndicator(ship.shipId);
 </body>
 
 </html>
+
 
 
