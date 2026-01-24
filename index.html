@@ -827,37 +827,49 @@ body {
         text-align: center;
         perspective: 1000px;
     }
+/* --- ★ 新增：班房登入輸入框樣式 ★ --- */
+    .login-input {
+        background: rgba(0, 0, 0, 0.7);
+        border: 1px solid var(--primary);
+        color: #fff;
+        padding: 10px;
+        width: 100%;
+        margin-bottom: 10px;
+        font-family: 'Orbitron', sans-serif;
+        text-align: center;
+        letter-spacing: 2px;
+        box-sizing: border-box; /* 確保 padding 唔會撐爆寬度 */
+        font-size: 14px;
+    }
+    
+    .login-input:focus {
+        border-color: var(--warning);
+        outline: none;
+        box-shadow: 0 0 10px rgba(245, 158, 11, 0.5);
+    }
 
-    /* --- Google Login 按鈕 (Cyberpunk 風格) --- */
-    #google-login-btn {
-        position: relative;
-        background: rgba(0, 0, 0, 0.6);
+    #login-btn-custom {
+        background: rgba(14, 165, 233, 0.2);
         border: 1px solid var(--primary);
         color: var(--primary);
-        padding: 12px 30px;
-        font-family: 'Orbitron', sans-serif;
-        font-size: 16px;
-        font-weight: bold;
-        letter-spacing: 2px;
-        cursor: pointer;
-        overflow: hidden;
-        transition: 0.3s;
-        box-shadow: 0 0 10px rgba(14, 165, 233, 0.2);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 10px;
+        padding: 12px 0;
         width: 100%;
+        font-family: 'Orbitron', sans-serif;
+        font-weight: bold;
+        cursor: pointer;
+        transition: 0.3s;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        position: relative;
+        overflow: hidden;
     }
-
-    #google-login-btn:hover {
-        background: rgba(14, 165, 233, 0.1);
+    
+    #login-btn-custom:hover {
+        background: var(--primary);
+        color: #000;
         box-shadow: 0 0 20px var(--primary);
-        text-shadow: 0 0 8px var(--primary);
-        letter-spacing: 4px; /* Hover 時字距拉開 */
     }
 
-    #google-login-btn .icon { font-weight: 900; font-family: sans-serif; }
 
     /* --- 用戶資料面板 (HUD Profile) --- */
     #user-profile-panel {
@@ -949,19 +961,19 @@ body {
 
     <div id="login-hud" class="hud-container">
         
-        <div id="login-panel">
+<div id="login-panel">
             <div class="hud-line"></div>
-            <div style="font-size: 10px; color: var(--danger); letter-spacing: 2px; margin-bottom: 15px;">SYSTEM ACCESS: RESTRICTED</div>
+            <div style="font-size: 10px; color: var(--primary); letter-spacing: 2px; margin-bottom: 10px;">IDENTITY AUTHENTICATION</div>
             
-            <button id="google-login-btn" onclick="loginWithGoogle()" style="margin-bottom: 10px;">
-                <span class="icon">G</span> 
-                <span class="text">INITIALIZE LINK</span>
-                <div class="btn-glitch"></div>
+            <input type="text" id="login-name" class="login-input" placeholder="CODENAME (e.g. SKYWALKER)" maxlength="12">
+            
+            <input type="password" id="login-code" class="login-input" placeholder="PASSCODE (e.g. 1234)" maxlength="8">
+            
+            <button id="login-btn-custom" onclick="loginClassroom()">
+                LINK START
             </button>
-
-            <button class="logout-link" onclick="playAsGuest()" style="color: #64748b; font-size: 10px; margin-top: 5px;">
-                &gt; BYPASS SECURITY (GUEST MODE)
-            </button>
+            
+            <div style="font-size: 9px; color: #64748b; margin-top: 8px;">NEW USER? JUST ENTER A CODE TO REGISTER</div>
         </div>
 
         <div id="user-profile-panel" style="display: none;">
@@ -2926,6 +2938,7 @@ updateEnemyIndicator(ship.shipId);
 </body>
 
 </html>
+
 
 
 
