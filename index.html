@@ -941,12 +941,16 @@ body {
         
         <div id="login-panel">
             <div class="hud-line"></div>
-            <div style="font-size: 10px; color: var(--danger); letter-spacing: 2px; margin-bottom: 5px;">SYSTEM ACCESS: RESTRICTED</div>
+            <div style="font-size: 10px; color: var(--danger); letter-spacing: 2px; margin-bottom: 15px;">SYSTEM ACCESS: RESTRICTED</div>
             
-            <button id="google-login-btn" onclick="loginWithGoogle()">
+            <button id="google-login-btn" onclick="loginWithGoogle()" style="margin-bottom: 10px;">
                 <span class="icon">G</span> 
                 <span class="text">INITIALIZE LINK</span>
                 <div class="btn-glitch"></div>
+            </button>
+
+            <button class="logout-link" onclick="playAsGuest()" style="color: #64748b; font-size: 10px; margin-top: 5px;">
+                &gt; BYPASS SECURITY (GUEST MODE)
             </button>
         </div>
 
@@ -973,14 +977,14 @@ body {
         </div>
     </div>
 
-    <div style="display: flex; gap: 20px;">
+    <div id="game-mode-selection" style="display: none; gap: 20px; margin-top: 10px; animation: fadeIn 0.5s;">
         <button class="start-btn-large" onclick="selectMode('AI')">VS A.I.</button>
         <button class="start-btn-large btn-pvp" onclick="selectMode('PVP')">
             VS PLAYER
         </button>
     </div>
     
-    <div style="margin-top: 20px; color: #94a3b8; font-size: 12px;">SYSTEM READY // SELECT COMBAT MODE</div>
+    <div id="system-status-text" style="margin-top: 30px; color: #94a3b8; font-size: 12px; opacity: 0.5;">WAITING FOR AUTHENTICATION...</div>
 </div>
 <div id="level-screen" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 250; background: rgba(0,0,0,0.9); flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(5px);">
         <h2 style="font-family: 'Black Ops One'; color: var(--primary); font-size: 40px; margin-bottom: 30px; text-shadow: 0 0 20px var(--primary);">SELECT DIFFICULTY</h2>
@@ -2891,10 +2895,81 @@ updateEnemyIndicator(ship.shipId);
     
     // 確保一開始載入時執行一次
     window.addEventListener('load', updateRankUI);
+// --- 1. 新增 Guest 模式函數 ---
+    function playAsGuest() {
+        playSound('deploy-sfx');
+        // 切換介面：隱藏 Login Panel，顯示 Guest 身份，並顯示遊戲按鈕
+        document.getElementById('login-panel').style.display = 'none';
+        
+        // 顯示遊戲模式按鈕
+        const modeSelect = document.getElementById('game-mode-selection');
+        modeSelect.style.display = 'flex';
+        
+        // 更新狀態文字
+        document.getElementById('system-status-text').innerText = "GUEST ACCESS GRANTED // SELECT MODE";
+        document.getElementById('system-status-text').style.color = "var(--primary)";
+        document.getElementById('system-status-text').style.opacity = "1";
+    }
+
+    // --- 2. 更新 Auth 監聽器 (控制按鈕顯示) ---
+    // 請用這段取代舊的 onAuthStateChanged
+    const { onAuthStateChanged } = window.firebaseModules; // 確保有引用
+    const auth = window.firebaseModules.getAuth();
+
+    onAuthStateChanged(auth, u => {
+        if (u) {
+            myPlayerId = u.uid;
+            
+            // ★ 邏輯更新：如果已登入，自動切換畫面 ★
+            if (!u.isAnonymous) {
+                // 1. 隱藏 Login Panel，顯示 Profile Panel
+                document.getElementById('login-panel').style.display = 'none';
+                document.getElementById('user-profile-panel').style.display = 'block';
+                
+                // 2. ★ 關鍵：顯示遊戲模式按鈕 ★
+                document.getElementById('game-mode-selection').style.display = 'flex';
+                
+                // 3. 更新狀態文字
+                document.getElementById('system-status-text').innerText = "IDENTITY CONFIRMED // READY FOR BATTLE";
+                document.getElementById('system-status-text').style.color = "var(--success)";
+                document.getElementById('system-status-text').style.opacity = "1";
+            }
+
+            // --- 讀取資料 (XP & 名稱) ---
+            const { ref, get, update } = window.firebaseModules;
+            const userRef = ref(db, 'users/' + u.uid);
+            
+            get(userRef).then((snapshot) => {
+                if (snapshot.exists()) {
+                    const data = snapshot.val();
+                    playerXP = data.xp || 0;
+                    
+                    // 設定名字
+                    const displayName = data.nickname || u.displayName || "OPERATOR";
+                    const nameEl = document.getElementById('hud-player-name');
+                    if(nameEl) nameEl.innerText = displayName.toUpperCase();
+                    
+                } else {
+                    // 新用戶初始化
+                    playerXP = 0;
+                    const defaultName = u.displayName || "NOVICE";
+                    const nameEl = document.getElementById('hud-player-name');
+                    if(nameEl) nameEl.innerText = defaultName.toUpperCase();
+                    
+                    // 只在非匿名時才寫入資料庫
+                    if(!u.isAnonymous) {
+                        update(userRef, { nickname: defaultName.toUpperCase(), xp: 0 });
+                    }
+                }
+                if(typeof updateRankUI === 'function') updateRankUI(); 
+            });
+        }
+    });
 </script>
 </body>
 
 </html>
+
 
 
 
