@@ -851,7 +851,7 @@ body {
     background: rgba(5, 10, 20, 0.95); /* 深色背景 */
     backdrop-filter: blur(10px);
     flex-direction: column;
-    align_items: center;
+    align-items: center;
     justify-content: center;
     animation: fadeIn 0.3s ease-out;
 }
@@ -950,19 +950,25 @@ body {
 <body>
 
 <div id="start-screen">
-        <div class="main-title">VOCAB<br>BATTLESHIP</div>
-        <div style="display: flex; gap: 20px;">
-            <button class="start-btn-large" onclick="selectMode('AI')">VS A.I.</button>
-<button class="start-btn-large btn-pvp" onclick="selectMode('PVP')">
-    VS PLAYER
-</button>
-        </div>
-    <div style="width: 100%; text-align: center;">
-             <button class="btn" onclick="openVocabScreen()" style="margin-top: 30px; border-color: #94a3b8; color: #cbd5e1; width: 220px; font-size: 16px;">
-                📂 ACCESS DATABASE
-            </button>
-        </div>
-        <div style="margin-top: 20px; color: #94a3b8; font-size: 12px;">SYSTEM READY // SELECT COMBAT MODE</div>
+      <div class="main-title">VOCAB<br>BATTLESHIP</div>
+    
+    <div style="display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; width: 100%; max-width: 800px;">
+        
+        <button class="start-btn-large" onclick="selectMode('AI')">
+            VS A.I.
+        </button>
+        
+        <button class="start-btn-large btn-pvp" onclick="selectMode('PVP')">
+            VS PLAYER
+        </button>
+        
+        <button class="start-btn-large" onclick="openVocabScreen()" style="border-color: #94a3b8; color: #cbd5e1; box-shadow: 0 0 15px rgba(148, 163, 184, 0.3);">
+            DECRYPTION TABLE
+        </button>
+
+    </div>
+
+    <div style="margin-top: 20px; color: #94a3b8; font-size: 12px;">SYSTEM READY // SELECT COMBAT MODE</div>
     </div>
 <div id="vocab-screen">
     <div class="tech-header">
@@ -2826,6 +2832,7 @@ function renderVocabList(level) {
 </body>
 
 </html>
+
 
 
 
