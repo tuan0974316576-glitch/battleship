@@ -957,17 +957,37 @@ body {
 }
 
 /* 6. 主畫面紫色按鈕 (CODE LIST) */
-.btn-code-list {
-    border-color: #d946ef;
-    color: #e879f9;
-    box-shadow: 0 0 15px rgba(217, 70, 239, 0.3);
-    transition: all 0.3s ease;
+/* =========================================
+   ★★★ 更新版：紫色呼吸燈按鈕 (連動畫) ★★★
+   ========================================= */
+
+/* 1. 定義紫色呼吸動畫 (Pulse) */
+@keyframes pulse-purple {
+    0% { box-shadow: 0 0 10px rgba(217, 70, 239, 0.3); }
+    50% { box-shadow: 0 0 25px rgba(217, 70, 239, 0.7); border-color: #f0abfc; }
+    100% { box-shadow: 0 0 10px rgba(217, 70, 239, 0.3); }
 }
+
+/* 2. 按鈕樣式 (已加入 animation) */
+.btn-code-list {
+    border-color: #d946ef;           
+    color: #e879f9;                  
+    box-shadow: 0 0 15px rgba(217, 70, 239, 0.3); 
+    transition: all 0.3s ease;
+    
+    /* ★ 重點：加咗呢行令佢識呼吸！ ★ */
+    animation: pulse-purple 2s infinite; 
+}
+
+/* Hover 狀態 (滑鼠指埋去時) */
 .btn-code-list:hover {
-    background: #d946ef;
-    color: #ffffff;
-    box-shadow: 0 0 30px #d946ef, 0 0 10px #ffffff;
+    background: #d946ef;             
+    color: #ffffff;                  
+    box-shadow: 0 0 30px #d946ef, 0 0 10px #ffffff; 
     transform: translateY(-2px);
+    
+    /* Hover 時暫停呼吸，變成持續強光 */
+    animation: none; 
 }
     </style>
 </head>
@@ -2856,6 +2876,7 @@ function renderVocabList(level) {
 </body>
 
 </html>
+
 
 
 
