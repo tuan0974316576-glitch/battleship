@@ -4,6 +4,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Vocab Battleship - Final Mission</title>
+    
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getDatabase, ref, set, onValue, update, push, child, get, onDisconnect, off } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+    // ★ 新增：引入 GoogleAuthProvider, signInWithPopup, signOut ★
+    import { getAuth, signInAnonymously, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+      
+    window.firebaseModules = { 
+        initializeApp, getDatabase, ref, set, onValue, update, push, child, get, 
+        getAuth, signInAnonymously, onAuthStateChanged, onDisconnect, off,
+        // ★ 記得加埋呢三樣入去 window 物件 ★
+        GoogleAuthProvider, signInWithPopup, signOut
+    };
+    </script>
 
     <style>
 @import url('https://fonts.googleapis.com/css2?family=Black+Ops+One&family=Orbitron:wght@400;500;700;900&family=Roboto+Mono:wght@400;700&display=swap');
@@ -827,49 +841,37 @@ body {
         text-align: center;
         perspective: 1000px;
     }
-/* --- ★ 新增：班房登入輸入框樣式 ★ --- */
-    .login-input {
-        background: rgba(0, 0, 0, 0.7);
-        border: 1px solid var(--primary);
-        color: #fff;
-        padding: 10px;
-        width: 100%;
-        margin-bottom: 10px;
-        font-family: 'Orbitron', sans-serif;
-        text-align: center;
-        letter-spacing: 2px;
-        box-sizing: border-box; /* 確保 padding 唔會撐爆寬度 */
-        font-size: 14px;
-    }
-    
-    .login-input:focus {
-        border-color: var(--warning);
-        outline: none;
-        box-shadow: 0 0 10px rgba(245, 158, 11, 0.5);
-    }
 
-    #login-btn-custom {
-        background: rgba(14, 165, 233, 0.2);
+    /* --- Google Login 按鈕 (Cyberpunk 風格) --- */
+    #google-login-btn {
+        position: relative;
+        background: rgba(0, 0, 0, 0.6);
         border: 1px solid var(--primary);
         color: var(--primary);
-        padding: 12px 0;
-        width: 100%;
+        padding: 12px 30px;
         font-family: 'Orbitron', sans-serif;
+        font-size: 16px;
         font-weight: bold;
-        cursor: pointer;
-        transition: 0.3s;
-        text-transform: uppercase;
         letter-spacing: 2px;
-        position: relative;
+        cursor: pointer;
         overflow: hidden;
-    }
-    
-    #login-btn-custom:hover {
-        background: var(--primary);
-        color: #000;
-        box-shadow: 0 0 20px var(--primary);
+        transition: 0.3s;
+        box-shadow: 0 0 10px rgba(14, 165, 233, 0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        width: 100%;
     }
 
+    #google-login-btn:hover {
+        background: rgba(14, 165, 233, 0.1);
+        box-shadow: 0 0 20px var(--primary);
+        text-shadow: 0 0 8px var(--primary);
+        letter-spacing: 4px; /* Hover 時字距拉開 */
+    }
+
+    #google-login-btn .icon { font-weight: 900; font-family: sans-serif; }
 
     /* --- 用戶資料面板 (HUD Profile) --- */
     #user-profile-panel {
@@ -961,19 +963,19 @@ body {
 
     <div id="login-hud" class="hud-container">
         
-<div id="login-panel">
+        <div id="login-panel">
             <div class="hud-line"></div>
-            <div style="font-size: 10px; color: var(--primary); letter-spacing: 2px; margin-bottom: 10px;">IDENTITY AUTHENTICATION</div>
+            <div style="font-size: 10px; color: var(--danger); letter-spacing: 2px; margin-bottom: 15px;">SYSTEM ACCESS: RESTRICTED</div>
             
-            <input type="text" id="login-name" class="login-input" placeholder="CODENAME (e.g. SKYWALKER)" maxlength="12">
-            
-            <input type="password" id="login-code" class="login-input" placeholder="PASSCODE (e.g. 1234)" maxlength="8">
-            
-            <button id="login-btn-custom" onclick="loginClassroom()">
-                LINK START
+            <button id="google-login-btn" onclick="loginWithGoogle()" style="margin-bottom: 10px;">
+                <span class="icon">G</span> 
+                <span class="text">INITIALIZE LINK</span>
+                <div class="btn-glitch"></div>
             </button>
-            
-            <div style="font-size: 9px; color: #64748b; margin-top: 8px;">NEW USER? JUST ENTER A CODE TO REGISTER</div>
+
+            <button class="logout-link" onclick="playAsGuest()" style="color: #64748b; font-size: 10px; margin-top: 5px;">
+                &gt; BYPASS SECURITY (GUEST MODE)
+            </button>
         </div>
 
         <div id="user-profile-panel" style="display: none;">
@@ -1136,24 +1138,11 @@ body {
 <audio id="open-room-sfx"><source src="open_room.mp3" type="audio/mpeg"></audio>
 <audio id="destroy-sfx"><source src="target_destory.mp3" type="audio/mpeg"></audio>
 
-<script type="module">
-    // ★ 1. 直接在這裡引入 Firebase (解決次序問題) ★
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getDatabase, ref, set, onValue, update, push, child, get, onDisconnect, off } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
-    import { getAuth, signInAnonymously, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-
-    // ★ 2. 建立 Polyfill (確保你原本用 window.firebaseModules 的代碼唔會報錯) ★
-    window.firebaseModules = { 
-        initializeApp, getDatabase, ref, set, onValue, update, push, child, get, 
-        getAuth, signInAnonymously, onAuthStateChanged, onDisconnect, off,
-        GoogleAuthProvider, signInWithPopup, signOut
-    };
-
-    let lastProcessedTimestamp = 0; 
-    let battleUnsubscribe = null; 
-    let turnCounter = 0; 
-
-    // --- 1. Firebase 設定 ---
+<script>
+    let lastProcessedTimestamp = 0; // ★ 新增：防止重複處理同一手棋
+let battleUnsubscribe = null; // ★ 新增：專門管理戰鬥中的監聽器
+let turnCounter = 0; // 回合計數器
+    // --- 1. Firebase 設定 (已填入你的資料) ---
     const firebaseConfig = {
         apiKey: "AIzaSyBdfTgb7FpkYdgjvrYWQ0jr-N-1fAaW9Q0",
         authDomain: "vocabularyxdungeon.firebaseapp.com",
@@ -1163,8 +1152,6 @@ body {
         messagingSenderId: "834761939928",
         appId: "1:834761939928:web:4591dcd9650ec99746f0ad"
     };
-    
-    // (接住你原本的 // --- 2. 遊戲參數 --- ...)
 
     // --- 2. 遊戲參數 ---
     const GRID_SIZE = 10;
@@ -2801,22 +2788,30 @@ updateEnemyIndicator(ship.shipId);
 // --- ★ 高科技登入系統邏輯 ★ ---
 
     function loginWithGoogle() {
-     function loginWithGoogle() {
         const { getAuth, signInWithPopup, GoogleAuthProvider } = window.firebaseModules;
-        // 確保使用已初始化的 app
+        
+        // ★ 改進：傳入 app 變數，確保捉到正確的 Firebase App ★
         const auth = getAuth(app); 
         const provider = new GoogleAuthProvider();
         
-        playSound('deploy-sfx');
-        console.log("LOGIN START...");
+        playSound('deploy-sfx'); 
+        console.log("Attempting Google Login..."); // Debug Log
         
         signInWithPopup(auth, provider)
             .then((result) => {
-                showNotification("IDENTITY CONFIRMED", "success");
+                console.log("Login Success:", result.user.displayName);
+                // 確保 showNotification 存在才調用
+                if (typeof showNotification === 'function') {
+                    showNotification("IDENTITY CONFIRMED", "success");
+                }
             }).catch((error) => {
-                console.error(error);
-                showNotification("ACCESS DENIED", "error");
+                console.error("Login Error:", error); // 顯示詳細錯誤
                 playSound('wrong-sfx');
+                if (typeof showNotification === 'function') {
+                    showNotification("ACCESS DENIED: " + error.code, "error");
+                } else {
+                    alert("LOGIN FAILED: " + error.message); // 後備方案
+                }
             });
     }
 
@@ -2848,15 +2843,16 @@ updateEnemyIndicator(ship.shipId);
                 update(ref(db, 'users/' + myPlayerId), { nickname: finalName });
                 showNotification("CODENAME UPDATED", "success");
             }
-        }
-    } // <--- ✅ 補回了這個括號！
-
-    // ==========================================
+        }}
+    
+        // ==========================================
     // ★ 補回：軍階系統核心代碼 (Rank System) ★
     // ==========================================
 
+    // 1. 初始化 XP (嘗試從本地或 Firebase 讀取，預設為 0)
     let playerXP = 0; 
 
+    // 2. 定義軍階表
     const RANKS = [
         { name: "CADET", exp: 0 },
         { name: "ENSIGN", exp: 100 },
@@ -2867,29 +2863,41 @@ updateEnemyIndicator(ship.shipId);
         { name: "FLEET ADMIRAL", exp: 5000 }
     ];
 
+    // 3. 增加 XP 的函數
     function addXP(amount) {
         playerXP += amount;
+        
+        // 儲存到 Firebase (如果已登入)
         if (typeof myPlayerId !== 'undefined' && myPlayerId) {
             const { ref, update } = window.firebaseModules;
-            update(ref(db, 'users/' + myPlayerId), { xp: playerXP, lastActive: Date.now() });
+            update(ref(db, 'users/' + myPlayerId), {
+                xp: playerXP,
+                lastActive: Date.now()
+            });
         }
-        updateRankUI(); 
+        
+        updateRankUI(); // 更新介面
     }
 
+    // 4. 更新介面顯示 (updateRankUI)
     function updateRankUI() {
+        // --- A. 計算當前軍階 ---
         let currentRank = RANKS[0];
         let nextRank = RANKS[1];
         
         for (let i = 0; i < RANKS.length; i++) {
             if (playerXP >= RANKS[i].exp) {
                 currentRank = RANKS[i];
-                nextRank = RANKS[i+1] || { exp: playerXP * 2 }; 
+                nextRank = RANKS[i+1] || { exp: playerXP * 2 }; // 最高級
             }
         }
 
+        // --- B. 更新 Login HUD (新版介面) ---
         const hudRank = document.getElementById('hud-rank-title');
         if (hudRank) {
             hudRank.innerText = currentRank.name;
+            
+            // 上將給金色，其他給警告色
             if (currentRank.name.includes("ADMIRAL")) {
                 hudRank.style.color = "#ffd700"; 
                 hudRank.style.textShadow = "0 0 20px #ffd700";
@@ -2898,48 +2906,46 @@ updateEnemyIndicator(ship.shipId);
                 hudRank.style.textShadow = "0 0 10px var(--warning)";
             }
         }
+
+        // --- C. 更新舊版進度條 (如果你還保留的話) ---
+        // (這部分是為了兼容，以防你還留著舊的 rank-title)
+        const oldRankTitle = document.getElementById('rank-title');
+        if (oldRankTitle) {
+            oldRankTitle.innerText = currentRank.name;
+            document.getElementById('xp-display').innerText = playerXP;
+            document.getElementById('next-rank-xp').innerText = nextRank.exp;
+            
+            // 計算進度條
+            let progress = 0;
+            if (nextRank) {
+                const range = nextRank.exp - currentRank.exp;
+                const gained = playerXP - currentRank.exp;
+                progress = Math.min(100, Math.max(0, (gained / range) * 100));
+            }
+            const bar = document.getElementById('rank-progress-bar');
+            if(bar) bar.style.width = progress + "%";
+        }
     }
     
-    // --- 1. 新增 Guest 模式函數 ---
+    // 確保一開始載入時執行一次
+    window.addEventListener('load', updateRankUI);
+// --- 1. 新增 Guest 模式函數 ---
     function playAsGuest() {
         playSound('deploy-sfx');
+        // 切換介面：隱藏 Login Panel，顯示 Guest 身份，並顯示遊戲按鈕
         document.getElementById('login-panel').style.display = 'none';
+        
+        // 顯示遊戲模式按鈕
         const modeSelect = document.getElementById('game-mode-selection');
         modeSelect.style.display = 'flex';
+        
+        // 更新狀態文字
         document.getElementById('system-status-text').innerText = "GUEST ACCESS GRANTED // SELECT MODE";
         document.getElementById('system-status-text').style.color = "var(--primary)";
         document.getElementById('system-status-text').style.opacity = "1";
     }
-
-    // ★ 關鍵修正：將 HTML onclick 會用到的函數，全部掛載到 window ★
-    // 因為改用了 type="module"，原本的函數會變成私有，HTML 按鈕會搵唔到，所以要手動公開。
-    window.loginWithGoogle = loginWithGoogle;
-    window.logout = logout;
-    window.playAsGuest = playAsGuest;
-    window.changeName = changeName;
-    window.selectMode = selectMode;
-    window.selectLevel = selectLevel;
-    window.closeLevelScreen = closeLevelScreen;
-    window.prepareCreateRoom = prepareCreateRoom;
-    window.joinRoom = joinRoom;
-    window.toggleMusic = toggleMusic;
-    window.rotateShip = rotateShip;
-    window.startBattle = startBattle;
-    window.confirmExit = confirmExit;
-    window.closeConfirmModal = closeConfirmModal;
-    window.executeAbort = executeAbort;
-    window.resetGame = resetGame;
-    window.focusInput = focusInput;
-    
-    // 啟動 Rank UI
-    window.addEventListener('load', updateRankUI);
-
 </script>
 </body>
-
 </html>
-
-
-
 
 
