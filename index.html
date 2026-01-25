@@ -956,38 +956,52 @@ body {
     text-shadow: 0 0 5px rgba(232, 121, 249, 0.6);
 }
 
-/* 6. 主畫面紫色按鈕 (CODE LIST) */
 /* =========================================
-   ★★★ 更新版：紫色呼吸燈按鈕 (連動畫) ★★★
+   ★★★ 最終修正版：紫色 Code List 按鈕 (跟足橙色 PvP 風格) ★★★
    ========================================= */
 
-/* 1. 定義紫色呼吸動畫 (Pulse) */
+/* 1. 紫色呼吸動畫：參考 PvP 邏輯，用 alternate 來回變色 */
 @keyframes pulse-purple {
-    0% { box-shadow: 0 0 10px rgba(217, 70, 239, 0.3); }
-    50% { box-shadow: 0 0 25px rgba(217, 70, 239, 0.7); border-color: #f0abfc; }
-    100% { box-shadow: 0 0 10px rgba(217, 70, 239, 0.3); }
+    0% {
+        /* 最暗嗰陣：保持 60% 光度，唔會消失 */
+        box-shadow: 0 0 15px rgba(217, 70, 239, 0.6); 
+        border-color: #d946ef; 
+    }
+    100% {
+        /* 最光嗰陣：爆光 */
+        box-shadow: 0 0 30px rgba(217, 70, 239, 1); 
+        border-color: #f0abfc;
+    }
 }
 
-/* 2. 按鈕樣式 (已加入 animation) */
+/* 2. 按鈕本體設定 */
 .btn-code-list {
-    border-color: #d946ef;           
-    color: #e879f9;                  
-    box-shadow: 0 0 15px rgba(217, 70, 239, 0.3); 
+    border-color: #d946ef !important;
+    color: #e879f9 !important;
+    
+    /* ★ 重點：加番 10% 紫色做底，唔好全透明，咁就唔會覺得「無咗舊嘢」 ★ */
+    background: rgba(217, 70, 239, 0.1); 
+    
+    /* 預設常駐發光 */
+    box-shadow: 0 0 15px #d946ef;
+    text-shadow: 0 0 5px #d946ef;
+    
     transition: all 0.3s ease;
     
-    /* ★ 重點：加咗呢行令佢識呼吸！ ★ */
-    animation: pulse-purple 2s infinite; 
+    /* 動畫：1.5秒 來回呼吸 (跟橙色掣一樣節奏) */
+    animation: pulse-purple 1.5s infinite alternate;
 }
 
-/* Hover 狀態 (滑鼠指埋去時) */
+/* 3. Hover 設定 (滑鼠指埋去) */
 .btn-code-list:hover {
-    background: #d946ef;             
-    color: #ffffff;                  
-    box-shadow: 0 0 30px #d946ef, 0 0 10px #ffffff; 
-    transform: translateY(-2px);
+    background: #d946ef !important; /* 變實心紫 */
+    color: #ffffff !important;      /* 變白字 */
     
-    /* Hover 時暫停呼吸，變成持續強光 */
-    animation: none; 
+    transform: scale(1.1);          /* ★ 跟橙色掣一樣：放大 1.1 倍 */
+    box-shadow: 0 0 40px #d946ef;   /* 超強紫光 */
+    text-shadow: none;              /* 實心底唔使文字發光 */
+    
+    animation: none; /* Hover 時暫停呼吸，保持最光狀態 */
 }
     </style>
 </head>
@@ -2876,6 +2890,7 @@ function renderVocabList(level) {
 </body>
 
 </html>
+
 
 
 
