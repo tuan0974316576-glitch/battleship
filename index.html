@@ -843,6 +843,108 @@ body {
     .btn-pvp {
         animation: pvpReadyPulse 1.5s infinite alternate;
     }
+/* --- Decryption Table (溫習表) 樣式 --- */
+#vocab-screen {
+    display: none; /* 預設隱藏 */
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    z-index: 400; /* 比 Start Screen 更高 */
+    background: rgba(5, 10, 20, 0.95); /* 深色背景 */
+    backdrop-filter: blur(10px);
+    flex-direction: column;
+    align_items: center;
+    justify-content: center;
+    animation: fadeIn 0.3s ease-out;
+}
+
+.tech-header { text-align: center; margin-bottom: 20px; }
+.tech-title {
+    font-family: 'Black Ops One'; font-size: 40px; color: var(--primary);
+    text-shadow: 0 0 20px var(--primary); margin: 0; letter-spacing: 3px;
+}
+.tech-subtitle {
+    font-family: 'Orbitron'; font-size: 12px; color: #64748b; letter-spacing: 5px; margin-top: 5px;
+}
+
+/* Tab 按鈕區 */
+.vocab-tabs {
+    display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; justify-content: center;
+}
+.tab-btn {
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid #475569;
+    color: #94a3b8;
+    padding: 8px 16px;
+    font-family: 'Orbitron'; font-weight: bold;
+    cursor: pointer; transition: all 0.2s;
+    clip-path: polygon(10% 0, 100% 0, 100% 90%, 90% 100%, 0 100%, 0 10%); /* 切角設計 */
+}
+.tab-btn:hover { background: rgba(14, 165, 233, 0.2); color: #fff; border-color: var(--primary); }
+.tab-btn.active {
+    background: var(--primary); color: #000; border-color: var(--primary);
+    box-shadow: 0 0 15px var(--primary);
+}
+.tab-btn.star { border-color: var(--warning); color: var(--warning); }
+.tab-btn.star.active { background: var(--warning); color: #000; box-shadow: 0 0 15px var(--warning); }
+
+/* 資料列表容器 */
+.vocab-container {
+    width: 90%; max-width: 600px;
+    height: 50vh; /* 佔據一半螢幕高度 */
+    background: rgba(0, 0, 0, 0.5);
+    border: 2px solid var(--primary);
+    border-top: 10px solid var(--primary); /* 頂部加厚 */
+    border-radius: 5px;
+    display: flex; flex-direction: column;
+    box-shadow: 0 0 30px rgba(14, 165, 233, 0.1);
+    position: relative;
+    overflow: hidden;
+}
+
+/* 列表標題列 */
+.vocab-list-header {
+    display: flex; justify-content: space-between; padding: 10px 20px;
+    background: rgba(14, 165, 233, 0.1); border-bottom: 1px solid var(--primary);
+    font-family: 'Orbitron'; color: var(--primary); font-size: 14px; letter-spacing: 2px;
+}
+
+/* 列表內容 (可捲動) */
+.vocab-list-body {
+    flex: 1; overflow-y: auto; padding: 10px;
+    /* 自訂捲軸樣式 */
+    scrollbar-width: thin; scrollbar-color: var(--primary) #0f172a;
+}
+.vocab-list-body::-webkit-scrollbar { width: 8px; }
+.vocab-list-body::-webkit-scrollbar-track { background: #0f172a; }
+.vocab-list-body::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 4px; }
+
+/* 單行單字樣式 */
+.vocab-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 12px 15px;
+    margin-bottom: 5px;
+    background: rgba(255, 255, 255, 0.03);
+    border-left: 3px solid transparent;
+    transition: all 0.2s;
+    font-family: 'Roboto Mono', monospace; /* 用等寬字體更有數據感 */
+}
+.vocab-row:hover {
+    background: rgba(14, 165, 233, 0.1);
+    border-left-color: var(--primary);
+    padding-left: 20px; /* Hover 時向右移 */
+}
+
+.vocab-ch { font-size: 16px; color: #e2e8f0; }
+.vocab-en { 
+    font-size: 18px; color: var(--warning); font-weight: bold; letter-spacing: 1px;
+    text-shadow: 0 0 5px rgba(245, 158, 11, 0.3);
+}
+
+/* 裝飾用的掃描線 */
+.vocab-container::after {
+    content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    background: linear-gradient(to bottom, transparent 50%, rgba(14, 165, 233, 0.03) 50%);
+    background-size: 100% 4px; pointer-events: none;
+}
     </style>
 </head>
 <body>
@@ -855,8 +957,39 @@ body {
     VS PLAYER
 </button>
         </div>
+    <div style="width: 100%; text-align: center;">
+             <button class="btn" onclick="openVocabScreen()" style="margin-top: 30px; border-color: #94a3b8; color: #cbd5e1; width: 220px; font-size: 16px;">
+                📂 ACCESS DATABASE
+            </button>
+        </div>
         <div style="margin-top: 20px; color: #94a3b8; font-size: 12px;">SYSTEM READY // SELECT COMBAT MODE</div>
     </div>
+<div id="vocab-screen">
+    <div class="tech-header">
+        <h2 class="tech-title">DECRYPTION TABLE</h2>
+        <div class="tech-subtitle">CLASSIFIED VOCABULARY DATABASE</div>
+    </div>
+
+    <div class="vocab-tabs">
+        <button class="tab-btn active" onclick="renderVocabList('L1')">L1</button>
+        <button class="tab-btn" onclick="renderVocabList('L2')">L2</button>
+        <button class="tab-btn" onclick="renderVocabList('L3')">L3</button>
+        <button class="tab-btn" onclick="renderVocabList('L4')">L4</button>
+        <button class="tab-btn" onclick="renderVocabList('L5')">L5</button>
+        <button class="tab-btn star" onclick="renderVocabList('L5_STAR')">L5*</button>
+    </div>
+
+    <div class="vocab-container">
+        <div class="vocab-list-header">
+            <span>TARGET (CH)</span>
+            <span>CODE (EN)</span>
+        </div>
+        <div id="vocab-list-body" class="vocab-list-body">
+            </div>
+    </div>
+
+    <button class="btn" onclick="closeVocabScreen()" style="margin-top: 20px; width: 150px;">&lt; BACK</button>
+</div>    
 <div id="level-screen" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 250; background: rgba(0,0,0,0.9); flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(5px);">
         <h2 style="font-family: 'Black Ops One'; color: var(--primary); font-size: 40px; margin-bottom: 30px; text-shadow: 0 0 20px var(--primary);">SELECT DIFFICULTY</h2>
         
@@ -2637,6 +2770,7 @@ updateEnemyIndicator(ship.shipId);
 </body>
 
 </html>
+
 
 
 
