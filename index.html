@@ -1402,6 +1402,7 @@ let turnTimerInterval = null; // 用來計選位嗰 8 秒
     let myGrid = Array(GRID_SIZE*GRID_SIZE).fill(0);   
     let enemyGrid = Array(GRID_SIZE*GRID_SIZE).fill(0); 
     let enemyShots = []; 
+    let aiTargetStack = [];
     let currentPhase = 'DEPLOY'; 
     let deployIndex = 0;
     let isVertical = true;
@@ -2195,45 +2196,87 @@ function playerFire(success) {
             }
         }
     }
+// ★ 新增：AI 智能鎖定系統 (當打中時，將周圍格仔加入追擊名單)
+function addSmartTargets(index) {
+    const targets = [];
+    const r = Math.floor(index / GRID_SIZE);
+    const c = index % GRID_SIZE;
 
+    // 搵出 上、下、左、右 四個鄰居
+    if (r > 0) targets.push(index - GRID_SIZE); // 上
+    if (r < GRID_SIZE - 1) targets.push(index + GRID_SIZE); // 下
+    if (c > 0) targets.push(index - 1); // 左
+    if (c < GRID_SIZE - 1) targets.push(index + 1);
+
+    // (Optional) 隨機打亂次序，令 AI 無咁機械化
+    targets.sort(() => Math.random() - 0.5);
+
+    // 將未打過嘅位加入 Stack
+    targets.forEach(t => {
+        if (!enemyShots.includes(t) && !aiTargetStack.includes(t)) {
+            aiTargetStack.push(t);
+        }
+    });
+}
 function aiFire() {
-        playSound('laser-sfx');
-        let t;
-        do { t = Math.floor(Math.random() * 100); } while (enemyShots.includes(t));
-        enemyShots.push(t);
-        
-        const cell = document.getElementById('player-grid').children[t];
-        cell.classList.add('revealed');
-        triggerAnimation(cell, 'blue');
-        
-        // 將所有後續動作放入同一個 Timeout，確保有先後次序
-        setGameTimeout(() => {
-            let isGameOver = false; // 標記遊戲是否結束
-
-            if (myGrid[t] === 1) {
-                cell.classList.add('hit');
-                playSound('hit-sfx');
-                triggerAnimation(cell, 'orange');
-                
-                myDamage++;
-                if (checkGameOver()) {
-                    isGameOver = true; // 標記為結束 (你輸了)
-                }
-            } else {
-                cell.classList.add('miss');
-                cell.innerText = "X";
-            }
-
-            // 隱藏紅色警報 (無論有無中都要隱藏)
-            document.getElementById('warning-overlay').style.display = 'none';
-
-            // ★ 關鍵修復：只有當「你未死」時，才輪到你行動 ★
-            if (!isGameOver) {
-                // 延遲 0.7秒 (加上原本的 0.5秒 = 1.2秒)
-                setGameTimeout(startPlayerTurn, 700);
-            }
-        }, 500);
+    playSound('laser-sfx');
+    let t;
+    
+    // --- 1. 智能選位邏輯 (Smart Targeting) ---
+    // 如果 Target Stack 有目標 (即係之前打中過)，優先攻擊嗰啲位
+    if (aiTargetStack.length > 0) {
+        // 取出最後一個目標 (Pop)
+        // 循環直到搵到一個未打過的 (防止重複)
+        do {
+            if (aiTargetStack.length === 0) break;
+            t = aiTargetStack.pop();
+        } while (enemyShots.includes(t));
     }
+    
+    // 如果 Stack 空了 (即係追擊完畢或未打中過)，或者取出的目標原來已經打過
+    // 就變回「隨機亂打」
+    if (t === undefined || enemyShots.includes(t)) {
+        do { t = Math.floor(Math.random() * 100); } while (enemyShots.includes(t));
+    }
+
+    enemyShots.push(t);
+    
+    // --- 2. 執行攻擊 ---
+    const cell = document.getElementById('player-grid').children[t];
+    cell.classList.add('revealed');
+    triggerAnimation(cell, 'blue');
+    
+    setGameTimeout(() => {
+        let isGameOver = false; 
+
+        if (myGrid[t] === 1) { // ★ 打中了！
+            cell.classList.add('hit');
+            playSound('hit-sfx');
+            triggerAnimation(cell, 'orange');
+            
+            myDamage++;
+            
+            // ★★★ 關鍵新增 1：AI 變聰明了！加入周圍格仔入 Stack ★★★
+            addSmartTargets(t);
+            
+            // ★★★ 關鍵新增 2：檢查我有無船沉咗 (顯示紅色殘骸) ★★★
+            checkMyShipDestruction(t); 
+
+            if (checkGameOver()) {
+                isGameOver = true; 
+            }
+        } else {
+            cell.classList.add('miss'); // 打失
+            cell.innerText = "X";
+        }
+
+        document.getElementById('warning-overlay').style.display = 'none';
+
+        if (!isGameOver) {
+            setGameTimeout(startPlayerTurn, 700);
+        }
+    }, 500);
+}
 
 function startPlayerTurn() {
         // ★ 新增：回合數 +1 ★
@@ -2674,7 +2717,10 @@ function resetGame() {
         // 5. 重置變數
         myGrid.fill(0);
         enemyGrid.fill(0);
+        
         enemyShots = [];
+        aiTargetStack = []; // ★ 關鍵修改：重置 AI 追擊記憶，防止下一場亂打 ★
+        
         deployIndex = 0;
         currentPhase = 'DEPLOY';
         myDamage = 0;
@@ -2692,7 +2738,6 @@ function resetGame() {
         createGrid('enemy-grid');
         
         // ★ 關鍵修復：強制將鏡頭轉回 My Fleet (玩家棋盤) ★
-        // 如果唔加呢兩句，Abort 完之後你可能會望住個空的敵人棋盤，咩都做唔到
         document.getElementById('player-board').classList.add('active');
         document.getElementById('enemy-board').classList.remove('active');
 
@@ -3146,6 +3191,7 @@ function openVocabScreen() {
 </body>
 
 </html>
+
 
 
 
