@@ -1502,7 +1502,53 @@ body {
     background: rgba(10, 20, 35, 0.95); /* 深色半透明背景 */
     backdrop-filter: blur(10px); /* 背景磨砂玻璃效果 */
 }
+/* =========================================
+   ★★★ 手機版緊急修正 (MOBILE FIXES) ★★★
+   ========================================= */
+@media (max-width: 600px) {
+    
+    /* 1. 修正視窗被推上頂 & 左右切邊問題 */
+    #registration-modal {
+        align-items: center !important;     /* 強制垂直置中 */
+        justify-content: center !important; /* 強制水平置中 */
+        padding: 20px !important;           /* 視窗邊緣留番啲位，唔好貼死 */
+        box-sizing: border-box;
+    }
 
+    /* 2. 修正個框太肥、撐爆畫面 */
+    #registration-modal .cyber-modal-box {
+        width: 100% !important;   /* 用盡可用寬度 */
+        max-width: none !important; 
+        padding: 25px 20px !important; /* 大幅縮細內邊距 (原本係 40px) */
+        border-width: 1px !important;  /* 手機版邊框幼啲靚啲 */
+    }
+
+    /* 3. 縮細標題字體 (費事一句爆兩行) */
+    #registration-modal .cyber-modal-box div[style*="font-size: 32px"] {
+        font-size: 22px !important; 
+        margin-bottom: 5px !important;
+    }
+    
+    /* 4. 縮細副標題 */
+    #registration-modal .cyber-modal-box div[style*="font-size: 12px"] {
+        font-size: 10px !important;
+        letter-spacing: 1px !important;
+        margin-bottom: 20px !important;
+    }
+
+    /* 5. 修正輸入框大細 */
+    #registration-modal input#reg-input {
+        font-size: 20px !important;
+        padding: 10px !important;
+        letter-spacing: 2px !important;
+    }
+
+    /* 6. 修正按鈕大細 */
+    #registration-modal button {
+        padding: 12px !important;
+        font-size: 16px !important;
+    }
+}
     </style>
 
 </head>
@@ -3911,6 +3957,7 @@ function playBgm() {
 </div>
 </body>
 </html>
+
 
 
 
