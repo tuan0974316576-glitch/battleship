@@ -1505,45 +1505,52 @@ body {
 /* =========================================
    ★★★ 手機版緊急修正 (MOBILE FIXES) ★★★
    ========================================= */
+/* =========================================
+   ★★★ 手機版緊急修正 (KEYBOARD SAFE V2) ★★★
+   ========================================= */
 @media (max-width: 600px) {
     
-    /* 1. 修正視窗被推上頂 & 左右切邊問題 */
+    /* 1. 修正視窗位置：強制靠上 (避開鍵盤) */
     #registration-modal {
-        align-items: center !important;     /* 強制垂直置中 */
-        justify-content: center !important; /* 強制水平置中 */
-        padding: 20px !important;           /* 視窗邊緣留番啲位，唔好貼死 */
+        align-items: flex-start !important; /* ★ 關鍵：由 center 改做 flex-start (靠頂) */
+        justify-content: center !important; /* 水平置中保持不變 */
+        
+        /* ★ 關鍵：頂部留 50px 空位，唔好貼死個邊，又夠高避開鍵盤 */
+        padding-top: 50px !important;       
+        padding-bottom: 20px !important;
+        
         box-sizing: border-box;
+        overflow-y: auto; /* 萬一鍵盤真係太高，容許個畫面碌上去 */
     }
 
-    /* 2. 修正個框太肥、撐爆畫面 */
+    /* 2. 修正個框寬度 */
     #registration-modal .cyber-modal-box {
-        width: 100% !important;   /* 用盡可用寬度 */
+        width: 90% !important;   
         max-width: none !important; 
-        padding: 25px 20px !important; /* 大幅縮細內邊距 (原本係 40px) */
-        border-width: 1px !important;  /* 手機版邊框幼啲靚啲 */
+        padding: 25px 20px !important; 
+        border-width: 1px !important;
+        margin-bottom: 50px; /* 底部留多啲位緩衝 */
     }
 
-    /* 3. 縮細標題字體 (費事一句爆兩行) */
+    /* 3. 字體縮細 */
     #registration-modal .cyber-modal-box div[style*="font-size: 32px"] {
-        font-size: 22px !important; 
+        font-size: 24px !important; 
         margin-bottom: 5px !important;
     }
     
-    /* 4. 縮細副標題 */
     #registration-modal .cyber-modal-box div[style*="font-size: 12px"] {
         font-size: 10px !important;
         letter-spacing: 1px !important;
         margin-bottom: 20px !important;
     }
 
-    /* 5. 修正輸入框大細 */
+    /* 4. 輸入框與按鈕調整 */
     #registration-modal input#reg-input {
         font-size: 20px !important;
         padding: 10px !important;
         letter-spacing: 2px !important;
     }
 
-    /* 6. 修正按鈕大細 */
     #registration-modal button {
         padding: 12px !important;
         font-size: 16px !important;
@@ -3957,6 +3964,7 @@ function playBgm() {
 </div>
 </body>
 </html>
+
 
 
 
