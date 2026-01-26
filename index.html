@@ -953,26 +953,34 @@ body {
 }
 
 /* 中文 (Target) - 銀白色數據風格 */
-.vocab-ch { 
-    font-family: "Microsoft YaHei", "Heiti TC", "PingFang HK", sans-serif; 
-    font-size: 18px; 
-    
-    /* ★ 改用銀白色，乾淨俐落，唔會同紫色撞 ★ */
-    color: #f8fafc;  
-    
-    font-weight: 900; 
-    letter-spacing: 1px; 
-    
-    /* 淡淡的白色光暈，扮熒幕殘影 */
-    text-shadow: 0 0 8px rgba(255, 255, 255, 0.3);
-        
+/* --- 方案 A：極致科技感 (幼身 + 強光) --- */
+.vocab-ch {
+    font-family: "Microsoft YaHei", "Heiti TC", "PingFang HK", sans-serif;
+    font-size: 18px;
+    color: #f8fafc; /* 銀白色 */
+
+    /* ★ 改動 1：由粗變幼 (900 -> 400 or 300) ★ */
+    /* 400 係標準，300 係更幼。試下 400 先，覺得唔夠幼就改 300 */
+    font-weight: 400;
+
+    letter-spacing: 1px;
+
+    /* ★ 改動 2：多層次發光 (雙重影) ★ */
+    /* 第一層：核心亮光 (較實) */
+    /* 第二層：外圍光暈 (較朦) */
+    text-shadow: 
+        0 0 8px rgba(248, 250, 252, 0.8), 
+        0 0 20px rgba(248, 250, 252, 0.4);
+
     transition: all 0.3s;
 }
 
-/* Hover 時變更光 */
+/* Hover 時變得更光更實 */
 .vocab-row:hover .vocab-ch {
     color: #ffffff;
-    text-shadow: 0 0 15px rgba(255, 255, 255, 0.8);
+    text-shadow: 
+        0 0 10px rgba(255, 255, 255, 1),
+        0 0 30px rgba(255, 255, 255, 0.7);
     transform: scale(1.05);
 }
 
@@ -3138,6 +3146,7 @@ function openVocabScreen() {
 </body>
 
 </html>
+
 
 
 
