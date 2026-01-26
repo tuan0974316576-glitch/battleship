@@ -1334,6 +1334,7 @@ body {
 
     <div id="game-ui">
         <div id="control-panel">
+            <div id="connection-status" style="width: 10px; height: 10px; border-radius: 50%; background: grey; display: none; margin-left: 10px;"></div>
             <div id="game-status">PHASE: <span style="color: var(--warning);">DEPLOYMENT</span></div>
             <button id="music-btn" class="btn" onclick="toggleMusic()"> BGM: ON</button>
             <span id="deploy-controls">
@@ -1558,9 +1559,10 @@ function startEnemyTurn() {
     let unsubscribeRoom = null; // 用來儲存 Firebase 監聽器
 
     // --- 4. 初始化 ---
-window.addEventListener('load', () => {
+    window.addEventListener('load', () => {
         // --- Firebase Init ---
-        const { initializeApp, getDatabase, getAuth, signInAnonymously, onAuthStateChanged } = window.firebaseModules;
+        // ★ 注意：這裡加了 ref 和 onValue，用於監測連線 ★
+        const { initializeApp, getDatabase, getAuth, signInAnonymously, onAuthStateChanged, ref, onValue } = window.firebaseModules;
         
         app = initializeApp(firebaseConfig);
         db = getDatabase(app);
@@ -1575,12 +1577,39 @@ window.addEventListener('load', () => {
                 if(disp) disp.innerText = u.uid.substring(0,6).toUpperCase();
             }
         });
+
+        // ★★★ 新增：連線狀態監測 (綠燈/紅燈) ★★★
+        // 這段代碼會監聽 Firebase 自身的連線狀態
+        const connectedRef = ref(db, ".info/connected");
+        onValue(connectedRef, (snap) => {
+            const el = document.getElementById('connection-status');
+            
+            // 如果你還沒在 HTML 加那個燈，這裡會直接跳過，不會報錯
+            if (!el) return; 
+            
+            el.style.display = 'block';
+            if (snap.val() === true) {
+                el.style.background = "#22c55e"; // 綠燈 (Online)
+                el.style.boxShadow = "0 0 5px #22c55e";
+            } else {
+                el.style.background = "#ef4444"; // 紅燈 (Offline)
+                el.style.boxShadow = "0 0 5px #ef4444";
+                
+                // 額外功能：斷線時彈出高科技提示
+                if (typeof showNotification === 'function') {
+                    showNotification("CONNECTION LOST!", "error"); 
+                }
+            }
+        });
         
+        // --- 遊戲畫面初始化 ---
         createGrid('player-grid');
         createGrid('enemy-grid');
         placeEnemyShips(); 
         renderSidebar();
-const roomInput = document.getElementById('room-id-input');
+
+        // --- 輸入框音效 ---
+        const roomInput = document.getElementById('room-id-input');
         if (roomInput) {
             roomInput.addEventListener('input', (e) => {
                 // 如果係刪除 (Backspace/Delete)
@@ -2251,81 +2280,94 @@ function checkAnswer() {
 
     // --- 10. 攻擊執行 ---
 function playerFire(success) {
-        clearInterval(timerInterval);
-        document.getElementById('launch-modal').style.display = "none";
-        
-        if (success) {
-            // PVP 模式
-            if (gameMode === 'PVP') {
-                const { ref, update } = window.firebaseModules;
-                update(ref(db, 'rooms/' + currentRoomId), {
-                    lastMove: { attacker: playerRole, index: currentTargetIndex, timestamp: Date.now() }
-                });
+    // 1. 基本清理：停計時器、關閉彈窗
+    clearInterval(timerInterval);
+    document.getElementById('launch-modal').style.display = "none";
+    
+    if (success) {
+        // ============================
+        // ★ 分支 A：PVP 對戰模式 ★
+        // ============================
+        if (gameMode === 'PVP') {
+            const { ref, update } = window.firebaseModules;
+            
+            // 1. 計算下一位係邊個
+            const nextTurn = (playerRole === 'host') ? 'guest' : 'host';
 
-                const cell = document.getElementById('enemy-grid').children[currentTargetIndex];
-                cell.classList.add('revealed');
-                playSound('laser-sfx');
-                triggerAnimation(cell, 'blue');
-                
-                // 動畫延遲 (0.5秒)
+            // 2. 更新 Firebase (合併做一次 Update)
+            update(ref(db, 'rooms/' + currentRoomId), {
+                lastMove: { attacker: playerRole, index: currentTargetIndex, timestamp: Date.now() },
+                turn: nextTurn // ★ 強制交更：話畀 DB 知而家輪到下一位！
+            });
+
+            // 3. 播放發射動畫
+            const cell = document.getElementById('enemy-grid').children[currentTargetIndex];
+            cell.classList.add('revealed');
+            playSound('laser-sfx');
+            triggerAnimation(cell, 'blue');
+            
+            // 4. 延遲 0.5秒 顯示結果 (等發射動畫播一陣)
+            setGameTimeout(() => {
+                if (enemyGrid[currentTargetIndex] === 1) {
+                    // --- 打中 (HIT) ---
+                    cell.classList.add('hit');
+                    triggerAnimation(cell, 'orange');
+                    
+                    enemyDamage++;
+                    
+                    // 檢查擊沉
+                    const isSunk = checkEnemyShipDestruction(currentTargetIndex);
+                    if (!isSunk) playSound('hit-sfx'); // 無沈先播 Hit 聲，沈咗會有 Destroy 聲
+
+                    if (checkGameOver()) return; // 如果贏咗就停
+                } else {
+                    // --- 打失 (MISS) ---
+                    cell.classList.add('miss');
+                    cell.innerText = "X";
+                }
+
+                // ★ 5. 關鍵設定：延長至 3秒 後先轉場 (讓你睇清楚戰果) ★
                 setGameTimeout(() => {
-                    if (enemyGrid[currentTargetIndex] === 1) {
-                        cell.classList.add('hit');
-                        triggerAnimation(cell, 'orange');
-                        
-                        enemyDamage++;
-                        
-                        // 檢查擊沉
-                        const isSunk = checkEnemyShipDestruction(currentTargetIndex);
-                        if (!isSunk) playSound('hit-sfx');
+                    currentPhase = 'ENEMY_TURN';
+                    document.getElementById('game-status').innerHTML = "OPPONENT'S TURN";
+                    switchScene('ENEMY'); 
+                }, 3000); 
 
-                        if (checkGameOver()) return; 
-                    } else {
-                        cell.classList.add('miss');
-                        cell.innerText = "X";
-                    }
+            }, 500);
 
-                    // ★ 關鍵修正：將這裡的延遲由 1500 改為 3000 (3秒) ★
-                    // 讓你慢慢欣賞完戰果，先至轉場
-                    setGameTimeout(() => {
-                        currentPhase = 'ENEMY_TURN';
-                        document.getElementById('game-status').innerHTML = "OPPONENT'S TURN";
-                        switchScene('ENEMY'); 
-                    }, 3000); 
+        } 
+        // ============================
+        // ★ 分支 B：AI 單機模式 ★
+        // ============================
+        else {
+            playSound('laser-sfx');
+            const cell = document.getElementById('enemy-grid').children[currentTargetIndex];
+            cell.classList.add('revealed');
+            triggerAnimation(cell, 'blue');
+            
+            setGameTimeout(() => {
+                let isGameOver = false; 
 
-                }, 500);
+                if (enemyGrid[currentTargetIndex] === 1) {
+                    cell.classList.add('hit');
+                    triggerAnimation(cell, 'orange');
+                    enemyDamage++;
+                    const isSunk = checkEnemyShipDestruction(currentTargetIndex);
+                    if (!isSunk) playSound('hit-sfx');
+                    if (checkGameOver()) isGameOver = true;
+                } else {
+                    cell.classList.add('miss');
+                    cell.innerText = "X";
+                }
 
-            } 
-            // 單機 AI 模式 (保持不變)
-            else {
-                playSound('laser-sfx');
-                const cell = document.getElementById('enemy-grid').children[currentTargetIndex];
-                cell.classList.add('revealed');
-                triggerAnimation(cell, 'blue');
-                
-                setGameTimeout(() => {
-                    let isGameOver = false; 
-
-                    if (enemyGrid[currentTargetIndex] === 1) {
-                        cell.classList.add('hit');
-                        triggerAnimation(cell, 'orange');
-                        enemyDamage++;
-                        const isSunk = checkEnemyShipDestruction(currentTargetIndex);
-                        if (!isSunk) playSound('hit-sfx');
-                        if (checkGameOver()) isGameOver = true;
-                    } else {
-                        cell.classList.add('miss');
-                        cell.innerText = "X";
-                    }
-
-                    if (!isGameOver) {
-                        // AI 模式通常節奏快啲，這裡維持 0.7秒 (你可以隨意加長，例如 1500)
-                        setGameTimeout(startEnemyTurn, 700);
-                    }
-                }, 500);
-            }
+                if (!isGameOver) {
+                    // AI 模式節奏快啲，維持 0.7秒 轉場
+                    setGameTimeout(startEnemyTurn, 700);
+                }
+            }, 500);
         }
     }
+}
 // ★ 新增：AI 智能鎖定系統 (當打中時，將周圍格仔加入追擊名單)
 function addSmartTargets(index) {
     const targets = [];
@@ -3327,6 +3369,7 @@ function openVocabScreen() {
 </body>
 
 </html>
+
 
 
 
