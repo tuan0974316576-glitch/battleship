@@ -1038,25 +1038,21 @@ body {
     100% { color: #e879f9; text-shadow: 0 0 5px #e879f9; }
 }
 
-/* 當個字被加上 .speaking class 時，就會閃動 */
-.vocab-en.speaking {
-    animation: tech-speak-pulse 0.5s infinite alternate; /* 快速閃動 */
-    background: rgba(217, 70, 239, 0.2); /* 加個紫色底色 */
-    padding: 2px 5px;
-    border-radius: 4px;
-    border: 1px solid #d946ef;
-    cursor: not-allowed; /* 讀緊嗰陣唔好俾人再撳 */
+/* --- AI 語音讀取中的特效 (整行發光版) --- */
+@keyframes tech-row-pulse {
+    0% { border-left-color: #e879f9; background: rgba(232, 121, 249, 0.1); }
+    50% { border-left-color: #fff; background: rgba(232, 121, 249, 0.3); box-shadow: 0 0 20px rgba(232, 121, 249, 0.4); }
+    100% { border-left-color: #e879f9; background: rgba(232, 121, 249, 0.1); }
 }
 
-/* 加強原本 .vocab-en 嘅互動感 */
-.vocab-en {
-    cursor: pointer; /* 變手指 */
-    transition: all 0.2s;
+/* 當整行被加上 .speaking 時 */
+.vocab-row.speaking {
+    animation: tech-row-pulse 0.5s infinite alternate; /* 快速閃動 */
+    border-left: 5px solid #e879f9; /* 左邊加一條粗光條 */
+    background: rgba(232, 121, 249, 0.2); /* 整行背景變紫 */
+    transform: scale(1.02); /* 稍微放大一點點，增加動感 */
 }
-.vocab-en:hover {
-    color: #fff;
-    text-shadow: 0 0 10px #e879f9, 0 0 20px #e879f9;
-}
+
     </style>
 </head>
 <body>
@@ -2928,7 +2924,7 @@ function speakText(text, element) {
     synth.cancel(); // 停止上一句
 
     // 清除舊特效
-    document.querySelectorAll('.vocab-en.speaking').forEach(el => el.classList.remove('speaking'));
+    document.querySelectorAll('.vocab-row.speaking').forEach(el => el.classList.remove('speaking'));
 
     const utterance = new SpeechSynthesisUtterance(text);
     
@@ -2990,10 +2986,9 @@ function renderVocabList(level) {
         // 處理單引號
         const safeText = item.en.replace(/'/g, "&apos;");
 
-        // ★★★ 關鍵修改：將點擊事件綁定在整行 (row) ★★★
-        // speakText 的第二個參數改成 `this.querySelector('.vocab-en')`
-        // 意思係：點擊這行 -> 讀字 -> 但只讓裡面的「英文部分」閃爍
-        row.setAttribute('onclick', `speakText('${safeText}', this.querySelector('.vocab-en'))`);
+// ★★★ 關鍵修改：將點擊事件綁定在整行，並傳送 'this' (整行自己) ★★★
+        // speakText('${safeText}', this)
+        row.setAttribute('onclick', `speakText('${safeText}', this)`);
 
         row.innerHTML = `
             <span class="vocab-ch">${item.ch}</span>
@@ -3011,4 +3006,5 @@ function renderVocabList(level) {
 </body>
 
 </html>
+
 
