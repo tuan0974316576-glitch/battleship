@@ -3683,7 +3683,16 @@ window.addEventListener('load', () => {
         });
     }, 500);
 });
+function playBgm() {
+    const bgm = document.getElementById('bgm');
+    // 檢查有沒有 BGM 元素，並且是否暫停中
+    if (bgm && bgm.paused) {
+        bgm.volume = 0.3; // 音量設定 (0.1 - 1.0)
+        bgm.play().catch(e => console.log("BGM 等待互動後播放:", e));
+    }
+}
 </script>
 </body>
 </html>
+
 
