@@ -2889,69 +2889,55 @@ function closeVocabScreen() {
     document.getElementById('start-screen').style.display = 'flex';
 }
 
-// ★★★ 高科技語音系統 (聲畫同步版) ★★★
+// ★★★★★ 請將這段語音代碼貼在這裡 (缺少的拼圖) ★★★★★
+
+// --- 高科技語音系統 (聲畫同步版) ---
 let synth = window.speechSynthesis;
 let techVoice = null;
 
-// 1. 預先載入靚聲 (優先搵 Google / Microsoft 嘅 Online Voice)
+// A. 預先載入靚聲
 function loadVoices() {
     const voices = synth.getVoices();
-    // 優先次序：Google US English -> Microsoft Zira -> Samantha -> 任何英文
     techVoice = voices.find(v => v.name.includes('Google US English')) || 
                 voices.find(v => v.name.includes('Zira')) || 
                 voices.find(v => v.name.includes('Samantha')) ||
                 voices.find(v => v.lang.startsWith('en'));
 }
 
-// 瀏覽器載入聲音係非同步既，所以要監聽
 if (speechSynthesis.onvoiceschanged !== undefined) {
     speechSynthesis.onvoiceschanged = loadVoices;
 }
 
-// 2. 讀字函數
+// B. 讀字函數 (包含閃爍特效)
 function speakText(text, element) {
     if (!text) return;
     
-    // A. 停止上一句 (防止疊聲)
-    synth.cancel();
+    synth.cancel(); // 停止上一句
 
-    // B. 清除所有舊的「說話中」特效 (防止有字卡住係發光狀態)
+    // 清除舊特效
     document.querySelectorAll('.vocab-en.speaking').forEach(el => el.classList.remove('speaking'));
 
-    // C. 建立發音物件
     const utterance = new SpeechSynthesisUtterance(text);
     
-    // 設定聲音
     if (!techVoice) loadVoices();
     if (techVoice) utterance.voice = techVoice;
 
-    // ★ 調音 (Tech Style) ★
-    utterance.pitch = 1.1; // 音調高少少，似 AI
-    utterance.rate = 1.0;  // 正常語速
+    // 調音
+    utterance.pitch = 1.1; 
+    utterance.rate = 1.0;  
     utterance.volume = 1.0;
 
-    // ★ 關鍵：聲畫同步事件 ★
-    
-    // 當開始讀的時候...
+    // 開始讀：加特效 + 播聲
     utterance.onstart = () => {
-        // 播放 "Beep" 音效 (更有科技感)
         playSound('enter-sfx');
-        
-        // 如果有傳入 HTML 元素，就加特效
-        if (element) {
-            element.classList.add('speaking');
-        }
+        if (element) element.classList.add('speaking');
     };
 
-    // 當讀完的時候...
+    // 讀完：除特效
     utterance.onend = () => {
-        // 移除特效
-        if (element) {
-            element.classList.remove('speaking');
-        }
+        if (element) element.classList.remove('speaking');
     };
 
-    // D. 正式發聲
     synth.speak(utterance);
 }
 
@@ -3018,6 +3004,7 @@ function renderVocabList(level) {
 </body>
 
 </html>
+
 
 
 
