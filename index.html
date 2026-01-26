@@ -1534,14 +1534,12 @@ body {
         <div id="vocab-list-body" class="vocab-list-body">
             </div>
     </div>
-<div class="vocab-tabs">
-        </div>
-<div class="vocab-search-container">
+
+    <div class="vocab-search-container">
         <input type="text" id="vocab-search-input" placeholder=">> INPUT_KEYWORD..." onkeyup="filterVocabList()">
-        
         <div class="search-icon"></div> 
     </div>
-    <div id="vocab-list-body"></div>
+
     <button class="btn" onclick="closeVocabScreen()" style="margin-top: 20px; width: 150px;">&lt; BACK</button>
 </div>
 <div id="level-screen" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 250; background: rgba(0,0,0,0.9); flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(5px);">
@@ -3439,17 +3437,6 @@ updateEnemyIndicator(ship.shipId);
              updateEnemyIndicator(ship.shipId);
         }
     }
-    /* --- Decryption Table 功能 --- */
-
-// 1. 打開溫習表
-function openVocabScreen() {
-    playSound('open-room-sfx'); // 播放音效
-    document.getElementById('start-screen').style.display = 'none';
-    document.getElementById('vocab-screen').style.display = 'flex';
-    
-    // 預設顯示 L1
-    renderVocabList('L1');
-}
 
 // 2. 關閉溫習表
 function closeVocabScreen() {
@@ -3790,15 +3777,76 @@ function showMainMenu() {
 
 
 // ★★★ 核心監聽器 (MAIN LISTENER) ★★★
-window.addEventListener('load', () => {
-    setTimeout(() => {
-        const { initializeApp, getDatabase, getAuth, onAuthStateChanged, ref, get, onValue } = window.firebaseModules;
+// --- 4. 初始化 (XCOM 註冊系統版) ---
+    let currentUserUid = null;
+
+    // ★ 提交註冊名字 (Registration Submit)
+    window.submitRegistration = function() {
+        const input = document.getElementById('reg-input');
+        const errorMsg = document.getElementById('reg-error');
+        const name = input.value.trim().toUpperCase();
+
+        if (name.length < 3) {
+            errorMsg.innerText = "ERROR: CALLSIGN TOO SHORT (MIN 3 CHARS)";
+            playSound('wrong-sfx'); return;
+        }
+        if (name.length > 12) {
+            errorMsg.innerText = "ERROR: CALLSIGN TOO LONG (MAX 12 CHARS)";
+            playSound('wrong-sfx'); return;
+        }
+
+        const { getDatabase, ref, update } = window.firebaseModules;
+        const db = getDatabase();
+
+        update(ref(db, 'users/' + currentUserUid), { displayName: name }).then(() => {
+            playSound('deploy-sfx');
+            document.getElementById('registration-modal').style.display = 'none';
+            // 註冊成功，進入 Start Screen
+            document.getElementById('start-screen').style.display = 'flex';
+        }).catch(e => {
+            errorMsg.innerText = "SYSTEM ERROR: " + e.message;
+        });
+    }
+
+    window.addEventListener('load', () => {
+        const { initializeApp, getDatabase, getAuth, signInAnonymously, onAuthStateChanged, ref, onValue, get } = window.firebaseModules;
         
         app = initializeApp(firebaseConfig);
         db = getDatabase(app);
         auth = getAuth(app);
 
-        // 連線狀態燈 (保留你原本的)
+        // ★ 1. 自動登入訪客 (因為我哋想一入 Game 就係已登入狀態，但如果是新兵就要彈窗)
+        signInAnonymously(auth).catch(e => console.error("Login Error:", e));
+
+        // ★ 2. 監聽登入狀態
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                currentUserUid = user.uid;
+                myPlayerId = user.uid;
+                
+                // 左上角顯示 ID
+                const disp = document.getElementById('player-id-display');
+                if(disp) disp.innerText = user.uid.substring(0,6).toUpperCase();
+
+                // ★★★ XCOM 核心邏輯：檢查有無名 ★★★
+                const userRef = ref(db, 'users/' + user.uid);
+                get(userRef).then((snapshot) => {
+                    const userData = snapshot.val();
+                    
+                    if (userData && userData.displayName) {
+                        // A. 老兵 (有記錄)：直接進入 Start Screen
+                        document.getElementById('start-screen').style.display = 'flex';
+                        document.getElementById('registration-modal').style.display = 'none';
+                    } else {
+                        // B. 新兵 (無記錄)：隱藏 Start Screen，強制彈出註冊窗
+                        document.getElementById('start-screen').style.display = 'none';
+                        document.getElementById('registration-modal').style.display = 'flex';
+                    }
+                });
+            }
+        });
+
+        // 連線狀態燈
         const connectedRef = ref(db, ".info/connected");
         onValue(connectedRef, (snap) => {
             const el = document.getElementById('connection-status');
@@ -3808,88 +3856,22 @@ window.addEventListener('load', () => {
                 el.style.boxShadow = snap.val() ? "0 0 5px #22c55e" : "0 0 5px #ef4444";
             }
         });
-
-        // 登入狀態改變
-        onAuthStateChanged(auth, (user) => {
-            const loginPanel = document.getElementById('login-panel');
-            const profilePanel = document.getElementById('user-profile-panel');
-            const gameModeSelect = document.getElementById('game-mode-selection');
-            const statusText = document.getElementById('system-status-text');
-
-            if (user) {
-                // --- 已登入 ---
-                console.log("User Detected:", user.uid);
-                currentUserUid = user.uid;
-                window.myPlayerId = user.uid;
-
-                if (user.isAnonymous) {
-                    // ★ 情況 A：訪客 (Guest) ★
-                    // 自動生成隨機代號：ROOKIE-1234
-                    const randomId = Math.floor(1000 + Math.random() * 9000);
-                    const guestName = `ROOKIE-${randomId}`;
-                    
-                    updateHUD(guestName);
-                    showMainMenu();
-
-                } else {
-                    // ★ 情況 B：Google 用戶 ★
-                    // 檢查 Firebase Database 有沒有他的名字記錄
-                    const userRef = ref(db, 'users/' + user.uid);
-                    
-                    get(userRef).then((snapshot) => {
-                        const userData = snapshot.val();
-
-                        if (userData && userData.displayName) {
-                            // 1. 老兵：已經有名字 -> 直接進入
-                            updateHUD(userData.displayName);
-                            showMainMenu();
-                        } else {
-                            // 2. 新兵：沒有名字 -> 彈出註冊視窗
-                            // 先隱藏登入面板，但不顯示主選單
-                            if(loginPanel) loginPanel.style.display = 'none';
-                            if(statusText) statusText.innerText = "REGISTRATION REQUIRED...";
-                            
-                            // 彈出視窗
-                            const modal = document.getElementById('registration-modal');
-                            if(modal) {
-                                modal.style.display = 'flex';
-                                document.getElementById('reg-input').focus();
-                            }
-                        }
-                    });
-                }
-
-            } else {
-                // --- 未登入 ---
-                console.log("No User.");
-                if(loginPanel) loginPanel.style.display = 'block';
-                if(profilePanel) profilePanel.style.display = 'none';
-                if(gameModeSelect) gameModeSelect.style.display = 'none';
-                
-                if(statusText) {
-                    statusText.innerText = "WAITING FOR AUTHENTICATION...";
-                    statusText.style.color = "#94a3b8";
-                }
-            }
-        });
         
-        // 遊戲初始化 (保留)
+        // 遊戲畫面初始化
         createGrid('player-grid');
         createGrid('enemy-grid');
         placeEnemyShips(); 
         renderSidebar();
 
-        // 輸入音效 (保留)
+        // 輸入框音效
         const roomInput = document.getElementById('room-id-input');
         if (roomInput) {
             roomInput.addEventListener('input', (e) => {
-                if (e.inputType.includes('delete')) playSound('delete-sfx'); 
+                if (e.inputType && e.inputType.includes('delete')) playSound('delete-sfx'); 
                 else playSound('enter-sfx'); 
             });
         }
-
-    }, 500);
-});
+    });
 function playBgm() {
     const bgm = document.getElementById('bgm');
     // 檢查有沒有 BGM 元素，並且是否暫停中
@@ -3937,6 +3919,7 @@ function playBgm() {
 </div>
 </body>
 </html>
+
 
 
 
