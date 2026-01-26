@@ -937,31 +937,28 @@ body {
     box-shadow: inset 0 0 10px rgba(217, 70, 239, 0.1);
 }
 
-/* 中文 (Target) - 粗黑體 */
-/* 中文 (Target) - 科技感改良版 */
+/* 中文 (Target) - 銀白色數據風格 */
 .vocab-ch { 
-    /* 優先使用系統內建的黑體，確保線條夠粗，適合做發光效果 */
     font-family: "Microsoft YaHei", "Heiti TC", "PingFang HK", sans-serif; 
-    font-size: 18px; /* 稍微加大 */
-    color: #0ea5e9;  /* 改用主色調 (青藍色)，配合科技主題 */
-    font-weight: 900; /* 最粗體，令字型更有「塊狀感」 */
-    letter-spacing: 1px; /* 增加字距 */
+    font-size: 18px; 
     
-    /* 雙重發光特效：一層淺藍暈光，一層深藍陰影 */
-    text-shadow: 
-        0 0 5px rgba(14, 165, 233, 0.8),   /* 內發光 */
-        0 0 15px rgba(14, 165, 233, 0.4);  /* 外暈光 */
+    /* ★ 改用銀白色，乾淨俐落，唔會同紫色撞 ★ */
+    color: #f8fafc;  
+    
+    font-weight: 900; 
+    letter-spacing: 1px; 
+    
+    /* 淡淡的白色光暈，扮熒幕殘影 */
+    text-shadow: 0 0 8px rgba(255, 255, 255, 0.3);
         
     transition: all 0.3s;
 }
 
-/* 當滑鼠指住該行時，中文字變色 */
+/* Hover 時變更光 */
 .vocab-row:hover .vocab-ch {
-    color: #fff; /* 變白 */
-    text-shadow: 
-        0 0 10px #0ea5e9,
-        0 0 20px #0ea5e9; /* 發光更強 */
-    transform: scale(1.05); /* 輕微放大 */
+    color: #ffffff;
+    text-shadow: 0 0 15px rgba(255, 255, 255, 0.8);
+    transform: scale(1.05);
 }
 
 /* 英文 (Code) - Orbitron 科技體 + 紫色發光 */
@@ -3021,6 +3018,7 @@ function renderVocabList(level) {
 </body>
 
 </html>
+
 
 
 
