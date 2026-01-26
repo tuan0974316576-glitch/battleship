@@ -3594,17 +3594,18 @@ function openVocabScreen() {
     renderVocabList('L1', true); 
 }
 /* =========================================
-   ★★★ CYBERPUNK HUD LOGIN SYSTEM ★★★
+   ★★★ CYBERPUNK HUD LOGIN SYSTEM (FINAL FIXED) ★★★
    ========================================= */
 
 // 1. 訪客登入 (對應 HTML 的 playAsGuest)
 window.playAsGuest = function() {
     const { getAuth, signInAnonymously } = window.firebaseModules;
     if(typeof playSound === 'function') playSound('deploy-sfx');
+    // 這裡按下按鈕才會登入訪客
     signInAnonymously(getAuth()).catch(e => alert(e.message));
 }
 
-// 2. Google 登入 (對應 HTML 的 loginWithGoogle)
+// 2. Google 登入
 window.loginWithGoogle = function() {
     const { getAuth, GoogleAuthProvider, signInWithPopup } = window.firebaseModules;
     if(typeof playSound === 'function') playSound('deploy-sfx');
@@ -3614,77 +3615,59 @@ window.loginWithGoogle = function() {
     });
 }
 
-// 3. 登出 (對應 HTML 的 logout)
+// 3. 登出
 window.logout = function() {
     const { getAuth, signOut } = window.firebaseModules;
     if(typeof playSound === 'function') playSound('delete-sfx');
     signOut(getAuth()).then(() => location.reload());
 }
 
-// 4. 改名功能 (對應 HTML 的 changeName)
+// 4. 改名 (HUD 鉛筆功能)
 window.changeName = function() {
-    const newName = prompt("ENTER NEW CALLSIGN (輸入新名字):");
+    const newName = prompt("ENTER NEW CALLSIGN:");
     if(newName && newName.trim() !== "") {
-         // 這裡暫時只改畫面，下一階段我們可以教你存入 Firebase Database
         document.getElementById('hud-player-name').innerText = newName.toUpperCase();
-        // 如果有 Firebase Update Profile 功能可在這裡加
     }
 }
 
-// ★ 5. 核心監聽器：控制 HUD 介面開關 ★
-// ==========================================
-// ★★★ XCOM STYLE ONBOARDING SYSTEM ★★★
-// ==========================================
+// 5. 註冊系統變數 (只宣告一次！)
+let currentUserUid = null;
 
-let currentUserUid = null; // 暫存 UID
-
-// 1. 提交註冊名字 (Registration Submit)
+// 6. 提交註冊 (新兵改名)
 window.submitRegistration = function() {
     const input = document.getElementById('reg-input');
     const errorMsg = document.getElementById('reg-error');
-    const name = input.value.trim().toUpperCase(); // 強制大寫
+    const name = input.value.trim().toUpperCase();
 
-    // 檢查名字合法性
     if (name.length < 3) {
-        errorMsg.innerText = "ERROR: CALLSIGN TOO SHORT (MIN 3 CHARS)";
-        playSound('wrong-sfx');
-        return;
+        errorMsg.innerText = "ERROR: MIN 3 CHARS";
+        playSound('wrong-sfx'); return;
     }
     if (name.length > 12) {
-        errorMsg.innerText = "ERROR: CALLSIGN TOO LONG (MAX 12 CHARS)";
-        playSound('wrong-sfx');
-        return;
+        errorMsg.innerText = "ERROR: MAX 12 CHARS";
+        playSound('wrong-sfx'); return;
     }
 
-    // 儲存到 Firebase Database
     const { getDatabase, ref, update } = window.firebaseModules;
     const db = getDatabase();
 
-    // 寫入資料庫：users/{uid}/displayName
-    update(ref(db, 'users/' + currentUserUid), {
-        displayName: name
-    }).then(() => {
-        // 註冊成功！
+    update(ref(db, 'users/' + currentUserUid), { displayName: name }).then(() => {
         playSound('deploy-sfx');
-        document.getElementById('registration-modal').style.display = 'none'; // 關閉視窗
-        
-        // 更新介面顯示
+        document.getElementById('registration-modal').style.display = 'none';
         updateHUD(name);
-        
-        // 進入主畫面
         showMainMenu();
     }).catch(e => {
-        errorMsg.innerText = "SYSTEM ERROR: " + e.message;
+        errorMsg.innerText = "ERROR: " + e.message;
     });
 }
 
-// 2. 更新 HUD 顯示 (共用函數)
+// 7. 更新 HUD 顯示名字
 function updateHUD(name) {
     const hudName = document.getElementById('hud-player-name');
     if(hudName) hudName.innerText = name;
 }
 
-// 3. 顯示主選單 (共用函數)
+// 8. 顯示主選單 (隱藏 Login Panel)
 function showMainMenu() {
     const loginPanel = document.getElementById('login-panel');
     const profilePanel = document.getElementById('user-profile-panel');
@@ -3703,146 +3686,64 @@ function showMainMenu() {
     playBgm();
 }
 
-
-// ==========================================
-// ★★★ XCOM STYLE ONBOARDING SYSTEM ★★★
-// ==========================================
-
-let currentUserUid = null; // 暫存 UID
-
-// 1. 提交註冊名字 (Registration Submit)
-window.submitRegistration = function() {
-    const input = document.getElementById('reg-input');
-    const errorMsg = document.getElementById('reg-error');
-    const name = input.value.trim().toUpperCase(); // 強制大寫
-
-    // 檢查名字合法性
-    if (name.length < 3) {
-        errorMsg.innerText = "ERROR: CALLSIGN TOO SHORT (MIN 3 CHARS)";
-        playSound('wrong-sfx');
-        return;
-    }
-    if (name.length > 12) {
-        errorMsg.innerText = "ERROR: CALLSIGN TOO LONG (MAX 12 CHARS)";
-        playSound('wrong-sfx');
-        return;
-    }
-
-    // 儲存到 Firebase Database
-    const { getDatabase, ref, update } = window.firebaseModules;
-    const db = getDatabase();
-
-    // 寫入資料庫：users/{uid}/displayName
-    update(ref(db, 'users/' + currentUserUid), {
-        displayName: name
-    }).then(() => {
-        // 註冊成功！
-        playSound('deploy-sfx');
-        document.getElementById('registration-modal').style.display = 'none'; // 關閉視窗
-        
-        // 更新介面顯示
-        updateHUD(name);
-        
-        // 進入主畫面
-        showMainMenu();
-    }).catch(e => {
-        errorMsg.innerText = "SYSTEM ERROR: " + e.message;
-    });
-}
-
-// 2. 更新 HUD 顯示 (共用函數)
-function updateHUD(name) {
-    const hudName = document.getElementById('hud-player-name');
-    if(hudName) hudName.innerText = name;
-}
-
-// 3. 顯示主選單 (共用函數)
-function showMainMenu() {
-    const loginPanel = document.getElementById('login-panel');
-    const profilePanel = document.getElementById('user-profile-panel');
-    const gameModeSelect = document.getElementById('game-mode-selection');
-    const statusText = document.getElementById('system-status-text');
-
-    if(loginPanel) loginPanel.style.display = 'none';
-    if(profilePanel) profilePanel.style.display = 'block';
-    if(gameModeSelect) gameModeSelect.style.display = 'flex';
-    
-    if(statusText) {
-        statusText.innerText = "IDENTITY CONFIRMED // SYSTEM READY";
-        statusText.style.color = "#0ea5e9";
-    }
-
-    playBgm();
-}
-
-
-// ★★★ 核心監聽器 (MAIN LISTENER) ★★★
-// --- 4. 初始化 (XCOM 註冊系統版) ---
-    let currentUserUid = null;
-
-    // ★ 提交註冊名字 (Registration Submit)
-    window.submitRegistration = function() {
-        const input = document.getElementById('reg-input');
-        const errorMsg = document.getElementById('reg-error');
-        const name = input.value.trim().toUpperCase();
-
-        if (name.length < 3) {
-            errorMsg.innerText = "ERROR: CALLSIGN TOO SHORT (MIN 3 CHARS)";
-            playSound('wrong-sfx'); return;
-        }
-        if (name.length > 12) {
-            errorMsg.innerText = "ERROR: CALLSIGN TOO LONG (MAX 12 CHARS)";
-            playSound('wrong-sfx'); return;
-        }
-
-        const { getDatabase, ref, update } = window.firebaseModules;
-        const db = getDatabase();
-
-        update(ref(db, 'users/' + currentUserUid), { displayName: name }).then(() => {
-            playSound('deploy-sfx');
-            document.getElementById('registration-modal').style.display = 'none';
-            // 註冊成功，進入 Start Screen
-            document.getElementById('start-screen').style.display = 'flex';
-        }).catch(e => {
-            errorMsg.innerText = "SYSTEM ERROR: " + e.message;
-        });
-    }
-
-    window.addEventListener('load', () => {
-        const { initializeApp, getDatabase, getAuth, signInAnonymously, onAuthStateChanged, ref, onValue, get } = window.firebaseModules;
+// 9. 核心監聽器 (修復版)
+window.addEventListener('load', () => {
+    // 延遲執行確保 Firebase 載入
+    setTimeout(() => {
+        const { initializeApp, getDatabase, getAuth, onAuthStateChanged, ref, onValue, get, signInAnonymously } = window.firebaseModules;
         
         app = initializeApp(firebaseConfig);
         db = getDatabase(app);
         auth = getAuth(app);
 
-        // ★ 1. 自動登入訪客 (因為我哋想一入 Game 就係已登入狀態，但如果是新兵就要彈窗)
-        signInAnonymously(auth).catch(e => console.error("Login Error:", e));
+        // ★★★ 修正：已刪除 signInAnonymously(auth)，防止一開 Game 就自動登入 ★★★
 
-        // ★ 2. 監聽登入狀態
         onAuthStateChanged(auth, (user) => {
+            const loginPanel = document.getElementById('login-panel');
+            const profilePanel = document.getElementById('user-profile-panel');
+            const gameModeSelect = document.getElementById('game-mode-selection');
+            const statusText = document.getElementById('system-status-text');
+
             if (user) {
+                // --- 已登入 ---
                 currentUserUid = user.uid;
                 myPlayerId = user.uid;
                 
-                // 左上角顯示 ID
+                // 顯示 ID
                 const disp = document.getElementById('player-id-display');
                 if(disp) disp.innerText = user.uid.substring(0,6).toUpperCase();
 
-                // ★★★ XCOM 核心邏輯：檢查有無名 ★★★
-                const userRef = ref(db, 'users/' + user.uid);
-                get(userRef).then((snapshot) => {
-                    const userData = snapshot.val();
-                    
-                    if (userData && userData.displayName) {
-                        // A. 老兵 (有記錄)：直接進入 Start Screen
-                        document.getElementById('start-screen').style.display = 'flex';
-                        document.getElementById('registration-modal').style.display = 'none';
-                    } else {
-                        // B. 新兵 (無記錄)：隱藏 Start Screen，強制彈出註冊窗
-                        document.getElementById('start-screen').style.display = 'none';
-                        document.getElementById('registration-modal').style.display = 'flex';
-                    }
-                });
+                if (user.isAnonymous) {
+                    // ★ 訪客 -> 自動隨機名 -> 直接入主選單
+                    const randomId = Math.floor(1000 + Math.random() * 9000);
+                    const guestName = `ROOKIE-${randomId}`;
+                    updateHUD(guestName);
+                    showMainMenu();
+                } else {
+                    // ★ Google -> 檢查資料庫有無名
+                    const userRef = ref(db, 'users/' + user.uid);
+                    get(userRef).then((snapshot) => {
+                        const userData = snapshot.val();
+                        if (userData && userData.displayName) {
+                            // 有名 -> 入主選單
+                            updateHUD(userData.displayName);
+                            showMainMenu();
+                        } else {
+                            // 無名 -> 彈註冊窗
+                            if(loginPanel) loginPanel.style.display = 'none'; // 隱藏按鈕
+                            document.getElementById('registration-modal').style.display = 'flex'; // 彈窗
+                        }
+                    });
+                }
+            } else {
+                // --- 未登入 (顯示 Login Panel) ---
+                if(loginPanel) loginPanel.style.display = 'block';
+                if(profilePanel) profilePanel.style.display = 'none';
+                if(gameModeSelect) gameModeSelect.style.display = 'none';
+                if(statusText) {
+                    statusText.innerText = "WAITING FOR AUTHENTICATION...";
+                    statusText.style.color = "#94a3b8";
+                }
             }
         });
 
@@ -3857,13 +3758,13 @@ function showMainMenu() {
             }
         });
         
-        // 遊戲畫面初始化
+        // 遊戲初始化
         createGrid('player-grid');
         createGrid('enemy-grid');
         placeEnemyShips(); 
         renderSidebar();
 
-        // 輸入框音效
+        // 音效監聽
         const roomInput = document.getElementById('room-id-input');
         if (roomInput) {
             roomInput.addEventListener('input', (e) => {
@@ -3871,13 +3772,15 @@ function showMainMenu() {
                 else playSound('enter-sfx'); 
             });
         }
-    });
+    }, 500);
+});
+
+// 10. BGM 播放
 function playBgm() {
     const bgm = document.getElementById('bgm');
-    // 檢查有沒有 BGM 元素，並且是否暫停中
     if (bgm && bgm.paused) {
-        bgm.volume = 0.3; // 音量設定 (0.1 - 1.0)
-        bgm.play().catch(e => console.log("BGM 等待互動後播放:", e));
+        bgm.volume = 0.3;
+        bgm.play().catch(e => console.log("BGM waiting for interaction"));
     }
 }
 </script>
@@ -3919,6 +3822,7 @@ function playBgm() {
 </div>
 </body>
 </html>
+
 
 
 
