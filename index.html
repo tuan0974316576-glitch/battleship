@@ -3743,94 +3743,99 @@ function showMainMenu() {
 }
 
 // 9. 核心監聽器 (修復版)
-window.addEventListener('load', () => {
-    // 延遲執行確保 Firebase 載入
-    setTimeout(() => {
-        const { initializeApp, getDatabase, getAuth, onAuthStateChanged, ref, onValue, get, signInAnonymously } = window.firebaseModules;
-        
-        app = initializeApp(firebaseConfig);
-        db = getDatabase(app);
-        auth = getAuth(app);
+// 9. 核心監聽器 (修復版：刪除自動登入，解決偷步彈窗)
+    window.addEventListener('load', () => {
+        // 延遲少少執行，確保 Firebase 載入
+        setTimeout(() => {
+            const { initializeApp, getDatabase, getAuth, onAuthStateChanged, ref, onValue, get } = window.firebaseModules;
+            
+            app = initializeApp(firebaseConfig);
+            db = getDatabase(app);
+            auth = getAuth(app);
 
-        // ★★★ 修正：已刪除 signInAnonymously(auth)，防止一開 Game 就自動登入 ★★★
+            // ★★★ 重點修正：這裡已經刪除了 signInAnonymously() ★★★
+            // 除非你之前已經 Login 過 (有記憶)，否則而家會停喺藍色畫面等你撳掣。
 
-        onAuthStateChanged(auth, (user) => {
-            const loginPanel = document.getElementById('login-panel');
-            const profilePanel = document.getElementById('user-profile-panel');
-            const gameModeSelect = document.getElementById('game-mode-selection');
-            const statusText = document.getElementById('system-status-text');
+            onAuthStateChanged(auth, (user) => {
+                const loginPanel = document.getElementById('login-panel');
+                const profilePanel = document.getElementById('user-profile-panel');
+                const gameModeSelect = document.getElementById('game-mode-selection');
+                const statusText = document.getElementById('system-status-text');
 
-            if (user) {
-                // --- 已登入 ---
-                currentUserUid = user.uid;
-                myPlayerId = user.uid;
-                
-                // 顯示 ID
-                const disp = document.getElementById('player-id-display');
-                if(disp) disp.innerText = user.uid.substring(0,6).toUpperCase();
+                if (user) {
+                    // --- 已登入 ---
+                    currentUserUid = user.uid;
+                    myPlayerId = user.uid;
+                    
+                    // 顯示左上角 ID
+                    const disp = document.getElementById('player-id-display');
+                    if(disp) disp.innerText = user.uid.substring(0,6).toUpperCase();
 
-                if (user.isAnonymous) {
-                    // ★ 訪客 -> 自動隨機名 -> 直接入主選單
-                    const randomId = Math.floor(1000 + Math.random() * 9000);
-                    const guestName = `RX-${randomId}`;
-                    updateHUD(guestName);
-                    showMainMenu();
+                    if (user.isAnonymous) {
+                        // ★ 訪客 -> 隨機名 -> 直接入
+                        const randomId = Math.floor(1000 + Math.random() * 9000);
+                        const guestName = `ROOKIE-${randomId}`;
+                        updateHUD(guestName);
+                        showMainMenu();
+                    } else {
+                        // ★ Google -> 檢查有無名
+                        const userRef = ref(db, 'users/' + user.uid);
+                        get(userRef).then((snapshot) => {
+                            const userData = snapshot.val();
+                            if (userData && userData.displayName) {
+                                // 老兵 (有名) -> 直接入
+                                updateHUD(userData.displayName);
+                                showMainMenu();
+                            } else {
+                                // 新兵 (無名) -> 彈出註冊窗
+                                if(loginPanel) loginPanel.style.display = 'none'; // 收埋登入掣
+                                document.getElementById('registration-modal').style.display = 'flex'; // 彈窗
+                                
+                                // 播放音效
+                                if(typeof playSound === 'function') playSound('new-commander-sfx');
+                            }
+                        });
+                    }
                 } else {
-                    // ★ Google -> 檢查資料庫有無名
-                    const userRef = ref(db, 'users/' + user.uid);
-                    get(userRef).then((snapshot) => {
-                        const userData = snapshot.val();
-                        if (userData && userData.displayName) {
-                            // 有名 -> 入主選單
-                            updateHUD(userData.displayName);
-                            showMainMenu();
-                        } else {
-                            // 無名 -> 彈註冊窗
-                            if(loginPanel) loginPanel.style.display = 'none'; // 隱藏按鈕
-                            document.getElementById('registration-modal').style.display = 'flex'; // 彈窗
-                            playSound('new-commander-sfx');
-                        }
-                    });
+                    // --- 未登入 (顯示 Login Panel) ---
+                    if(loginPanel) loginPanel.style.display = 'block';
+                    if(profilePanel) profilePanel.style.display = 'none';
+                    if(gameModeSelect) gameModeSelect.style.display = 'none';
+                    
+                    if(statusText) {
+                        statusText.innerText = "WAITING FOR AUTHENTICATION...";
+                        statusText.style.color = "#94a3b8";
+                    }
                 }
-            } else {
-                // --- 未登入 (顯示 Login Panel) ---
-                if(loginPanel) loginPanel.style.display = 'block';
-                if(profilePanel) profilePanel.style.display = 'none';
-                if(gameModeSelect) gameModeSelect.style.display = 'none';
-                if(statusText) {
-                    statusText.innerText = "WAITING FOR AUTHENTICATION...";
-                    statusText.style.color = "#94a3b8";
-                }
-            }
-        });
-
-        // 連線狀態燈
-        const connectedRef = ref(db, ".info/connected");
-        onValue(connectedRef, (snap) => {
-            const el = document.getElementById('connection-status');
-            if(el) {
-                el.style.display = 'block';
-                el.style.background = snap.val() ? "#22c55e" : "#ef4444";
-                el.style.boxShadow = snap.val() ? "0 0 5px #22c55e" : "0 0 5px #ef4444";
-            }
-        });
-        
-        // 遊戲初始化
-        createGrid('player-grid');
-        createGrid('enemy-grid');
-        placeEnemyShips(); 
-        renderSidebar();
-
-        // 音效監聽
-        const roomInput = document.getElementById('room-id-input');
-        if (roomInput) {
-            roomInput.addEventListener('input', (e) => {
-                if (e.inputType && e.inputType.includes('delete')) playSound('delete-sfx'); 
-                else playSound('enter-sfx'); 
             });
-        }
-    }, 500);
-});
+
+            // 連線狀態燈
+            const connectedRef = ref(db, ".info/connected");
+            onValue(connectedRef, (snap) => {
+                const el = document.getElementById('connection-status');
+                if(el) {
+                    el.style.display = 'block';
+                    el.style.background = snap.val() ? "#22c55e" : "#ef4444";
+                    el.style.boxShadow = snap.val() ? "0 0 5px #22c55e" : "0 0 5px #ef4444";
+                }
+            });
+            
+            // 遊戲初始化
+            createGrid('player-grid');
+            createGrid('enemy-grid');
+            placeEnemyShips(); 
+            renderSidebar();
+
+            // 音效監聽
+            const roomInput = document.getElementById('room-id-input');
+            if (roomInput) {
+                roomInput.addEventListener('input', (e) => {
+                    if (e.inputType && e.inputType.includes('delete')) playSound('delete-sfx'); 
+                    else playSound('enter-sfx'); 
+                });
+            }
+        }, 500);
+    });
 
 // 10. BGM 播放
 function playBgm() {
@@ -3841,76 +3846,72 @@ function playBgm() {
     }
 }
 </script>
-<div id="registration-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 9999; flex-direction: column; align-items: center; justify-content: center;">
+<div id="registration-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 9999; flex-direction: column; align-items: center; justify-content: center;">
     
     <div style="position: absolute; width: 100%; height: 100%; background: repeating-linear-gradient(0deg, transparent 0px, transparent 2px, rgba(0, 240, 255, 0.03) 3px); pointer-events: none; animation: scanlineMove 10s linear infinite;"></div>
 
-    <div class="cyber-modal-box" style="z-index: 10; text-align: center; padding: 50px 40px; max-width: 550px; width: 90%; position: relative; overflow: hidden;">
+    <div class="cyber-modal-box" style="z-index: 10; text-align: center; padding: 40px; max-width: 500px; width: 90%; position: relative; overflow: hidden; border: 1px solid #00f0ff; box-shadow: 0 0 30px rgba(0, 240, 255, 0.2); background: rgba(10, 20, 35, 0.95); backdrop-filter: blur(10px);">
         
-        <div style="position: absolute; top: 0; left: 0; width: 100%; height: 3px; background: #00f0ff; box-shadow: 0 0 15px #00f0ff;"></div>
+        <div style="position: absolute; top: 0; left: 0; width: 100%; height: 2px; background: #00f0ff; box-shadow: 0 0 10px #00f0ff;"></div>
 
-        <div style="font-family: 'Black Ops One'; font-size: 36px; color: #00f0ff; margin-bottom: 15px; text-shadow: 0 0 20px #00f0ff; letter-spacing: 2px;">
-            ⚠️ IDENTITY UNVERIFIED
+        <div style="font-family: 'Black Ops One'; font-size: 32px; color: #00f0ff; margin-bottom: 10px; text-shadow: 0 0 15px #00f0ff; letter-spacing: 2px;">
+            IDENTITY UNVERIFIED
         </div>
-        <div style="font-family: 'Orbitron'; color: #a5f3fc; font-size: 14px; letter-spacing: 3px; margin-bottom: 40px; opacity: 0.8;">
-            >> NEW COMMANDER DETECTED. REGISTER CALLSIGN. <<
+        <div style="font-family: 'Orbitron'; color: #a5f3fc; font-size: 12px; letter-spacing: 3px; margin-bottom: 30px; opacity: 0.8;">
+            >> NEW COMMANDER DETECTED <<
         </div>
 
         <div style="position: relative; width: 100%; margin-bottom: 30px;">
             <input type="text" id="reg-input" maxlength="12" placeholder="ENTER CALLSIGN" style="
                 background: rgba(0, 10, 20, 0.6); 
-                border: 2px solid #0077b6; /* 未選中時嘅暗藍色 */
+                border: 1px solid #0077b6; 
                 color: #fff; 
                 font-family: 'Black Ops One'; 
-                font-size: 28px; 
-                text-align: center; /* 文字置中 */
-                padding: 15px 20px; 
-                width: 100%; /* 佔滿容器寬度，確保視覺置中 */
-                box-sizing: border-box; /* 確保 padding 唔會撐爆寬度 */
+                font-size: 24px; 
+                text-align: center; 
+                padding: 12px; 
+                width: 100%; 
+                box-sizing: border-box; 
                 outline: none; 
                 text-transform: uppercase;
-                letter-spacing: 4px;
+                letter-spacing: 3px;
                 transition: 0.3s all;
-                box-shadow: 0 0 15px rgba(0, 119, 182, 0.3);
             " 
-            onfocus="this.style.borderColor='#00f0ff'; this.style.boxShadow='0 0 30px rgba(0, 240, 255, 0.6), inset 0 0 10px rgba(0, 240, 255, 0.2)';" 
-            onblur="this.style.borderColor='#0077b6'; this.style.boxShadow='0 0 15px rgba(0, 119, 182, 0.3)';">
-            <div style="position: absolute; bottom: -5px; left: 50%; transform: translateX(-50%); width: 80%; height: 2px; background: rgba(0,240,255,0.3);"></div>
+            onfocus="this.style.borderColor='#00f0ff'; this.style.boxShadow='0 0 20px rgba(0, 240, 255, 0.4)';" 
+            onblur="this.style.borderColor='#0077b6'; this.style.boxShadow='none';">
         </div>
 
         <button onclick="submitRegistration()" class="btn" style="
             width: 100%; 
-            padding: 18px; 
-            font-size: 20px; 
+            padding: 15px; 
+            font-size: 18px; 
             font-family: 'Orbitron'; 
             font-weight: bold;
-            letter-spacing: 3px;
-            color: #000; /* 字變黑色對比度高啲 */
-            background: #22c55e; /* 鮮艷綠色 */
-            border: none;
-            border-radius: 4px;
+            letter-spacing: 2px;
+            
+            /* 預設狀態：空心、透明底、綠色邊 */
+            background: transparent;
+            color: #22c55e;
+            border: 2px solid #22c55e;
+            
             cursor: pointer;
-            /* 強力綠色發光特效 */
-            box-shadow: 0 0 20px #22c55e, 0 0 40px rgba(34, 197, 94, 0.6);
-            transition: 0.2s;
-            position: relative;
-            overflow: hidden;
-        " onmouseover="this.style.background='#4ade80'; this.style.boxShadow='0 0 30px #4ade80, 0 0 60px rgba(74, 222, 128, 0.8)';"
-          onmouseout="this.style.background='#22c55e'; this.style.boxShadow='0 0 20px #22c55e, 0 0 40px rgba(34, 197, 94, 0.6)';">
-            <span style="position: relative; z-index: 1;">CONFIRM IDENTITY ></span>
-            <div style="position: absolute; top: 0; left: -100%; width: 100%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.6), transparent); animation: btnShine 3s infinite;"></div>
+            transition: all 0.3s ease;
+            box-shadow: 0 0 10px rgba(34, 197, 94, 0.1);
+        " 
+        onmouseover="this.style.background='#22c55e'; this.style.color='#000'; this.style.boxShadow='0 0 20px #22c55e';"
+        onmouseout="this.style.background='transparent'; this.style.color='#22c55e'; this.style.boxShadow='0 0 10px rgba(34, 197, 94, 0.1)';">
+            CONFIRM IDENTITY
         </button>
 
-        <div id="reg-error" style="color: #ff4444; font-size: 14px; margin-top: 20px; height: 20px; font-family: 'Orbitron'; text-shadow: 0 0 10px #ff4444; letter-spacing: 1px;"></div>
+        <div id="reg-error" style="color: #ff4444; font-size: 12px; margin-top: 20px; height: 20px; font-family: 'Orbitron';"></div>
         
-        <div style="position: absolute; bottom: 0; right: 0; width: 20px; height: 20px; border-bottom: 3px solid #00f0ff; border-right: 3px solid #00f0ff;"></div>
-        <div style="position: absolute; bottom: 0; left: 0; width: 20px; height: 20px; border-bottom: 3px solid #00f0ff; border-left: 3px solid #00f0ff;"></div>
-    </div>
-</div>
+        <div style="position: absolute; bottom: 0; right: 0; width: 15px; height: 15px; border-bottom: 2px solid #00f0ff; border-right: 2px solid #00f0ff;"></div>
+        <div style="position: absolute; bottom: 0; left: 0; width: 15px; height: 15px; border-bottom: 2px solid #00f0ff; border-left: 2px solid #00f0ff;"></div>
     </div>
 </div>
 </body>
 </html>
+
 
 
 
