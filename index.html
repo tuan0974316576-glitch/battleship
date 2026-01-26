@@ -602,32 +602,34 @@ body {
                 border-color: #fff; /* 邊框閃白光 */
             }
         }
-/* --- 戰艦殘骸 (擊沉後顯示) --- */
-        .enemy-ship-revealed {
-            position: absolute;
-            z-index: 5; 
-            pointer-events: none;
-            
-            /* 設定最終狀態 */
-            opacity: 0.9; 
-            filter: drop-shadow(0 0 15px var(--danger)); /* 紅色戰損光暈 */
-            
-            /* 播放動畫：0.5秒 */
-            animation: shipMaterialize 0.5s ease-out forwards;
-        }
+/* --- 戰艦殘骸 (擊沉後顯示) - 改良紅光特效 --- */
+.enemy-ship-revealed {
+    position: absolute;
+    z-index: 5; 
+    pointer-events: none;
+    
+    /* 設定最終狀態：強烈紅色戰損光暈 */
+    opacity: 0.9; 
+    /* 多層陰影模擬發光：一層深紅，一層鮮紅 */
+    filter: drop-shadow(0 0 5px #ef4444) drop-shadow(0 0 15px #b91c1c); 
+    
+    /* 播放動畫：0.5秒 */
+    animation: shipMaterializeRed 0.5s ease-out forwards;
+}
 
-        /* ★ 新動畫：全息投影閃現效果 ★ */
-        /* 不再改變 transform，所以不會影響 JS 的旋轉設定 */
-        @keyframes shipMaterialize {
-            0% { 
-                opacity: 0; 
-                filter: drop-shadow(0 0 0 var(--danger)) brightness(5); /* 一開始超光 (閃光) */
-            }
-            100% { 
-                opacity: 0.9; 
-                filter: drop-shadow(0 0 15px var(--danger)) brightness(1); /* 變回正常 */
-            }
-        }
+/* ★ 新動畫：紅色全息投影閃現效果 ★ */
+@keyframes shipMaterializeRed {
+    0% { 
+        opacity: 0; 
+        /* 一開始超光 (白紅閃光) */
+        filter: drop-shadow(0 0 0 #ef4444) brightness(5) sepia(1) hue-rotate(-50deg) saturate(5);
+    }
+    100% { 
+        opacity: 0.9; 
+        /* 變回正常但帶有強烈紅光 */
+        filter: drop-shadow(0 0 5px #ef4444) drop-shadow(0 0 15px #b91c1c); 
+    }
+}
 /* --- 敵軍艦隊狀態欄 --- */
 /* --- 升級版狀態面板 (Status Panel) --- */
         #status-panel {
@@ -1130,9 +1132,9 @@ body {
             VS PLAYER
         </button>
         
-        <button class="start-btn-large btn-code-list" onclick="openVocabScreen()">
-            CODE LIST
-        </button>
+<button class="start-btn-large btn-code-list" onclick="openVocabScreen()">
+    CODE LIST
+</button>
 
     </div>
     <div style="margin-top: 20px; color: #94a3b8; font-size: 12px;">SYSTEM READY // SELECT COMBAT MODE</div>
@@ -2526,27 +2528,45 @@ function renderSidebar() {
         const msg = document.getElementById('end-msg');
         const screen = document.getElementById('end-screen');
         
+        // --- 情況 A：勝利 (Victory) ---
         if (enemyDamage >= TOTAL_HP) {
+            // 1. 先設定好文字 (但暫時不顯示)
             title.innerText = "VICTORY";
             title.style.color = "var(--success)";
             title.style.textShadow = "0 0 30px var(--success)";
             msg.innerText = "ENEMY FLEET ELIMINATED";
-            playSound('hit-sfx'); 
-            screen.style.display = "flex";
-            return true;
+            
+            // 2. ★ 關鍵修改：延遲 2.5 秒才彈出畫面 ★
+            // 讓玩家有時間看完最後一擊的爆炸特效
+            setTimeout(() => {
+                playSound('hit-sfx'); // 勝利音效 (或者你可以換成專屬 BGM)
+                screen.style.display = "flex";
+                screen.style.animation = "fadeIn 0.5s ease-out"; // 加個淡入效果
+            }, 2500); 
+
+            return true; // 告訴系統遊戲已經結束 (停止其他邏輯)
         }
         
+        // --- 情況 B：戰敗 (Defeat) ---
         if (myDamage >= TOTAL_HP) {
+            // 1. 先設定好文字
             title.innerText = "DEFEAT";
             title.style.color = "var(--danger)";
             title.style.textShadow = "0 0 30px var(--danger)";
             msg.innerText = "CRITICAL MISSION FAILURE";
-            playSound('timeout-sfx'); 
-            screen.style.display = "flex";
-            return true;
+            
+            // 2. ★ 關鍵修改：延遲 2.5 秒才彈出畫面 ★
+            // 讓玩家看清楚自己的船是怎麼沉的
+            setTimeout(() => {
+                playSound('timeout-sfx'); // 失敗音效
+                screen.style.display = "flex";
+                screen.style.animation = "fadeIn 0.5s ease-out";
+            }, 2500);
+
+            return true; // 告訴系統遊戲已經結束
         }
         
-        return false;
+        return false; // 遊戲繼續
     }
 
 function confirmExit() {
@@ -3018,22 +3038,24 @@ function speakText(text, element) {
 }
 
 // 3. 渲染單字列表 (最終完整版)
-function renderVocabList(level) {
+// 3. 渲染單字列表 (修正重疊音效版)
+// ★ 新增第二個參數 isSilent：如果是 true，就不會播放切換音效
+function renderVocabList(level, isSilent = false) {
+    
     // A. 播放切換 Level 音效
-    // 檢查是不是第一次打開 (如果 listBody 還是空的，代表第一次開，就不播聲以免太吵)
     const listBody = document.getElementById('vocab-list-body');
     const isFirstLoad = listBody.innerHTML === ''; 
     
-    // 如果不是第一次載入 (即係用戶手動轉 Tab)，就播放音效
-    if (!isFirstLoad) {
+    // ★ 修改：只有在「不是第一次載入」而且「沒有被靜音」時，才播放音效
+    if (!isFirstLoad && !isSilent) {
         const levelSfx = document.getElementById('level-select-sfx');
         if (levelSfx) {
-            levelSfx.currentTime = 0; // 重置音效
+            levelSfx.currentTime = 0;
             levelSfx.play().catch(e => console.log("Audio play prevented:", e));
         }
     }
 
-    // B. 切換 Tab 按鈕狀態 (視覺效果)
+    // B. 切換 Tab 按鈕狀態
     document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
     const btns = document.querySelectorAll('.tab-btn');
     btns.forEach(btn => {
@@ -3044,6 +3066,10 @@ function renderVocabList(level) {
 
     // C. 清空舊內容
     listBody.innerHTML = ''; 
+    
+    // ★ 新增：每次切換 Level 時，自動清空搜尋框 (提升體驗)
+    const searchInput = document.getElementById('vocab-search-input');
+    if (searchInput) searchInput.value = '';
 
     // D. 獲取數據
     const data = VOCAB_DB[level];
@@ -3056,7 +3082,6 @@ function renderVocabList(level) {
         const row = document.createElement('div');
         row.classList.add('vocab-row');
         
-        // 前 20 個字加動畫，防止手機發熱
         if (index < 20) {
             row.style.animation = `fadeIn 0.3s ease-out ${index * 0.05}s forwards`;
             row.style.opacity = '0';
@@ -3064,10 +3089,7 @@ function renderVocabList(level) {
             row.style.opacity = '1';
         }
 
-        // 處理單引號
         const safeText = item.en.replace(/'/g, "&apos;");
-
-        // ★ 綁定全行點擊事件 (傳入 this 代表整行) ★
         row.setAttribute('onclick', `speakText('${safeText}', this)`);
 
         row.innerHTML = `
@@ -3078,7 +3100,6 @@ function renderVocabList(level) {
         fragment.appendChild(row);
     });
 
-    // F. 一次過放入頁面
     listBody.appendChild(fragment);
 }
 // ★★★ 新增：搜尋過濾功能 ★★★
@@ -3103,10 +3124,21 @@ function filterVocabList() {
         }
     });
 }
+// ★ 專門用來打開 Question Bank 的函數 ★
+function openVocabScreen() {
+    playSound('open-room-sfx'); // 播放打開介面的聲
+    
+    document.getElementById('start-screen').style.display = 'none';
+    document.getElementById('vocab-screen').style.display = 'flex';
+    
+    // ★★★ 重點：傳入 true，開啟「靜音模式」，防止 L1 音效彈出黎 ★★★
+    renderVocabList('L1', true); 
+}
 </script>
 </body>
 
 </html>
+
 
 
 
