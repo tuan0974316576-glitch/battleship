@@ -1021,6 +1021,32 @@ body {
     
     animation: none; /* Hover 時暫停呼吸，保持最光狀態 */
 }
+/* --- AI 語音讀取中的特效 --- */
+@keyframes tech-speak-pulse {
+    0% { color: #e879f9; text-shadow: 0 0 5px #e879f9; }
+    50% { color: #fff; text-shadow: 0 0 20px #d946ef, 0 0 40px #d946ef; transform: scale(1.05); }
+    100% { color: #e879f9; text-shadow: 0 0 5px #e879f9; }
+}
+
+/* 當個字被加上 .speaking class 時，就會閃動 */
+.vocab-en.speaking {
+    animation: tech-speak-pulse 0.5s infinite alternate; /* 快速閃動 */
+    background: rgba(217, 70, 239, 0.2); /* 加個紫色底色 */
+    padding: 2px 5px;
+    border-radius: 4px;
+    border: 1px solid #d946ef;
+    cursor: not-allowed; /* 讀緊嗰陣唔好俾人再撳 */
+}
+
+/* 加強原本 .vocab-en 嘅互動感 */
+.vocab-en {
+    cursor: pointer; /* 變手指 */
+    transition: all 0.2s;
+}
+.vocab-en:hover {
+    color: #fff;
+    text-shadow: 0 0 10px #e879f9, 0 0 20px #e879f9;
+}
     </style>
 </head>
 <body>
@@ -2866,8 +2892,72 @@ function closeVocabScreen() {
     document.getElementById('start-screen').style.display = 'flex';
 }
 
-// 3. 渲染單字列表
-// 3. 渲染單字列表 (極速優化版 + 發音功能)
+// ★★★ 高科技語音系統 (聲畫同步版) ★★★
+let synth = window.speechSynthesis;
+let techVoice = null;
+
+// 1. 預先載入靚聲 (優先搵 Google / Microsoft 嘅 Online Voice)
+function loadVoices() {
+    const voices = synth.getVoices();
+    // 優先次序：Google US English -> Microsoft Zira -> Samantha -> 任何英文
+    techVoice = voices.find(v => v.name.includes('Google US English')) || 
+                voices.find(v => v.name.includes('Zira')) || 
+                voices.find(v => v.name.includes('Samantha')) ||
+                voices.find(v => v.lang.startsWith('en'));
+}
+
+// 瀏覽器載入聲音係非同步既，所以要監聽
+if (speechSynthesis.onvoiceschanged !== undefined) {
+    speechSynthesis.onvoiceschanged = loadVoices;
+}
+
+// 2. 讀字函數
+function speakText(text, element) {
+    if (!text) return;
+    
+    // A. 停止上一句 (防止疊聲)
+    synth.cancel();
+
+    // B. 清除所有舊的「說話中」特效 (防止有字卡住係發光狀態)
+    document.querySelectorAll('.vocab-en.speaking').forEach(el => el.classList.remove('speaking'));
+
+    // C. 建立發音物件
+    const utterance = new SpeechSynthesisUtterance(text);
+    
+    // 設定聲音
+    if (!techVoice) loadVoices();
+    if (techVoice) utterance.voice = techVoice;
+
+    // ★ 調音 (Tech Style) ★
+    utterance.pitch = 1.1; // 音調高少少，似 AI
+    utterance.rate = 1.0;  // 正常語速
+    utterance.volume = 1.0;
+
+    // ★ 關鍵：聲畫同步事件 ★
+    
+    // 當開始讀的時候...
+    utterance.onstart = () => {
+        // 播放 "Beep" 音效 (更有科技感)
+        playSound('enter-sfx');
+        
+        // 如果有傳入 HTML 元素，就加特效
+        if (element) {
+            element.classList.add('speaking');
+        }
+    };
+
+    // 當讀完的時候...
+    utterance.onend = () => {
+        // 移除特效
+        if (element) {
+            element.classList.remove('speaking');
+        }
+    };
+
+    // D. 正式發聲
+    synth.speak(utterance);
+}
+
 function renderVocabList(level) {
     // --- 1. 切換 Tab 按鈕狀態 (視覺效果) ---
     document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
@@ -2885,8 +2975,7 @@ function renderVocabList(level) {
     const listBody = document.getElementById('vocab-list-body');
     listBody.innerHTML = ''; // 清空舊內容
     
-    // 播放輕微音效 (建議註解掉，因為列表生成太快會變成雜音，或者只在大類切換時播)
-    // playSound('enter-sfx'); 
+    // playSound('enter-sfx'); // (選擇性) 播放音效
 
     // --- 3. 獲取數據 ---
     const data = VOCAB_DB[level];
@@ -2912,18 +3001,18 @@ function renderVocabList(level) {
         // 處理單引號 (防止例如 "It's" 令到 onclick 語法出錯)
         const safeText = item.en.replace(/'/g, "&apos;");
 
-        // 填入內容 (包含 speakText 發音功能 & 科技感 Class)
+        // ★★★ 關鍵修改：加入 'this' 參數 ★★★
+        // 填入內容 (包含 speakText 發音功能 & 傳入 'this' 做閃動特效)
         row.innerHTML = `
             <span class="vocab-ch">${item.ch}</span>
-            <span class="vocab-en" onclick="speakText('${safeText}')" title="點擊聆聽 SYSTEM VOICE">${item.en}</span>
+            <span class="vocab-en" onclick="speakText('${safeText}', this)" title="點擊聆聽 SYSTEM VOICE">${item.en}</span>
         `;
         
-        // 將 row 加落 fragment，而不是直接加落網頁
+        // 將 row 加落 fragment
         fragment.appendChild(row);
     });
 
     // ★★★ 優化重點 3：最後一步才一次過渲染 ★★★
-    // 瀏覽器只需重畫一次，極速！
     listBody.appendChild(fragment);
 }
 
@@ -2932,6 +3021,7 @@ function renderVocabList(level) {
 </body>
 
 </html>
+
 
 
 
