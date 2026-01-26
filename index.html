@@ -8,7 +8,6 @@
     
 <script type="module">
       import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-      // ★ 這裡加了 onDisconnect 和 off ★
       import { getDatabase, ref, set, onValue, update, push, child, get, onDisconnect, off } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
       import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
       
@@ -3486,6 +3485,7 @@ function openVocabScreen() {
 </body>
 
 </html>
+
 
 
 
