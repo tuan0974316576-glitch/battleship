@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@100;300;400;500;700;900&display=swap" rel="stylesheet">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Vocab Battleship - Final Mission</title>
@@ -954,33 +955,38 @@ body {
 
 /* 中文 (Target) - 銀白色數據風格 */
 /* --- 方案 A：極致科技感 (幼身 + 強光) --- */
-.vocab-ch {
-    font-family: "Microsoft YaHei", "Heiti TC", "PingFang HK", sans-serif;
-    font-size: 18px;
-    color: #f8fafc; /* 銀白色 */
-
-    /* ★ 改動 1：由粗變幼 (900 -> 400 or 300) ★ */
-    /* 400 係標準，300 係更幼。試下 400 先，覺得唔夠幼就改 300 */
-    font-weight: 400;
-
-    letter-spacing: 1px;
-
-    /* ★ 改動 2：多層次發光 (雙重影) ★ */
-    /* 第一層：核心亮光 (較實) */
-    /* 第二層：外圍光暈 (較朦) */
+/* --- 中文 (Target) - 繁體科技感專用 --- */
+.vocab-ch { 
+    /* 使用 Noto Sans TC */
+    font-family: 'Noto Sans TC', sans-serif;
+    
+    /* ★ 重點 1：用幼身字體 (300 = Light, 100 = Thin) ★ */
+    /* 建議用 300，太幼 (100) 喺手機可能會難睇 */
+    font-weight: 300; 
+    
+    font-size: 20px; 
+    
+    /* 銀白色，帶少少透明感，扮投影 */
+    color: rgba(248, 250, 252, 0.9);
+    
+    /* ★ 重點 2：拉闊字距 (科技感來源) ★ */
+    letter-spacing: 2px; 
+    
+    /* ★ 重點 3：雙層發光 (核心光 + 散光) ★ */
     text-shadow: 
-        0 0 8px rgba(248, 250, 252, 0.8), 
-        0 0 20px rgba(248, 250, 252, 0.4);
-
+        0 0 5px rgba(255, 255, 255, 0.8),   /* 內層高光 */
+        0 0 15px rgba(14, 165, 233, 0.5);   /* 外層藍光 (配合你個 Primary Color) */
+        
     transition: all 0.3s;
 }
 
-/* Hover 時變得更光更實 */
+/* Hover 時的效果：變實、變光 */
 .vocab-row:hover .vocab-ch {
-    color: #ffffff;
+    font-weight: 500; /* Hover 時稍微加粗，增加互動感 */
+    color: #fff;
     text-shadow: 
         0 0 10px rgba(255, 255, 255, 1),
-        0 0 30px rgba(255, 255, 255, 0.7);
+        0 0 25px rgba(14, 165, 233, 0.8);
     transform: scale(1.05);
 }
 
@@ -3191,6 +3197,7 @@ function openVocabScreen() {
 </body>
 
 </html>
+
 
 
 
