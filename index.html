@@ -1231,6 +1231,7 @@ body {
     <audio id="timeout-sfx"><source src="time_out.mp3" type="audio/mpeg"></audio>
 <audio id="open-room-sfx"><source src="open_room.mp3" type="audio/mpeg"></audio>
 <audio id="destroy-sfx"><source src="target_destory.mp3" type="audio/mpeg"></audio>
+<audio id="level-select-sfx"><source src="level_select_code_list.mp3" type="audio/mpeg"></audio>
 
 <script src="vocab_data.js"></script>
 
@@ -2938,7 +2939,6 @@ function speakText(text, element) {
 
     // 開始讀：加特效 + 播聲
     utterance.onstart = () => {
-        playSound('enter-sfx');
         if (element) element.classList.add('speaking');
     };
 
@@ -2950,9 +2950,23 @@ function speakText(text, element) {
     synth.speak(utterance);
 }
 
-// 3. 渲染單字列表 (全行點擊版)
+// 3. 渲染單字列表 (最終完整版)
 function renderVocabList(level) {
-    // 1. 切換 Tab 狀態
+    // A. 播放切換 Level 音效
+    // 檢查是不是第一次打開 (如果 listBody 還是空的，代表第一次開，就不播聲以免太吵)
+    const listBody = document.getElementById('vocab-list-body');
+    const isFirstLoad = listBody.innerHTML === ''; 
+    
+    // 如果不是第一次載入 (即係用戶手動轉 Tab)，就播放音效
+    if (!isFirstLoad) {
+        const levelSfx = document.getElementById('level-select-sfx');
+        if (levelSfx) {
+            levelSfx.currentTime = 0; // 重置音效
+            levelSfx.play().catch(e => console.log("Audio play prevented:", e));
+        }
+    }
+
+    // B. 切換 Tab 按鈕狀態 (視覺效果)
     document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
     const btns = document.querySelectorAll('.tab-btn');
     btns.forEach(btn => {
@@ -2961,21 +2975,21 @@ function renderVocabList(level) {
         }
     });
 
-    // 2. 清空列表
-    const listBody = document.getElementById('vocab-list-body');
+    // C. 清空舊內容
     listBody.innerHTML = ''; 
 
+    // D. 獲取數據
     const data = VOCAB_DB[level];
     if (!data) return;
 
-    // 3. 使用 Fragment 加速渲染
+    // E. 使用 Fragment 加速渲染
     const fragment = document.createDocumentFragment();
 
     data.forEach((item, index) => {
         const row = document.createElement('div');
         row.classList.add('vocab-row');
         
-        // 前 20 個字加動畫
+        // 前 20 個字加動畫，防止手機發熱
         if (index < 20) {
             row.style.animation = `fadeIn 0.3s ease-out ${index * 0.05}s forwards`;
             row.style.opacity = '0';
@@ -2986,8 +3000,7 @@ function renderVocabList(level) {
         // 處理單引號
         const safeText = item.en.replace(/'/g, "&apos;");
 
-// ★★★ 關鍵修改：將點擊事件綁定在整行，並傳送 'this' (整行自己) ★★★
-        // speakText('${safeText}', this)
+        // ★ 綁定全行點擊事件 (傳入 this 代表整行) ★
         row.setAttribute('onclick', `speakText('${safeText}', this)`);
 
         row.innerHTML = `
@@ -2998,13 +3011,14 @@ function renderVocabList(level) {
         fragment.appendChild(row);
     });
 
+    // F. 一次過放入頁面
     listBody.appendChild(fragment);
 }
-
 
 </script>
 </body>
 
 </html>
+
 
 
