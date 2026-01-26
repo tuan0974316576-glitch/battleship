@@ -1946,7 +1946,7 @@ function handleClick(index) {
 
         indices.forEach(idx => myGrid[idx] = 1);
         FLEET[deployIndex].indices = indices;
-
+        FLEET[deployIndex].isVertical = isVertical;
         placeShipImage('player-grid', index, conf, isVertical);
         playSound('deploy-sfx');
 
@@ -2426,82 +2426,86 @@ function startPlayerTurn() {
  // ★ 最終修復版：顯示我自己嘅戰艦殘骸 (移除 absolute，加入智能檢測) ★
     // ★ 修正版：顯示我自己嘅戰艦殘骸 (並隱藏原本完好嘅船) ★
     function revealMyShip(ship, index) {
-        ship.revealed = true;
-        const grid = document.getElementById('player-grid');
-        const container = document.getElementById('player-board');
-        const startCell = grid.children[ship.indices[0]];
+    ship.revealed = true;
+    const grid = document.getElementById('player-grid');
+    const container = document.getElementById('player-board');
+    const startCell = grid.children[ship.indices[0]];
 
-        // --- 1. 智能測量 (Smart Measurement) ---
-        const isVisible = (container.offsetParent !== null);
-        let prevDisplay = '';
-        let prevVisibility = '';
+    // --- 1. 智能測量 (Smart Measurement) ---
+    // 檢查棋盤是否隱藏中，如果是，暫時顯示以獲取正確座標
+    const isVisible = (container.offsetParent !== null);
+    let prevDisplay = '';
+    let prevVisibility = '';
 
-        if (!isVisible) {
-            prevDisplay = container.style.display;
-            prevVisibility = container.style.visibility;
-            container.style.visibility = 'hidden'; 
-            container.style.display = 'block';     
-        }
-
-        // 2. 讀取真實座標
-        const cellLeft = startCell.offsetLeft;
-        const cellTop = startCell.offsetTop;
-        const cellSize = startCell.offsetWidth;
-
-        // 3. 還原
-        if (!isVisible) {
-            container.style.display = prevDisplay;
-            container.style.visibility = prevVisibility;
-        }
-
-        // --- ★ 關鍵修正 1：隱藏原本完好嘅船 (否則會遮住戰損圖) ★ ---
-        // 我們在部署時有設定 ID: board-ship-0, board-ship-1...
-        const originalShipImg = document.getElementById(`board-ship-${index}`);
-        if (originalShipImg) {
-            originalShipImg.style.display = 'none'; // 隱藏舊圖
-        }
-
-        // --- 4. 建立戰損圖片 ---
-        const img = document.createElement('img');
-        
-        // ★ 關鍵修正 2：確保使用戰損圖片 (Damaged Image) ★
-        if (typeof DAMAGED_IMAGES !== 'undefined' && DAMAGED_IMAGES[index]) {
-            img.src = DAMAGED_IMAGES[index];
-        } else {
-            img.src = ship.img; // 如果無戰損圖，先用原圖
-        }
-        
-        img.classList.add('enemy-ship-revealed'); 
-        
-        // ★ 關鍵修正 3：提升層級 (確保佢係最頂) ★
-        img.style.zIndex = "10"; 
-
-        // 計算大細
-        const pW = cellSize * ship.width + 2 * (ship.width - 1);
-        const pH = cellSize * ship.height + 2 * (ship.height - 1);
-        
-        img.style.width = pW + 'px';
-        img.style.height = pH + 'px';
-        img.style.left = cellLeft + 'px';
-        img.style.top = cellTop + 'px';
-        
-        // Transform
-        let isVertical = false;
-        if (ship.indices.length > 1) {
-            isVertical = (ship.indices[1] === ship.indices[0] + 10);
-        }
-        
-        if (!isVertical) {
-            const shift = (pH - pW) / 2;
-            img.style.transform = `translate(${shift}px, -${shift}px) rotate(-90deg)`;
-        } else {
-            img.style.transform = 'none';
-        }
-        
-        grid.appendChild(img);
-        
-        playSound('destroy-sfx'); 
+    if (!isVisible) {
+        prevDisplay = container.style.display;
+        prevVisibility = container.style.visibility;
+        container.style.visibility = 'hidden'; 
+        container.style.display = 'block';     
     }
+
+    // 2. 讀取真實座標
+    const cellLeft = startCell.offsetLeft;
+    const cellTop = startCell.offsetTop;
+    const cellSize = startCell.offsetWidth;
+
+    // 3. 還原棋盤顯示狀態
+    if (!isVisible) {
+        container.style.display = prevDisplay;
+        container.style.visibility = prevVisibility;
+    }
+
+    // --- ★ 隱藏原本完好嘅船 (避免重疊顯示) ★ ---
+    const originalShipImg = document.getElementById(`board-ship-${index}`);
+    if (originalShipImg) {
+        originalShipImg.style.display = 'none'; // 隱藏舊圖
+    }
+
+    // --- 4. 建立戰損圖片 ---
+    const img = document.createElement('img');
+    
+    // 確保使用對應的 Damaged 圖片
+    if (typeof DAMAGED_IMAGES !== 'undefined' && DAMAGED_IMAGES[index]) {
+        img.src = DAMAGED_IMAGES[index];
+    } else {
+        img.src = ship.img; // 如果無戰損圖，用原圖頂住先
+    }
+    
+    img.classList.add('enemy-ship-revealed'); 
+    
+    // 提升層級，確保它蓋在所有東西上面
+    img.style.zIndex = "10"; 
+
+    // 計算圖片大細 (包含邊框間隙)
+    const pW = cellSize * ship.width + 2 * (ship.width - 1);
+    const pH = cellSize * ship.height + 2 * (ship.height - 1);
+    
+    img.style.width = pW + 'px';
+    img.style.height = pH + 'px';
+    img.style.left = cellLeft + 'px';
+    img.style.top = cellTop + 'px';
+    
+    // ★★★ 重點修正：直接讀取部署時記錄的方向 ★★★
+    // 這樣 2x4 船隻就不會再被錯誤判斷為橫向
+    let isVertical = ship.isVertical; 
+
+    // (安全措施) 如果 undefined (例如舊存檔)，嘗試用舊方法估算，但 2x4 可能會錯
+    if (isVertical === undefined && ship.indices.length > 1) {
+         isVertical = (ship.indices[1] === ship.indices[0] + 10);
+    }
+    
+    // 如果是橫放，就需要旋轉圖片
+    if (!isVertical) {
+        const shift = (pH - pW) / 2;
+        img.style.transform = `translate(${shift}px, -${shift}px) rotate(-90deg)`;
+    } else {
+        img.style.transform = 'none';
+    }
+    
+    grid.appendChild(img);
+    
+    playSound('destroy-sfx'); 
+}
 // ★ 新增全局變數 (請確保放在 global 區域，例如 let enemyShots = []; 附近) ★
 // ★ 新增：初始化敵軍狀態欄 ★
 // ★ 新版：初始化敵軍狀態欄 (生成能量方塊) ★
@@ -3274,6 +3278,7 @@ function openVocabScreen() {
 </body>
 
 </html>
+
 
 
 
