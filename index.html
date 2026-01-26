@@ -617,26 +617,26 @@ body {
     z-index: 5; 
     pointer-events: none;
     
-    /* 設定最終狀態：強烈紅色戰損光暈 */
+    /* 設定最終狀態：高能橙色戰損光暈 */
     opacity: 0.9; 
-    /* 多層陰影模擬發光：一層深紅，一層鮮紅 */
-    filter: drop-shadow(0 0 5px #ef4444) drop-shadow(0 0 15px #b91c1c); 
+    /* 使用橙色 (#f59e0b) 與 深橙色 (#d97706) 進行多層發光 */
+    filter: drop-shadow(0 0 5px #f59e0b) drop-shadow(0 0 15px #d97706); 
     
-    /* 播放動畫：0.5秒 */
-    animation: shipMaterializeRed 0.5s ease-out forwards;
+    /* 播放紅色變橙色的閃現動畫 */
+    animation: shipMaterializeOrange 0.5s ease-out forwards;
 }
 
-/* ★ 新動畫：紅色全息投影閃現效果 ★ */
-@keyframes shipMaterializeRed {
+/* ★ 新動畫：橙色全息投影閃現效果 ★ */
+@keyframes shipMaterializeOrange {
     0% { 
         opacity: 0; 
-        /* 一開始超光 (白紅閃光) */
-        filter: drop-shadow(0 0 0 #ef4444) brightness(5) sepia(1) hue-rotate(-50deg) saturate(5);
+        /* 一開始超光的白橙閃光 */
+        filter: drop-shadow(0 0 0 #f59e0b) brightness(5) saturate(2);
     }
     100% { 
         opacity: 0.9; 
-        /* 變回正常但帶有強烈紅光 */
-        filter: drop-shadow(0 0 5px #ef4444) drop-shadow(0 0 15px #b91c1c); 
+        /* 最終停留在強烈的橙色光暈 */
+        filter: drop-shadow(0 0 5px #f59e0b) drop-shadow(0 0 15px #d97706); 
     }
 }
 /* --- 敵軍艦隊狀態欄 --- */
@@ -3254,6 +3254,7 @@ function openVocabScreen() {
 </body>
 
 </html>
+
 
 
 
