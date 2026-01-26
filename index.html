@@ -1794,7 +1794,7 @@ function startEnemyTurn() {
     let enemyDamage = 0; // 敵人被打中幾多格 (我贏的進度)
     let unsubscribeRoom = null; // 用來儲存 Firebase 監聽器
 
-    // --- 4. 初始化 ---
+   // --- 4. 初始化 ---
     window.addEventListener('load', () => {
         // --- Firebase Init ---
         // ★ 注意：這裡加了 ref 和 onValue，用於監測連線 ★
@@ -1804,8 +1804,9 @@ function startEnemyTurn() {
         db = getDatabase(app);
         auth = getAuth(app);
 
-        signInAnonymously(auth).catch(e => console.error("Login Error:", e));
-        
+        // ★★★ 重要修改：我刪除了 signInAnonymously(auth)... 這一行 ★★★
+        // 現在系統唔會再自動登入，會乖乖地停在藍色畫面等你撳掣！
+
         onAuthStateChanged(auth, u => {
             if (u) {
                 myPlayerId = u.uid;
@@ -1814,13 +1815,10 @@ function startEnemyTurn() {
             }
         });
 
-        // ★★★ 新增：連線狀態監測 (綠燈/紅燈) ★★★
-        // 這段代碼會監聽 Firebase 自身的連線狀態
+        // ★★★ 連線狀態監測 (綠燈/紅燈) ★★★
         const connectedRef = ref(db, ".info/connected");
         onValue(connectedRef, (snap) => {
             const el = document.getElementById('connection-status');
-            
-            // 如果你還沒在 HTML 加那個燈，這裡會直接跳過，不會報錯
             if (!el) return; 
             
             el.style.display = 'block';
@@ -3694,5 +3692,6 @@ function playBgm() {
 </script>
 </body>
 </html>
+
 
 
