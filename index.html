@@ -3602,6 +3602,7 @@ window.playAsGuest = function() {
     const { getAuth, signInAnonymously } = window.firebaseModules;
     if(typeof playSound === 'function') playSound('deploy-sfx');
     // 這裡按下按鈕才會登入訪客
+    playBgm();
     signInAnonymously(getAuth()).catch(e => alert(e.message));
 }
 
@@ -3609,6 +3610,7 @@ window.playAsGuest = function() {
 window.loginWithGoogle = function() {
     const { getAuth, GoogleAuthProvider, signInWithPopup } = window.firebaseModules;
     if(typeof playSound === 'function') playSound('deploy-sfx');
+    playBgm();
     signInWithPopup(getAuth(), new GoogleAuthProvider()).catch(e => {
         if(e.code === 'auth/unauthorized-domain') alert("請到 Firebase Console 加入 Authorized Domain!");
         else alert(e.message);
@@ -3822,6 +3824,7 @@ function playBgm() {
 </div>
 </body>
 </html>
+
 
 
 
