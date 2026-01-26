@@ -763,27 +763,70 @@ body {
             transform: scale(0.95); 
         }
     }
-/* --- 手機 / iPad 專用調整 (當螢幕闊度細過 1024px) --- */
-    @media (max-width: 1024px) { 
-        #launch-modal {
-            /* ★ 手機版強制覆寫：改為靠上 ★ */
-            align-items: flex-start !important; 
-            
-            /* ★ 上方留空 15%，避開頂部資訊欄，同埋預留空間俾鍵盤推起 ★ */
-            padding-top: 15vh !important; 
-            
-            /* 防止內容太長時被切斷 */
-            overflow-y: auto; 
-        }
-        
-        /* 針對手機版框框的大細調整 */
-        .modal-content {
-            width: 90%;
-            max-width: 400px;
-            /* 底部加多啲 Buffer，確保鍵盤彈起時唔會頂死個框 */
-            margin-bottom: 20vh; 
-        }
+/* --- 手機專用調整 (當螢幕闊度細過 600px) --- */
+    @media (max-width: 600px) { 
+    
+    /* 1. 將成個視窗推高 (解決：想放高少少 & 避開鍵盤) */
+    #launch-modal {
+        align-items: flex-start !important; /* 強制靠上 */
+        padding-top: 5vh !important; /* 由 15vh 改做 5vh，即係貼近頂部好多 */
+        overflow-y: scroll; /* 容許滾動，萬一鍵盤真係太高都可以拉上去 */
     }
+
+    /* 2. 縮細個框 & 修正左右爆邊 (解決：左右CUT左 & 細少少) */
+    .modal-content {
+        /* ★ 關鍵：將 Padding 計入闊度內，防止 90% + Padding 爆出螢幕 */
+        box-sizing: border-box; 
+        
+        width: 85%; /* 稍微收窄，留番啲邊位呼吸 */
+        max-width: 350px; /* 限制最大闊度 */
+        
+        padding: 15px 20px; /* 上下 15px, 左右 20px (原本係 30px，改薄啲) */
+        
+        /* 底部加超大 Margin，確保鍵盤彈起時，你可以 Scroll 得起個畫面 */
+        margin-bottom: 50vh; 
+    }
+
+    /* 3. 字體微調 (解決：個框太大) */
+    .modal-content #q-text {
+        font-size: 24px !important; /* 中文題目字改細 */
+        margin: 5px 0 !important;
+    }
+    
+    .modal-content .vocab-hint {
+        font-size: 28px !important; /* 英文填充題字改細 */
+        margin: 10px 0 !important;
+        letter-spacing: 3px !important;
+    }
+    
+    .modal-content div[style*="font-size: 22px"] {
+        font-size: 18px !important; /* ⚠️ DECRYPT CODE ⚠️ 標題改細 */
+    }
+}
+/* --- ★ iPad / 平板專用設定 (601px 至 1024px) ★ --- */
+@media (min-width: 601px) and (max-width: 1024px) {
+    
+    #launch-modal {
+        /* 1. 改為靠上對齊，避開 Keyboard */
+        align-items: flex-start !important; 
+        
+        /* 2. 唔使好似手機(5vh)咁貼頂，iPad 留番 15vh 靚仔啲 */
+        padding-top: 15vh !important; 
+        
+        overflow-y: auto; 
+    }
+
+    .modal-content {
+        /* 3. iPad 畫面大，個框可以闊少少，唔使縮到 350px 咁細 */
+        width: 70%; 
+        max-width: 500px; 
+        
+        /* 4. 底部留白，預留空間俾 Keyboard 彈起 */
+        margin-bottom: 20vh; 
+    }
+    
+    /* 字體可以用番 Desktop 大細，唔使縮細，因為 iPad 夠位顯示 */
+}
         /* --- 等級選擇畫面樣式 --- */
 /* --- 等級選擇畫面樣式 --- */
     .level-grid {
@@ -3284,6 +3327,7 @@ function openVocabScreen() {
 </body>
 
 </html>
+
 
 
 
