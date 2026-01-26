@@ -1356,46 +1356,152 @@ body {
     width: 100vw;
     overflow-x: hidden;
 }
+/* --- HUD 容器 & Cyberpunk Style --- */
+.hud-container {
+    margin: 20px 0;
+    position: relative;
+    width: 320px;
+    text-align: center;
+    perspective: 1000px;
+}
+
+/* Google 按鈕特效 */
+#google-login-btn {
+    position: relative;
+    background: rgba(0, 0, 0, 0.6);
+    border: 1px solid #0ea5e9;
+    color: #0ea5e9;
+    padding: 12px 30px;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 16px;
+    font-weight: bold;
+    letter-spacing: 2px;
+    cursor: pointer;
+    overflow: hidden;
+    transition: 0.3s;
+    box-shadow: 0 0 10px rgba(14, 165, 233, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+}
+
+#google-login-btn:hover {
+    background: rgba(14, 165, 233, 0.1);
+    box-shadow: 0 0 20px #0ea5e9;
+    text-shadow: 0 0 8px #0ea5e9;
+    letter-spacing: 4px;
+}
+
+/* Profile Panel 動畫 */
+#user-profile-panel {
+    background: rgba(15, 23, 42, 0.8);
+    border-left: 2px solid #fbbf24;
+    border-right: 2px solid #fbbf24;
+    padding: 15px;
+    position: relative;
+    backdrop-filter: blur(5px);
+    animation: hudOpen 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes hudOpen {
+    from { transform: rotateX(90deg); opacity: 0; }
+    to { transform: rotateX(0deg); opacity: 1; }
+}
+
+/* 裝飾角落 */
+.hud-corner-tl { position: absolute; top: -2px; left: -2px; width: 10px; height: 10px; border-top: 2px solid #0ea5e9; border-left: 2px solid #0ea5e9; }
+.hud-corner-br { position: absolute; bottom: -2px; right: -2px; width: 10px; height: 10px; border-bottom: 2px solid #0ea5e9; border-right: 2px solid #0ea5e9; }
+
+.profile-grid {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    padding-bottom: 10px;
+}
+
+#hud-player-name {
+    font-family: 'Black Ops One';
+    font-size: 20px;
+    color: #fff;
+    text-transform: uppercase;
+    text-shadow: 0 0 10px rgba(255,255,255,0.5);
+}
+
+.edit-btn {
+    background: none; border: 1px solid #64748b; color: #64748b;
+    cursor: pointer; padding: 2px 6px; font-size: 12px; border-radius: 4px;
+    transition: 0.2s;
+}
+.edit-btn:hover { border-color: #0ea5e9; color: #0ea5e9; box-shadow: 0 0 10px #0ea5e9; }
+
+.logout-link {
+    background: none; border: none; color: #ff4444;
+    font-family: 'Orbitron', sans-serif; font-size: 10px;
+    letter-spacing: 2px; cursor: pointer; opacity: 0.7; transition: 0.3s;
+}
+.logout-link:hover { opacity: 1; text-shadow: 0 0 10px #ff4444; letter-spacing: 3px; }
     </style>
 </head>
 <body>
 <div id="start-screen" class="screen active" style="display: flex; flex-direction: column; justify-content: center; align-items: center;">
-    <h1 class="glitch-text" data-text="LEXICON DESTROYER">LEXICON DESTROYER</h1>
     
-    <div id="login-gate" style="display: flex; flex-direction: column; gap: 20px; margin-top: 30px; align-items: center;">
-        <div style="color: #00f0ff; font-family: 'Orbitron'; letter-spacing: 2px; margin-bottom: 10px; animation: blink 1s infinite;">
-            >> IDENTIFY YOURSELF <<
-        </div>
+    <div class="main-title">VOCAB<br>BATTLESHIP</div>
 
-        <button onclick="loginWithGoogle()" class="btn" style="background: rgba(0,0,0,0.8); border: 1px solid #00f0ff; color: #fff; display: flex; align-items: center; gap: 10px; padding: 15px 30px; width: 280px; justify-content: center;">
-            <svg width="20" height="20" viewBox="0 0 18 18"><path d="M17.64 9.2c0-.637-.057-1.252-.164-1.841H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"></path><path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.715H.957v2.332A8.997 8.997 0 0 0 9 18z" fill="#34A853"></path><path d="M3.964 10.706a5.41 5.41 0 0 1-.282-1.706c0-.593.102-1.17.282-1.706V4.962H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.038l3.007-2.332z" fill="#FBBC05"></path><path d="M9 3.58c1.321 0 2.508.454 3.44 1.346l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.962l3.006 2.332c.708-2.131 2.693-3.715 5.037-3.715z" fill="#EA4335"></path></svg>
-            LOGIN WITH GOOGLE
-        </button>
-
-        <button onclick="loginAsGuest()" class="btn" style="background: transparent; border: 1px solid #aaa; color: #aaa; width: 280px; padding: 12px;">
-            GUEST LOGIN (訪客模式)
-        </button>
-    </div>
-
-    <div id="main-menu" style="display: none; flex-direction: column; gap: 20px; margin-top: 20px; align-items: center; width: 100%;">
+    <div id="login-hud" class="hud-container">
         
-        <div style="display: flex; align-items: center; gap: 10px; background: rgba(0, 20, 40, 0.8); padding: 10px 30px; border: 1px solid #00f0ff; border-radius: 4px; margin-bottom: 20px;">
-            <img id="menu-user-avatar" src="galaxy.png" style="width: 40px; height: 40px; border-radius: 50%; border: 2px solid #00f0ff;">
-            <div style="text-align: left;">
-                <div style="color: #00f0ff; font-size: 10px; letter-spacing: 2px;">COMMANDER</div>
-                <div id="menu-user-name" style="color: #fff; font-size: 16px; font-weight: bold;">...</div>
-            </div>
-            <button onclick="logoutGoogle()" style="margin-left: 20px; background: transparent; border: 1px solid #ff4444; color: #ff4444; font-size: 10px; padding: 4px 10px; cursor: pointer;">LOGOUT</button>
+        <div id="login-panel">
+            <div class="hud-line"></div>
+            <div style="font-size: 10px; color: #ff4444; letter-spacing: 2px; margin-bottom: 15px; font-family: 'Orbitron';">SYSTEM ACCESS: RESTRICTED</div>
+            
+            <button id="google-login-btn" onclick="loginWithGoogle()" style="margin-bottom: 10px;">
+                <span class="icon">G</span> 
+                <span class="text">INITIALIZE LINK</span>
+                <div class="btn-glitch"></div>
+            </button>
+
+            <button class="logout-link" onclick="playAsGuest()" style="color: #64748b; font-size: 10px; margin-top: 5px;">
+               &gt; BYPASS SECURITY (GUEST MODE)
+            </button>
         </div>
 
-        <button id="start-btn" class="btn" style="width: 300px; font-size: 24px; padding: 20px;">START MISSION</button>
-        <button id="pvp-btn" class="btn" style="width: 300px;">VS PLAYER (ONLINE)</button>
-        <button class="btn" onclick="showTutorial()" style="width: 300px;">HOW TO PLAY</button>
+        <div id="user-profile-panel" style="display: none;">
+            <div class="hud-corner-tl"></div>
+            <div class="hud-corner-br"></div>
+            
+            <div class="profile-grid">
+                <div class="profile-rank">
+                    <div style="font-size: 10px; color: #64748b;">CURRENT RANK</div>
+                    <div id="hud-rank-title" style="color: #fbbf24; font-size: 18px; text-shadow: 0 0 10px #fbbf24; font-family: 'Black Ops One';">CADET</div>
+                </div>
+
+                <div class="profile-name-box">
+                    <div style="font-size: 10px; color: #0ea5e9;">OPERATOR</div>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <div id="hud-player-name" class="scrolling-text">LOADING...</div>
+                        <button class="edit-btn" onclick="changeName()">✏️</button>
+                    </div>
+                </div>
+            </div>
+
+            <button class="logout-link" onclick="logout()">TERMINATE SESSION</button>
+        </div>
     </div>
 
-    <div style="position: absolute; bottom: 20px; color: rgba(0,240,255,0.5); font-size: 12px;">
-        SYSTEM VERSION 2.0 // ENGUISTICS
+    <div id="game-mode-selection" style="display: none; gap: 20px; margin-top: 20px; animation: fadeIn 0.5s;">
+        <button class="start-btn-large" onclick="selectMode('AI')">VS A.I.</button>
+        <button class="start-btn-large btn-pvp" onclick="selectMode('PVP')">
+            VS PLAYER
+        </button>
+        <button class="start-btn-large btn-code-list" onclick="openVocabScreen()">
+            CODE LIST
+        </button>
     </div>
+    
+    <div id="system-status-text" style="margin-top: 30px; color: #94a3b8; font-size: 12px; opacity: 0.5; font-family: 'Orbitron';">WAITING FOR AUTHENTICATION...</div>
 </div>
 
 <div id="vocab-screen">
@@ -3495,130 +3601,89 @@ function openVocabScreen() {
     // ★★★ 重點：傳入 true，開啟「靜音模式」，防止 L1 音效彈出黎 ★★★
     renderVocabList('L1', true); 
 }
-// ==========================================
-// ★★★ NEW LOGIN FLOW & BGM SYSTEM (V2.0) ★★★
-// ==========================================
+/* =========================================
+   ★★★ CYBERPUNK HUD LOGIN SYSTEM ★★★
+   ========================================= */
 
-// 1. 訪客登入 (Guest Login)
-window.loginAsGuest = function() {
-    console.log("Attempting Guest Login...");
+// 1. 訪客登入 (對應 HTML 的 playAsGuest)
+window.playAsGuest = function() {
     const { getAuth, signInAnonymously } = window.firebaseModules;
-    const auth = getAuth();
-    
-    // 播放音效
     if(typeof playSound === 'function') playSound('deploy-sfx');
-
-    signInAnonymously(auth)
-        .then(() => {
-            console.log("Guest login success");
-            // 成功後，下面的監聽器會自動做嘢轉畫面
-        })
-        .catch((error) => {
-            console.error(error);
-            alert("Guest login failed: " + error.message);
-        });
+    signInAnonymously(getAuth()).catch(e => alert(e.message));
 }
 
-// 2. Google 登入 (Google Login)
+// 2. Google 登入 (對應 HTML 的 loginWithGoogle)
 window.loginWithGoogle = function() {
-    console.log("Attempting Google Login...");
     const { getAuth, GoogleAuthProvider, signInWithPopup } = window.firebaseModules;
-    const auth = getAuth();
-    const provider = new GoogleAuthProvider();
-
     if(typeof playSound === 'function') playSound('deploy-sfx');
-
-    signInWithPopup(auth, provider)
-        .then((result) => {
-            console.log("Google login success:", result.user.displayName);
-        })
-        .catch((error) => {
-            console.error("Login Error:", error);
-            if (error.code === 'auth/unauthorized-domain') {
-                alert("Domain Error: 請在 Firebase Console 加番個網址入 Authorized Domains。");
-            } else {
-                alert("Login Failed: " + error.message);
-            }
-        });
-}
-
-// 3. 登出 (Logout)
-window.logoutGoogle = function() {
-    const { getAuth, signOut } = window.firebaseModules;
-    const auth = getAuth();
-
-    if(typeof playSound === 'function') playSound('delete-sfx');
-
-    signOut(auth).then(() => {
-        console.log("Logged out.");
-        // 登出後，會觸發 onAuthStateChanged (User = null)，自動跳返去 Login Gate
-        location.reload(); // 最簡單：重新整理頁面，確保乾淨
+    signInWithPopup(getAuth(), new GoogleAuthProvider()).catch(e => {
+        if(e.code === 'auth/unauthorized-domain') alert("請到 Firebase Console 加入 Authorized Domain!");
+        else alert(e.message);
     });
 }
 
-// 4. 核心監聽器：控制畫面轉變 & BGM
-window.addEventListener('load', () => {
-    setTimeout(() => {
-        // 檢查 Firebase 是否載入
-        if (!window.firebaseModules) {
-            console.error("Firebase modules not loaded!");
-            return;
-        }
+// 3. 登出 (對應 HTML 的 logout)
+window.logout = function() {
+    const { getAuth, signOut } = window.firebaseModules;
+    if(typeof playSound === 'function') playSound('delete-sfx');
+    signOut(getAuth()).then(() => location.reload());
+}
 
-        const { getAuth, onAuthStateChanged } = window.firebaseModules;
-        const auth = getAuth();
-
-        onAuthStateChanged(auth, (user) => {
-            // 獲取 HTML 元素
-            const loginGate = document.getElementById('login-gate');
-            const mainMenu = document.getElementById('main-menu');
-            const menuUserName = document.getElementById('menu-user-name');
-            const menuUserAvatar = document.getElementById('menu-user-avatar');
-            const startScreen = document.getElementById('start-screen');
-
-            if (user) {
-                // --- 🟢 狀態：已登入 (Google / Guest) ---
-                console.log("User Detected:", user.uid);
-                
-                // 1. 介面切換：隱藏 Login Gate -> 顯示 Main Menu
-                if(loginGate) loginGate.style.display = 'none';
-                if(mainMenu) mainMenu.style.display = 'flex';
-                
-                // 確保 Start Screen 係打開嘅 (以防萬一)
-                if(startScreen) startScreen.style.display = 'flex';
-
-                // 2. 更新玩家資料
-                window.myPlayerId = user.uid;
-                if(menuUserName) menuUserName.innerText = user.displayName ? user.displayName.toUpperCase() : "GUEST COMMANDER";
-                if(menuUserAvatar) menuUserAvatar.src = user.photoURL || "galaxy.png";
-
-                // 3. 自動播放 BGM
-                playBgm(); 
-
-            } else {
-                // --- 🔴 狀態：未登入 (No User) ---
-                console.log("No User. Waiting for login...");
-
-                // 1. 介面切換：顯示 Login Gate -> 隱藏 Main Menu
-                if(loginGate) loginGate.style.display = 'flex';
-                if(mainMenu) mainMenu.style.display = 'none';
-                
-                // 停止 BGM
-                const bgm = document.getElementById('bgm');
-                if(bgm) bgm.pause();
-            }
-        });
-    }, 500); // 延遲少少確保穩定
-});
-
-// 輔助：BGM 播放函數
-function playBgm() {
-    const bgm = document.getElementById('bgm');
-    if (bgm && bgm.paused) {
-        bgm.volume = 0.3; 
-        bgm.play().catch(e => console.log("BGM autoplay waiting for interaction"));
+// 4. 改名功能 (對應 HTML 的 changeName)
+window.changeName = function() {
+    const newName = prompt("ENTER NEW CALLSIGN (輸入新名字):");
+    if(newName && newName.trim() !== "") {
+         // 這裡暫時只改畫面，下一階段我們可以教你存入 Firebase Database
+        document.getElementById('hud-player-name').innerText = newName.toUpperCase();
+        // 如果有 Firebase Update Profile 功能可在這裡加
     }
 }
+
+// ★ 5. 核心監聽器：控制 HUD 介面開關 ★
+window.addEventListener('load', () => {
+    setTimeout(() => {
+        const { getAuth, onAuthStateChanged } = window.firebaseModules;
+        
+        onAuthStateChanged(getAuth(), (user) => {
+            // 獲取新版 HTML 元素
+            const loginPanel = document.getElementById('login-panel');
+            const profilePanel = document.getElementById('user-profile-panel');
+            const gameModeSelect = document.getElementById('game-mode-selection');
+            const statusText = document.getElementById('system-status-text');
+            const playerName = document.getElementById('hud-player-name');
+
+            if (user) {
+                // --- 🟢 已登入 ---
+                console.log("Access Granted:", user.uid);
+                
+                // 介面切換
+                if(loginPanel) loginPanel.style.display = 'none';
+                if(profilePanel) profilePanel.style.display = 'block'; // 注意：block 配合動畫
+                if(gameModeSelect) gameModeSelect.style.display = 'flex';
+                
+                // 更新文字
+                if(statusText) statusText.innerText = "IDENTITY CONFIRMED // SYSTEM READY";
+                if(statusText) statusText.style.color = "#0ea5e9";
+                
+                window.myPlayerId = user.uid;
+                if(playerName) playerName.innerText = user.displayName ? user.displayName.toUpperCase() : "GUEST COMMANDER";
+
+                playBgm(); // 播歌
+            } else {
+                // --- 🔴 未登入 ---
+                console.log("Access Denied.");
+                
+                if(loginPanel) loginPanel.style.display = 'block';
+                if(profilePanel) profilePanel.style.display = 'none';
+                if(gameModeSelect) gameModeSelect.style.display = 'none';
+                
+                if(statusText) statusText.innerText = "WAITING FOR AUTHENTICATION...";
+                if(statusText) statusText.style.color = "#94a3b8";
+            }
+        });
+    }, 500);
+});
 </script>
 </body>
 </html>
+
