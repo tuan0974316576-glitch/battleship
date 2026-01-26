@@ -97,129 +97,128 @@ body {
             background: rgba(0, 0, 0, 0.6); transition: opacity 0.5s;
         }
 
-/* --- ★ 全新 LEXICON FLEET 標題特效 (Cyberpunk Glitch) ★ --- */
+/* --- ★ 最終版 XCOM 風格：無框全息電流 (Unframed Hologram Current) ★ --- */
 
-/* 1. 定義故障動畫 Keyframes */
-/* --- ★ XCOM 2 風格：軍事全息投影 (Tactical Hologram) ★ --- */
-
-/* 1. 定義全息干擾動畫 (模擬訊號不穩) */
-@keyframes xcom-signal {
-    0%, 85% { 
-        opacity: 1; 
-        text-shadow: 0 0 15px var(--primary); 
+/* 1. 定義全息電流動畫 */
+@keyframes xcom-current-glitch {
+    /* --- 正常狀態：平穩呼吸 --- */
+    0%, 75% {
+        opacity: 1;
+        transform: scale(1) skew(0deg);
+        text-shadow: 
+            0 0 10px rgba(14, 165, 233, 0.8), /* 核心光 */
+            0 0 20px rgba(14, 165, 233, 0.4), /* 中層光暈 */
+            0 0 40px rgba(14, 165, 233, 0.2); /* 外層朦朧氣氛 */
+        filter: blur(0.5px); /* 長期保持極輕微模糊，增加投影感 */
+    }
+    
+    /* --- 電流衝擊開始 (Glitch Start) --- */
+    76% {
+        opacity: 0.8;
+        transform: skew(-3deg); /* 輕微訊號扭曲 */
+    }
+    77% {
+        opacity: 1;
+        /* 爆光 + 色差分裂 (青/白) 模擬電流經過 */
+        text-shadow: 
+            -3px 0 0px rgba(255,255,255,0.8), 
+            3px 0 0px var(--primary),
+            0 0 50px var(--primary),
+            0 0 80px #fff;
+        filter: blur(1px); /* 變得更朦 */
+        transform: scale(1.05) skew(2deg);
+    }
+    78% {
+        opacity: 0.2; /* 訊號丟失 */
+        transform: scale(0.95);
+    }
+    79% {
+        opacity: 1;
+        /* 另一種分裂 */
+        text-shadow: 
+            3px 0 0px rgba(255,255,255,0.8), 
+            -3px 0 0px var(--primary),
+            0 0 30px var(--primary);
+        filter: blur(2px); /* 最朦一刻 */
+        transform: skew(-1deg);
+    }
+    80% {
+        /* 回復正常前的瞬間穩定 */
+        transform: scale(1) skew(0deg);
+        text-shadow: 0 0 20px var(--primary);
+        filter: blur(0px);
+    }
+    
+    /* --- 餘波 (微震) --- */
+    82% { transform: translate(1px, 0); }
+    84% { transform: translate(-1px, 0); }
+    85% { transform: translate(0, 0); }
+    
+    /* --- 回復平穩 --- */
+    100% {
+        opacity: 1;
         transform: scale(1);
-    }
-    86% { 
-        opacity: 0.8; 
-        text-shadow: 0 0 0 transparent; /* 突然失去光暈 */
-    }
-    87% { 
-        opacity: 1; 
-        text-shadow: 0 0 30px var(--primary), 0 0 50px #fff; /* 爆光 */
-    }
-    88% { 
-        opacity: 0.4; /* 接觸不良 */
-        transform: scaleY(1.02); /* 輕微拉長 */
-    }
-    90% { 
-        opacity: 1; 
-        text-shadow: 0 0 15px var(--primary); 
-        transform: scale(1);
+        text-shadow: 
+            0 0 10px rgba(14, 165, 233, 0.8),
+            0 0 20px rgba(14, 165, 233, 0.4),
+            0 0 40px rgba(14, 165, 233, 0.2);
+        filter: blur(0.5px);
     }
 }
 
-/* 2. 掃描線動畫 */
-@keyframes xcom-scanline {
-    0% { background-position: 0 0; }
-    100% { background-position: 0 100%; }
+/* 2. 掃描線紋理 (增加儀器感) */
+@keyframes xcom-hologram-scan {
+    0% { background-position: 0 -100vh; }
+    100% { background-position: 0 100vh; }
 }
 
 /* 3. 標題本體樣式 */
 .main-title {
     font-family: 'Black Ops One', cursive;
-    font-size: 72px;
-    line-height: 1.2;
+    font-size: 80px; /* 再大氣啲 */
+    line-height: 1.1;
     
-    /* 字體顏色：純白，靠光暈上色 */
-    color: #ffffff; 
+    /* 本體顏色：接近透明的白，主要靠光暈顯色 */
+    color: rgba(255, 255, 255, 0.85);
     
     text-align: center;
-    letter-spacing: 12px; /* 拉得更闊，更有電影感 */
+    letter-spacing: 12px; /* 戰術感寬字距 */
     margin-bottom: 40px;
-    
-    /* 核心：純青色光暈 (無紅色！) */
-    text-shadow: 0 0 20px var(--primary); 
     
     position: relative;
     z-index: 201;
     
-    /* 應用干擾動畫 */
-    animation: xcom-signal 4s infinite;
+    /* 應用電流動畫：5秒一個循環 */
+    animation: xcom-current-glitch 5s infinite;
     
-    /* 加個背景漸變，扮全息投影的光束 */
-    background: linear-gradient(
-        180deg, 
-        rgba(14, 165, 233, 0) 0%, 
-        rgba(14, 165, 233, 0.1) 50%, 
-        rgba(14, 165, 233, 0) 100%
-    );
-    
-    /* 加少少 Padding 俾邊框 */
-    padding: 10px 40px;
-    
-    /* ★ XCOM 招牌：上下邊框 (HUD) */
-    border-top: 2px solid var(--primary);
-    border-bottom: 2px solid var(--primary);
-    
-    /* 邊框發光 */
-    box-shadow: 0 0 15px rgba(14, 165, 233, 0.3), inset 0 0 20px rgba(14, 165, 233, 0.1);
+    /* 確保無邊框 */
+    border: none;
+    background: none;
+    padding: 0;
 }
 
-/* 4. 加個「掃描線」紋理蓋在字上面 */
+/* 4. 覆蓋一層淡淡的掃描線 */
 .main-title::before {
     content: '';
     position: absolute;
-    top: 0; left: 0; width: 100%; height: 100%;
-    
-    /* 幼細横線紋理 */
+    top: -50%; left: 0; width: 100%; height: 200%; /* 拉高覆蓋範圍確保動畫順滑 */
     background: repeating-linear-gradient(
-        0deg,
-        transparent 0,
-        transparent 3px,
-        rgba(14, 165, 233, 0.3) 4px
+        transparent 0px,
+        transparent 2px,
+        rgba(14, 165, 233, 0.15) 3px, /* 極淡的青色掃描線 */
+        transparent 4px
     );
-    
-    pointer-events: none;
-    animation: xcom-scanline 8s linear infinite; /* 緩慢流動 */
-    opacity: 0.5;
-}
-
-/* 5. 左右括號裝飾 (扮 HUD) */
-.main-title::after {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; width: 100%; height: 100%;
-    
-    /* 利用 Border 畫四個角 */
-    border: 2px solid transparent;
-    /* 這裡有點複雜，實際上用 border-image 或簡單 border-left/right 都可以 */
-    /* 簡單版：只加左右粗邊 */
-    border-left: 4px solid var(--primary);
-    border-right: 4px solid var(--primary);
-    
-    box-shadow: 0 0 15px var(--primary);
+    pointer-events: none; /* 唔阻住滑鼠 */
+    animation: xcom-hologram-scan 8s linear infinite; /* 緩慢向下掃描 */
+    opacity: 0.7;
+    z-index: -1; /* 喺字嘅後面 */
 }
 
 /* 手機版調整 */
 @media (max-width: 500px) {
     .main-title { 
-        font-size: 42px; 
+        font-size: 46px; 
         letter-spacing: 6px;
-        padding: 10px 20px;
-        border-width: 1px; /* 邊框幼啲 */
-    }
-    .main-title::after {
-        border-width: 2px;
     }
 }
 
@@ -3482,6 +3481,7 @@ function openVocabScreen() {
 </body>
 
 </html>
+
 
 
 
