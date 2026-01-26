@@ -3,7 +3,7 @@
 <head>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@100;300;400;500;700;900&display=swap" rel="stylesheet">
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Vocab Battleship - Final Mission</title>
     
 <script type="module">
@@ -1177,6 +1177,22 @@ body {
         bottom: 20px;
         width: 90%; /* 防止太闊出界 */
     }
+}
+        html, body {
+    /* 鎖死橫向捲動 */
+    overflow-x: hidden; 
+    /* 確保高度佔滿，防止縮放造成嘅跳動 */
+    height: 100%;
+    width: 100%;
+    position: relative;
+    /* 防止手機瀏覽器嘅「下拉重新整理」或「左右滑動返回」干擾遊戲 */
+    overscroll-behavior: none; 
+}
+
+/* 針對遊戲主容器進行限制 */
+#game-ui, #start-screen, #vocab-screen {
+    width: 100vw;
+    overflow-x: hidden;
 }
     </style>
 </head>
@@ -3258,6 +3274,7 @@ function openVocabScreen() {
 </body>
 
 </html>
+
 
 
 
