@@ -1370,7 +1370,9 @@ body {
 <audio id="open-room-sfx"><source src="open_room.mp3" type="audio/mpeg"></audio>
 <audio id="destroy-sfx"><source src="target_destory.mp3" type="audio/mpeg"></audio>
 <audio id="level-select-sfx"><source src="level_select_code_list.mp3" type="audio/mpeg"></audio>
-
+<audio id="victory-sfx"><source src="victory.mp3" type="audio/mpeg"></audio>
+<audio id="lose-sfx"><source src="lose.mp3" type="audio/mpeg"></audio>
+    
 <script src="vocab_data.js"></script>
 
 <script>
@@ -2637,50 +2639,52 @@ function renderSidebar() {
         return FLEET.length; 
     }
 
-    function checkGameOver() {
+   function checkGameOver() {
         const title = document.getElementById('end-title');
         const msg = document.getElementById('end-msg');
         const screen = document.getElementById('end-screen');
         
         // --- 情況 A：勝利 (Victory) ---
         if (enemyDamage >= TOTAL_HP) {
-            // 1. 先設定好文字 (但暫時不顯示)
             title.innerText = "VICTORY";
             title.style.color = "var(--success)";
             title.style.textShadow = "0 0 30px var(--success)";
             msg.innerText = "ENEMY FLEET ELIMINATED";
             
-            // 2. ★ 關鍵修改：延遲 2.5 秒才彈出畫面 ★
-            // 讓玩家有時間看完最後一擊的爆炸特效
+            // 延遲 2.5 秒彈出畫面並播放勝利音效
             setTimeout(() => {
-                playSound('hit-sfx'); // 勝利音效 (或者你可以換成專屬 BGM)
+                // ★ 修改點：播放 victory-sfx ★
+                const vSfx = document.getElementById('victory-sfx');
+                if(vSfx) { vSfx.currentTime = 0; vSfx.play().catch(e=>{}); }
+                
                 screen.style.display = "flex";
-                screen.style.animation = "fadeIn 0.5s ease-out"; // 加個淡入效果
+                screen.style.animation = "fadeIn 0.5s ease-out";
             }, 2500); 
 
-            return true; // 告訴系統遊戲已經結束 (停止其他邏輯)
+            return true;
         }
         
         // --- 情況 B：戰敗 (Defeat) ---
         if (myDamage >= TOTAL_HP) {
-            // 1. 先設定好文字
             title.innerText = "DEFEAT";
             title.style.color = "var(--danger)";
             title.style.textShadow = "0 0 30px var(--danger)";
             msg.innerText = "CRITICAL MISSION FAILURE";
             
-            // 2. ★ 關鍵修改：延遲 2.5 秒才彈出畫面 ★
-            // 讓玩家看清楚自己的船是怎麼沉的
+            // 延遲 2.5 秒彈出畫面並播放失敗音效
             setTimeout(() => {
-                playSound('timeout-sfx'); // 失敗音效
+                // ★ 修改點：播放 lose-sfx ★
+                const lSfx = document.getElementById('lose-sfx');
+                if(lSfx) { lSfx.currentTime = 0; lSfx.play().catch(e=>{}); }
+                
                 screen.style.display = "flex";
                 screen.style.animation = "fadeIn 0.5s ease-out";
             }, 2500);
 
-            return true; // 告訴系統遊戲已經結束
+            return true;
         }
         
-        return false; // 遊戲繼續
+        return false;
     }
 
 function confirmExit() {
@@ -3254,6 +3258,7 @@ function openVocabScreen() {
 </body>
 
 </html>
+
 
 
 
