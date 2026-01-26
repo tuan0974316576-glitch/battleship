@@ -2867,41 +2867,64 @@ function closeVocabScreen() {
 }
 
 // 3. 渲染單字列表
+// 3. 渲染單字列表 (極速優化版 + 發音功能)
 function renderVocabList(level) {
-    // 切換 Tab 狀態
+    // --- 1. 切換 Tab 按鈕狀態 (視覺效果) ---
     document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-    // 搵番對應嗰粒掣 (簡單用 onclick 內容來匹配，或者你可以加 data-level 屬性)
+    
+    // 搵番對應嗰粒掣並加光佢
     const btns = document.querySelectorAll('.tab-btn');
     btns.forEach(btn => {
+        // 處理特殊情況：L5* 的文字對應
         if(btn.innerText.replace('*','_STAR') === level || (level === 'L5_STAR' && btn.innerText === 'L5*')) {
             btn.classList.add('active');
         }
     });
 
+    // --- 2. 準備容器 ---
     const listBody = document.getElementById('vocab-list-body');
     listBody.innerHTML = ''; // 清空舊內容
     
-    // 播放一個輕微的刷新音效 (如果有的話)
-    playSound('enter-sfx');
+    // 播放輕微音效 (建議註解掉，因為列表生成太快會變成雜音，或者只在大類切換時播)
+    // playSound('enter-sfx'); 
 
+    // --- 3. 獲取數據 ---
     const data = VOCAB_DB[level];
     if (!data) return;
 
-    // 逐個字加落去
+    // ★★★ 優化重點 1：建立 Fragment (虛擬容器) ★★★
+    // 所有的 DOM 操作先在這裡做，最後再一次過放上頁面，速度快 100 倍
+    const fragment = document.createDocumentFragment();
+
     data.forEach((item, index) => {
         const row = document.createElement('div');
         row.classList.add('vocab-row');
         
-        // 加入延遲動畫，令列表有一行行彈出黎嘅感覺
-        row.style.animation = `fadeIn 0.3s ease-out ${index * 0.05}s forwards`;
-        row.style.opacity = '0'; // 動畫前隱藏
+        // ★★★ 優化重點 2：限制動畫數量 ★★★
+        // 只對頭 20 個字做動畫，之後的直接顯示，防止手機發熱卡頓
+        if (index < 20) {
+            row.style.animation = `fadeIn 0.3s ease-out ${index * 0.05}s forwards`;
+            row.style.opacity = '0'; // 動畫前隱藏
+        } else {
+            row.style.opacity = '1'; // 其他直接顯示
+        }
 
+        // 處理單引號 (防止例如 "It's" 令到 onclick 語法出錯)
+        const safeText = item.en.replace(/'/g, "&apos;");
+
+        // 填入內容 (包含 speakText 發音功能 & 科技感 Class)
         row.innerHTML = `
             <span class="vocab-ch">${item.ch}</span>
-            <span class="vocab-en">${item.en}</span>
+            <span class="vocab-en" onclick="speakText('${safeText}')" title="點擊聆聽 SYSTEM VOICE">${item.en}</span>
         `;
-        listBody.appendChild(row);
+        
+        // 將 row 加落 fragment，而不是直接加落網頁
+        fragment.appendChild(row);
     });
+
+    // ★★★ 優化重點 3：最後一步才一次過渲染 ★★★
+    // 瀏覽器只需重畫一次，極速！
+    listBody.appendChild(fragment);
 }
 
 
@@ -2909,6 +2932,7 @@ function renderVocabList(level) {
 </body>
 
 </html>
+
 
 
 
