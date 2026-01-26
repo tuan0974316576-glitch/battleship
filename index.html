@@ -9,7 +9,7 @@
 <script type="module">
       import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
       import { getDatabase, ref, set, onValue, update, push, child, get, onDisconnect, off } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
-      import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+      import { getAuth, signInAnonymously, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";;
       
       // 將它們掛載到 window
       window.firebaseModules = { 
@@ -27,6 +27,9 @@
           onAuthStateChanged,
           onDisconnect, // ★ 記得加這個
           off           // ★ 還有這個
+          GoogleAuthProvider, // 新增
+    signInWithPopup,    // 新增
+    signOut             // 新增
       };
     </script>
 
@@ -1377,7 +1380,33 @@ body {
     </div>
 
     <div style="margin-top: 20px; color: #94a3b8; font-size: 12px;">SYSTEM READY // SELECT COMBAT MODE</div>
+<div id="user-profile-area" style="margin-top: 20px; text-align: center; z-index: 100; position: relative;">
+    
+    <button id="google-login-btn" onclick="loginWithGoogle()" class="btn" style="background: rgba(0, 0, 0, 0.8); color: #fff; display: inline-flex; align-items: center; justify-content: center; gap: 12px; font-family: 'Noto Sans TC', sans-serif; font-weight: 500; border: 1px solid #00f0ff; padding: 10px 24px; cursor: pointer; box-shadow: 0 0 15px rgba(0, 240, 255, 0.2); transition: all 0.3s;">
+        <svg width="20" height="20" viewBox="0 0 18 18">
+            <path d="M17.64 9.2c0-.637-.057-1.252-.164-1.841H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"></path>
+            <path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.715H.957v2.332A8.997 8.997 0 0 0 9 18z" fill="#34A853"></path>
+            <path d="M3.964 10.706a5.41 5.41 0 0 1-.282-1.706c0-.593.102-1.17.282-1.706V4.962H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.038l3.007-2.332z" fill="#FBBC05"></path>
+            <path d="M9 3.58c1.321 0 2.508.454 3.44 1.346l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.962l3.006 2.332c.708-2.131 2.693-3.715 5.037-3.715z" fill="#EA4335"></path>
+        </svg>
+        <span style="letter-spacing: 1px;">LOGIN WITH GOOGLE</span>
+    </button>
 
+    <div id="user-info-display" style="display: none; flex-direction: column; align-items: center; gap: 10px;">
+        <div style="display: flex; align-items: center; gap: 15px; background: rgba(0, 20, 40, 0.8); padding: 8px 20px; border: 1px solid #00f0ff; border-radius: 4px;">
+            <img id="user-avatar" src="" style="width: 32px; height: 32px; border-radius: 50%; border: 2px solid #00f0ff;">
+            <div style="text-align: left;">
+                <div style="color: #00f0ff; font-family: 'Orbitron', sans-serif; font-size: 10px; letter-spacing: 2px; opacity: 0.8;">COMMANDER</div>
+                <div id="user-name" style="color: #fff; font-family: 'Noto Sans TC', sans-serif; font-size: 14px; font-weight: 700;">PLAYER</div>
+            </div>
+        </div>
+        
+        <button onclick="logoutGoogle()" style="background: transparent; border: 1px solid #ff4444; color: #ff4444; font-family: 'Orbitron', sans-serif; font-size: 10px; padding: 4px 12px; cursor: pointer; letter-spacing: 1px; transition: all 0.2s; opacity: 0.7;">
+            [ DISCONNECT LINK ]
+        </button>
+    </div>
+
+</div>
     <div class="game-footer">
         SYSTEM DEVELOPED BY <span class="brand">ENGUISTICS</span> & <span class="brand">A1 EDUCATION</span><br>
         <span style="font-size: 10px; opacity: 0.7;">© 2026 SECURE CONNECTION ESTABLISHED // VER 2.1</span>
@@ -3481,10 +3510,129 @@ function openVocabScreen() {
     // ★★★ 重點：傳入 true，開啟「靜音模式」，防止 L1 音效彈出黎 ★★★
     renderVocabList('L1', true); 
 }
+/* =========================================
+   ★★★ GOOGLE LOGIN 完整功能模組 ★★★
+   (請將此段貼在 Script 的最後面)
+   ========================================= */
+
+// 1. 處理 Google 登入
+window.loginWithGoogle = function() {
+    console.log("Attempting Google Login...");
+    
+    // 從 window.firebaseModules 獲取需要的工具
+    const { getAuth, GoogleAuthProvider, signInWithPopup } = window.firebaseModules;
+    
+    if (!getAuth || !GoogleAuthProvider || !signInWithPopup) {
+        alert("System Error: Firebase modules not loaded properly.");
+        return;
+    }
+
+    const auth = getAuth();
+    const provider = new GoogleAuthProvider();
+
+    // 播放音效 (如果有)
+    if(typeof playSound === 'function') playSound('deploy-sfx');
+
+    signInWithPopup(auth, provider)
+        .then((result) => {
+            console.log("Login Success! User:", result.user.displayName);
+            // 登入成功後，onAuthStateChanged 會自動處理畫面更新，這裡不用做額外操作
+        })
+        .catch((error) => {
+            console.error("Login Error:", error);
+            // 處理常見錯誤
+            if (error.code === 'auth/unauthorized-domain') {
+                alert("錯誤：此網域未獲授權。\n請到 Firebase Console > Authentication > Settings > Authorized Domains 新增你的網址。");
+            } else {
+                alert("Login Failed: " + error.message);
+            }
+        });
+};
+
+// 2. 處理登出
+window.logoutGoogle = function() {
+    console.log("Logging out...");
+    
+    const { getAuth, signOut, signInAnonymously } = window.firebaseModules;
+    const auth = getAuth();
+
+    if(typeof playSound === 'function') playSound('delete-sfx');
+
+    signOut(auth).then(() => {
+        console.log("Logged out. Switching to Guest Mode...");
+        // 登出後，立即以「訪客」身份登入，確保遊戲功能 (Database) 繼續運作
+        signInAnonymously(auth).catch(err => console.error("Guest login failed:", err));
+    }).catch((error) => {
+        console.error("Logout Error:", error);
+    });
+};
+
+// 3. 啟動監聽器：當登入狀態改變時，自動更新介面
+// 我們使用 window.addEventListener('load') 確保 Firebase 已經準備好
+window.addEventListener('load', function() {
+    
+    // 稍微延遲執行，確保 firebaseModules 已加載
+    setTimeout(() => {
+        const { getAuth, onAuthStateChanged, signInAnonymously } = window.firebaseModules;
+        
+        // 如果 firebase 模組還沒好，就停止
+        if (!getAuth) {
+            console.error("Firebase Auth modules missing.");
+            return;
+        }
+
+        const auth = getAuth();
+
+        // ★ 核心監聽器：這是 Firebase 告訴我們「現在是誰登入」的地方 ★
+        onAuthStateChanged(auth, (user) => {
+            
+            // 取得 UI 元素
+            const googleBtn = document.getElementById('google-login-btn');
+            const userInfo = document.getElementById('user-info-display');
+            const userNameDisplay = document.getElementById('user-name');
+            const userAvatarDisplay = document.getElementById('user-avatar');
+            const gamePlayerIdDisplay = document.getElementById('player-id-display'); // 左上角的 ID
+
+            if (user) {
+                // 更新全域變數 (如果你的遊戲邏輯有用到 myPlayerId)
+                window.myPlayerId = user.uid;
+                console.log("Current User ID:", user.uid);
+
+                // 更新左上角 ID 顯示
+                if(gamePlayerIdDisplay) {
+                    gamePlayerIdDisplay.innerText = user.uid.substring(0,6).toUpperCase();
+                }
+
+                if (user.isAnonymous) {
+                    // --- 狀態：訪客 (Guest) ---
+                    console.log("Status: Guest");
+                    if(googleBtn) googleBtn.style.display = 'inline-flex'; // 顯示登入掣
+                    if(userInfo) userInfo.style.display = 'none';          // 隱藏個人資料
+                } else {
+                    // --- 狀態：已登入 Google ---
+                    console.log("Status: Google User -", user.displayName);
+                    if(googleBtn) googleBtn.style.display = 'none';        // 隱藏登入掣
+                    if(userInfo) userInfo.style.display = 'flex';          // 顯示個人資料
+                    
+                    // 填入資料
+                    if(userNameDisplay) userNameDisplay.innerText = user.displayName || "COMMANDER";
+                    // 如果有頭像就用頭像，否則用預設圖片
+                    if(userAvatarDisplay) userAvatarDisplay.src = user.photoURL || "galaxy.png";
+                }
+            } else {
+                // 如果完全沒有使用者 (剛打開網頁時)，自動登入訪客
+                console.log("No user detected. Auto-signing in as Guest...");
+                signInAnonymously(auth).catch(e => console.error("Auto-guest failed:", e));
+            }
+        });
+
+    }, 500); // 延遲 0.5 秒執行以策安全
+});
 </script>
 </body>
 
 </html>
+
 
 
 
