@@ -1183,7 +1183,31 @@ body {
 <audio id="destroy-sfx"><source src="target_destory.mp3" type="audio/mpeg"></audio>
 
 <script src="vocab_data.js"></script>
+
 <script>
+    // ★★★ 新增：自動排序功能 ★★★
+    // 這段代碼會走遍所有 Level (L1, L2...), 自動按英文字母 A-Z 排列
+    function sortDatabase() {
+        // 檢查 VOCAB_DB 是否存在
+        if (typeof VOCAB_DB === 'undefined') return;
+
+        // 走遍每一個 Level (L1, L2, L3...)
+        for (let levelKey in VOCAB_DB) {
+            // 使用 JavaScript 原生的 sort 功能
+            VOCAB_DB[levelKey].sort((a, b) => {
+                // 將英文轉做細楷 (LowerCase) 來比較，確保 'a' 和 'A' 都能正確排序
+                return a.en.toLowerCase().localeCompare(b.en.toLowerCase());
+            });
+        }
+        console.log("題目庫已自動按字母排序完成！");
+    }
+
+    // 立即執行排序
+    sortDatabase();
+    // ★★★ 排序代碼結束 ★★★
+
+
+    // ... 下面接回你原本的代碼 ...
     let lastProcessedTimestamp = 0; // ★ 新增：防止重複處理同一手棋
 let battleUnsubscribe = null; // ★ 新增：專門管理戰鬥中的監聽器
 let turnCounter = 0; // 回合計數器
@@ -2867,6 +2891,7 @@ function renderVocabList(level) {
 </body>
 
 </html>
+
 
 
 
