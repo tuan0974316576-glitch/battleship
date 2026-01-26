@@ -321,17 +321,25 @@ body {
             .vocab-hint { font-size: 28px; letter-spacing: 4px; }
         }
 /* --- 艦隊側邊欄 --- */
+/* --- 艦隊側邊欄 (修改版：雙列佈局) --- */
 #fleet-sidebar {
-            display: flex;
-            flex-direction: column;
-            gap: 20px; /* 船與船之間的距離 */
-            background: rgba(15, 23, 42, 0.8);
-            padding: 20px 10px;
-            border-radius: 8px;
-            border: 1px solid var(--glass-border);
-            min-width: 80px;
-            align-items: center;
-        }
+    /* ★ 改用 Grid 佈局，不再是一條直線 ★ */
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* 強制分兩列 (左右並排) */
+    
+    gap: 10px; /* 縮細船與船之間的距離 (原本係 20px) */
+    
+    background: rgba(15, 23, 42, 0.8);
+    padding: 15px 10px;
+    border-radius: 8px;
+    border: 1px solid var(--glass-border);
+    
+    /* 確保佢唔會拉到太長 */
+    height: fit-content; 
+    align-self: center; /* 令側邊欄在畫面中間垂直置中 */
+    
+    justify-items: center; /* 內容置中 */
+}
 .fleet-unit {
             position: relative;
             display: grid; /* 用 Grid 排列背景格仔 */
@@ -730,17 +738,18 @@ body {
         }
 
         /* 2. 將側邊欄改為「橫向排列」並放在頂部 */
-        #fleet-sidebar {
-            flex-direction: row !important; /* 橫排 */
-            width: 100%;      /* 佔滿闊度 */
-            max-width: 380px; /* 唔好太闊 */
-            overflow-x: auto; /* 如果太多船，容許左右滑動 */
-            margin-bottom: 15px; /* 同棋盤保持距離 */
-            padding: 10px 5px;
-            gap: 8px; /* 船與船之間密少少 */
-            min-width: auto; /* 取消最小闊度限制 */
-            justify-content: center; /* 居中 */
-        }
+#fleet-sidebar {
+        display: flex; /* ★ 必須加呢句！強制變回 Flex 橫排，覆蓋上面的 Grid ★ */
+        flex-direction: row !important; 
+        width: 100%;      
+        max-width: 380px; 
+        overflow-x: auto; 
+        margin-bottom: 15px; 
+        padding: 10px 5px;
+        gap: 8px; 
+        min-width: auto; 
+        justify-content: center; 
+    }
 
         /* 3. 調整每隻船仔的大小 (稍微縮細以適應橫排) */
         .fleet-unit {
@@ -3197,6 +3206,7 @@ function openVocabScreen() {
 </body>
 
 </html>
+
 
 
 
