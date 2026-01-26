@@ -1431,13 +1431,20 @@ body {
     text-shadow: 0 0 10px rgba(255,255,255,0.5);
 }
 
+/* 隱藏主畫面上的鉛筆按鈕 */
 .edit-btn {
-    background: none; border: 1px solid #64748b; color: #64748b;
-    cursor: pointer; padding: 2px 6px; font-size: 12px; border-radius: 4px;
-    transition: 0.2s;
+    display: none !important; /* 強制隱藏 */
 }
-.edit-btn:hover { border-color: #0ea5e9; color: #0ea5e9; box-shadow: 0 0 10px #0ea5e9; }
 
+/* 讓 Call Sign 顯示得更威武 */
+#hud-player-name {
+    font-family: 'Black Ops One';
+    font-size: 24px;
+    color: #fff;
+    text-transform: uppercase;
+    text-shadow: 0 0 10px rgba(14, 165, 233, 0.8); /* 藍光 */
+    letter-spacing: 2px;
+}
 .logout-link {
     background: none; border: none; color: #ff4444;
     font-family: 'Orbitron', sans-serif; font-size: 10px;
@@ -3638,47 +3645,249 @@ window.changeName = function() {
 }
 
 // ★ 5. 核心監聽器：控制 HUD 介面開關 ★
+// ==========================================
+// ★★★ XCOM STYLE ONBOARDING SYSTEM ★★★
+// ==========================================
+
+let currentUserUid = null; // 暫存 UID
+
+// 1. 提交註冊名字 (Registration Submit)
+window.submitRegistration = function() {
+    const input = document.getElementById('reg-input');
+    const errorMsg = document.getElementById('reg-error');
+    const name = input.value.trim().toUpperCase(); // 強制大寫
+
+    // 檢查名字合法性
+    if (name.length < 3) {
+        errorMsg.innerText = "ERROR: CALLSIGN TOO SHORT (MIN 3 CHARS)";
+        playSound('wrong-sfx');
+        return;
+    }
+    if (name.length > 12) {
+        errorMsg.innerText = "ERROR: CALLSIGN TOO LONG (MAX 12 CHARS)";
+        playSound('wrong-sfx');
+        return;
+    }
+
+    // 儲存到 Firebase Database
+    const { getDatabase, ref, update } = window.firebaseModules;
+    const db = getDatabase();
+
+    // 寫入資料庫：users/{uid}/displayName
+    update(ref(db, 'users/' + currentUserUid), {
+        displayName: name
+    }).then(() => {
+        // 註冊成功！
+        playSound('deploy-sfx');
+        document.getElementById('registration-modal').style.display = 'none'; // 關閉視窗
+        
+        // 更新介面顯示
+        updateHUD(name);
+        
+        // 進入主畫面
+        showMainMenu();
+    }).catch(e => {
+        errorMsg.innerText = "SYSTEM ERROR: " + e.message;
+    });
+}
+
+// 2. 更新 HUD 顯示 (共用函數)
+function updateHUD(name) {
+    const hudName = document.getElementById('hud-player-name');
+    if(hudName) hudName.innerText = name;
+}
+
+// 3. 顯示主選單 (共用函數)
+function showMainMenu() {
+    const loginPanel = document.getElementById('login-panel');
+    const profilePanel = document.getElementById('user-profile-panel');
+    const gameModeSelect = document.getElementById('game-mode-selection');
+    const statusText = document.getElementById('system-status-text');
+
+    if(loginPanel) loginPanel.style.display = 'none';
+    if(profilePanel) profilePanel.style.display = 'block';
+    if(gameModeSelect) gameModeSelect.style.display = 'flex';
+    
+    if(statusText) {
+        statusText.innerText = "IDENTITY CONFIRMED // SYSTEM READY";
+        statusText.style.color = "#0ea5e9";
+    }
+
+    playBgm();
+}
+
+
+// ==========================================
+// ★★★ XCOM STYLE ONBOARDING SYSTEM ★★★
+// ==========================================
+
+let currentUserUid = null; // 暫存 UID
+
+// 1. 提交註冊名字 (Registration Submit)
+window.submitRegistration = function() {
+    const input = document.getElementById('reg-input');
+    const errorMsg = document.getElementById('reg-error');
+    const name = input.value.trim().toUpperCase(); // 強制大寫
+
+    // 檢查名字合法性
+    if (name.length < 3) {
+        errorMsg.innerText = "ERROR: CALLSIGN TOO SHORT (MIN 3 CHARS)";
+        playSound('wrong-sfx');
+        return;
+    }
+    if (name.length > 12) {
+        errorMsg.innerText = "ERROR: CALLSIGN TOO LONG (MAX 12 CHARS)";
+        playSound('wrong-sfx');
+        return;
+    }
+
+    // 儲存到 Firebase Database
+    const { getDatabase, ref, update } = window.firebaseModules;
+    const db = getDatabase();
+
+    // 寫入資料庫：users/{uid}/displayName
+    update(ref(db, 'users/' + currentUserUid), {
+        displayName: name
+    }).then(() => {
+        // 註冊成功！
+        playSound('deploy-sfx');
+        document.getElementById('registration-modal').style.display = 'none'; // 關閉視窗
+        
+        // 更新介面顯示
+        updateHUD(name);
+        
+        // 進入主畫面
+        showMainMenu();
+    }).catch(e => {
+        errorMsg.innerText = "SYSTEM ERROR: " + e.message;
+    });
+}
+
+// 2. 更新 HUD 顯示 (共用函數)
+function updateHUD(name) {
+    const hudName = document.getElementById('hud-player-name');
+    if(hudName) hudName.innerText = name;
+}
+
+// 3. 顯示主選單 (共用函數)
+function showMainMenu() {
+    const loginPanel = document.getElementById('login-panel');
+    const profilePanel = document.getElementById('user-profile-panel');
+    const gameModeSelect = document.getElementById('game-mode-selection');
+    const statusText = document.getElementById('system-status-text');
+
+    if(loginPanel) loginPanel.style.display = 'none';
+    if(profilePanel) profilePanel.style.display = 'block';
+    if(gameModeSelect) gameModeSelect.style.display = 'flex';
+    
+    if(statusText) {
+        statusText.innerText = "IDENTITY CONFIRMED // SYSTEM READY";
+        statusText.style.color = "#0ea5e9";
+    }
+
+    playBgm();
+}
+
+
+// ★★★ 核心監聽器 (MAIN LISTENER) ★★★
 window.addEventListener('load', () => {
     setTimeout(() => {
-        const { getAuth, onAuthStateChanged } = window.firebaseModules;
+        const { initializeApp, getDatabase, getAuth, onAuthStateChanged, ref, get, onValue } = window.firebaseModules;
         
-        onAuthStateChanged(getAuth(), (user) => {
-            // 獲取新版 HTML 元素
+        app = initializeApp(firebaseConfig);
+        db = getDatabase(app);
+        auth = getAuth(app);
+
+        // 連線狀態燈 (保留你原本的)
+        const connectedRef = ref(db, ".info/connected");
+        onValue(connectedRef, (snap) => {
+            const el = document.getElementById('connection-status');
+            if(el) {
+                el.style.display = 'block';
+                el.style.background = snap.val() ? "#22c55e" : "#ef4444";
+                el.style.boxShadow = snap.val() ? "0 0 5px #22c55e" : "0 0 5px #ef4444";
+            }
+        });
+
+        // 登入狀態改變
+        onAuthStateChanged(auth, (user) => {
             const loginPanel = document.getElementById('login-panel');
             const profilePanel = document.getElementById('user-profile-panel');
             const gameModeSelect = document.getElementById('game-mode-selection');
             const statusText = document.getElementById('system-status-text');
-            const playerName = document.getElementById('hud-player-name');
 
             if (user) {
-                // --- 🟢 已登入 ---
-                console.log("Access Granted:", user.uid);
-                
-                // 介面切換
-                if(loginPanel) loginPanel.style.display = 'none';
-                if(profilePanel) profilePanel.style.display = 'block'; // 注意：block 配合動畫
-                if(gameModeSelect) gameModeSelect.style.display = 'flex';
-                
-                // 更新文字
-                if(statusText) statusText.innerText = "IDENTITY CONFIRMED // SYSTEM READY";
-                if(statusText) statusText.style.color = "#0ea5e9";
-                
+                // --- 已登入 ---
+                console.log("User Detected:", user.uid);
+                currentUserUid = user.uid;
                 window.myPlayerId = user.uid;
-                if(playerName) playerName.innerText = user.displayName ? user.displayName.toUpperCase() : "GUEST COMMANDER";
 
-                playBgm(); // 播歌
+                if (user.isAnonymous) {
+                    // ★ 情況 A：訪客 (Guest) ★
+                    // 自動生成隨機代號：ROOKIE-1234
+                    const randomId = Math.floor(1000 + Math.random() * 9000);
+                    const guestName = `ROOKIE-${randomId}`;
+                    
+                    updateHUD(guestName);
+                    showMainMenu();
+
+                } else {
+                    // ★ 情況 B：Google 用戶 ★
+                    // 檢查 Firebase Database 有沒有他的名字記錄
+                    const userRef = ref(db, 'users/' + user.uid);
+                    
+                    get(userRef).then((snapshot) => {
+                        const userData = snapshot.val();
+
+                        if (userData && userData.displayName) {
+                            // 1. 老兵：已經有名字 -> 直接進入
+                            updateHUD(userData.displayName);
+                            showMainMenu();
+                        } else {
+                            // 2. 新兵：沒有名字 -> 彈出註冊視窗
+                            // 先隱藏登入面板，但不顯示主選單
+                            if(loginPanel) loginPanel.style.display = 'none';
+                            if(statusText) statusText.innerText = "REGISTRATION REQUIRED...";
+                            
+                            // 彈出視窗
+                            const modal = document.getElementById('registration-modal');
+                            if(modal) {
+                                modal.style.display = 'flex';
+                                document.getElementById('reg-input').focus();
+                            }
+                        }
+                    });
+                }
+
             } else {
-                // --- 🔴 未登入 ---
-                console.log("Access Denied.");
-                
+                // --- 未登入 ---
+                console.log("No User.");
                 if(loginPanel) loginPanel.style.display = 'block';
                 if(profilePanel) profilePanel.style.display = 'none';
                 if(gameModeSelect) gameModeSelect.style.display = 'none';
                 
-                if(statusText) statusText.innerText = "WAITING FOR AUTHENTICATION...";
-                if(statusText) statusText.style.color = "#94a3b8";
+                if(statusText) {
+                    statusText.innerText = "WAITING FOR AUTHENTICATION...";
+                    statusText.style.color = "#94a3b8";
+                }
             }
         });
+        
+        // 遊戲初始化 (保留)
+        createGrid('player-grid');
+        createGrid('enemy-grid');
+        placeEnemyShips(); 
+        renderSidebar();
+
+        // 輸入音效 (保留)
+        const roomInput = document.getElementById('room-id-input');
+        if (roomInput) {
+            roomInput.addEventListener('input', (e) => {
+                if (e.inputType.includes('delete')) playSound('delete-sfx'); 
+                else playSound('enter-sfx'); 
+            });
+        }
+
     }, 500);
 });
 function playBgm() {
@@ -3690,8 +3899,45 @@ function playBgm() {
     }
 }
 </script>
+<div id="registration-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 9999; flex-direction: column; align-items: center; justify-content: center;">
+    
+    <div style="position: absolute; width: 100%; height: 100%; background: repeating-linear-gradient(transparent 0px, transparent 2px, rgba(14, 165, 233, 0.05) 3px); pointer-events: none;"></div>
+
+    <div style="z-index: 10; text-align: center; border: 2px solid var(--primary); padding: 40px; background: rgba(15, 23, 42, 0.95); box-shadow: 0 0 50px rgba(14, 165, 233, 0.3); max-width: 500px; width: 90%;">
+        
+        <div style="font-family: 'Black Ops One'; font-size: 32px; color: var(--primary); margin-bottom: 10px; text-shadow: 0 0 15px var(--primary);">
+            IDENTITY UNVERIFIED
+        </div>
+        <div style="font-family: 'Orbitron'; color: #94a3b8; font-size: 14px; letter-spacing: 2px; margin-bottom: 30px;">
+            NEW COMMANDER DETECTED. REGISTER CALLSIGN TO PROCEED.
+        </div>
+
+        <input type="text" id="reg-input" maxlength="12" placeholder="ENTER CALLSIGN" style="
+            background: rgba(0,0,0,0.5); 
+            border: 2px solid #334155; 
+            color: #fff; 
+            font-family: 'Black Ops One'; 
+            font-size: 24px; 
+            text-align: center; 
+            padding: 15px; 
+            width: 100%; 
+            outline: none; 
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            margin-bottom: 20px;
+            transition: 0.3s;
+        " onfocus="this.style.borderColor='var(--primary)'; this.style.boxShadow='0 0 20px rgba(14,165,233,0.3)';" onblur="this.style.borderColor='#334155'; this.style.boxShadow='none';">
+
+        <button onclick="submitRegistration()" class="btn" style="width: 100%; padding: 15px; font-size: 18px; border: 1px solid var(--success); color: var(--success); background: rgba(34, 197, 94, 0.1);">
+            CONFIRM IDENTITY
+        </button>
+
+        <div id="reg-error" style="color: var(--danger); font-size: 12px; margin-top: 15px; height: 15px; font-family: 'Orbitron';"></div>
+    </div>
+</div>
 </body>
 </html>
+
 
 
 
