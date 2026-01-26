@@ -1052,7 +1052,32 @@ body {
     background: rgba(232, 121, 249, 0.2); /* 整行背景變紫 */
     transform: scale(1.02); /* 稍微放大一點點，增加動感 */
 }
+/* --- 搜尋框右邊的特效 (改做閃爍光標) --- */
+.search-icon {
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    
+    /* 畫一個長方形光標 */
+    width: 10px;
+    height: 20px;
+    background-color: #0ea5e9; /* 藍色 */
+    
+    /* 加強發光 */
+    box-shadow: 0 0 8px #0ea5e9;
+    
+    /* 讓它閃動，扮 Terminal */
+    animation: cursor-blink 1s infinite step-end;
+    
+    pointer-events: none; /* 確保點擊時不會擋住 */
+}
 
+/* 閃爍動畫 */
+@keyframes cursor-blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+}
     </style>
 </head>
 <body>
@@ -1101,7 +1126,14 @@ body {
         <div id="vocab-list-body" class="vocab-list-body">
             </div>
     </div>
-
+<div class="vocab-tabs">
+        </div>
+<div class="vocab-search-container">
+        <input type="text" id="vocab-search-input" placeholder=">> INPUT_KEYWORD..." onkeyup="filterVocabList()">
+        
+        <div class="search-icon"></div> 
+    </div>
+    <div id="vocab-list-body"></div>
     <button class="btn" onclick="closeVocabScreen()" style="margin-top: 20px; width: 150px;">&lt; BACK</button>
 </div>
 <div id="level-screen" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 250; background: rgba(0,0,0,0.9); flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(5px);">
@@ -3014,11 +3046,33 @@ function renderVocabList(level) {
     // F. 一次過放入頁面
     listBody.appendChild(fragment);
 }
+// ★★★ 新增：搜尋過濾功能 ★★★
+function filterVocabList() {
+    // 1. 獲取搜尋文字 (轉做細楷，方便比較)
+    const input = document.getElementById('vocab-search-input');
+    const filter = input.value.toLowerCase();
+    
+    // 2. 獲取所有單字行
+    const rows = document.querySelectorAll('.vocab-row');
 
+    // 3. 逐行檢查
+    rows.forEach(row => {
+        const enText = row.querySelector('.vocab-en').innerText.toLowerCase();
+        const chText = row.querySelector('.vocab-ch').innerText.toLowerCase();
+
+        // 如果 英文 或 中文 包含搜尋關鍵字，就顯示，否則隱藏
+        if (enText.includes(filter) || chText.includes(filter)) {
+            row.style.display = "flex";
+        } else {
+            row.style.display = "none";
+        }
+    });
+}
 </script>
 </body>
 
 </html>
+
 
 
 
