@@ -1538,27 +1538,38 @@ body {
 
 @media (max-width: 768px) {
         
-        /* 1. 令按鈕容器可以換行，並置中 */
+        @media (max-width: 768px) {
+        
         #game-mode-selection {
-            flex-wrap: wrap !important;      /* 關鍵：允許換行 */
-            justify-content: center !important; 
-            gap: 10px !important;           /* 手機版間距縮細少少，費事太闊 */
+            flex-wrap: wrap !important;      /* 允許換行 */
+            justify-content: center !important; /* 整體置中 */
+            gap: 10px !important;           /* 按鈕之間的空隙 */
         }
 
-        /* 2. 微調按鈕大細，確保頭兩粒掣 (VS AI / VS PLAYER) 夠位並排 */
+        /* 統一所有大按鈕 (包括 Code List) */
         .start-btn-large {
-            padding: 12px 10px !important;  /* 左右縮窄少少 Padding */
-            font-size: 18px !important;     /* 字體縮細少少，避免手機爆格 */
-            flex: 0 1 auto !important;      /* 自動調整闊度 */
-            min-width: 130px;               /* 設定最小闊度，確保好撳 */
+            /* ★ 關鍵修改：全部統一 45% 闊 ★ */
+            flex: 0 0 45% !important;       
+            width: 45% !important;          
+            max-width: 200px !important;    /* 限制最大闊度，唔好太長 */
+            min-width: auto !important;     /* 取消最小闊度限制 */
+            
+            padding: 12px 2px !important;   /* 稍微減少左右 Padding，確保文字夠位 */
+            font-size: 16px !important;     /* 字體調整，防止爆行 */
+            
+            /* 確保文字垂直水平置中 */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            
+            margin: 0 !important;           /* 清除不必要的 Margin */
         }
 
-        /* 3. 強制 CODE LIST 按鈕獨佔下一行 (Full Width) */
+        /* 重置 CODE LIST 按鈕，令它不再是 Full Width */
         .btn-code-list {
-            flex-basis: 90% !important;     /* 強制佔滿一行 (90% 闊度) */
-            margin-top: 5px !important;     /* 同上面分開少少 */
-            width: 90% !important;
-            max-width: 320px;               /* 限制最大闊度，唔好闊得太誇張 */
+            flex-basis: 45% !important;     /* 跟隨大隊，變回 45% */
+            width: 45% !important;
+            margin-top: 0px !important;     /* 唔使額外加 Top Margin */
         }
     }
 /* =========================================
@@ -4034,6 +4045,7 @@ function playBgm() {
 </div>
 </body>
 </html>
+
 
 
 
