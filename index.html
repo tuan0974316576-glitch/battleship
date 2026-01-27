@@ -440,7 +440,7 @@ body {
             .vocab-hint { font-size: 28px; letter-spacing: 4px; }
         }
 
-/* --- 艦隊側邊欄 (修改版：雙列佈局) --- */
+/* --- 艦隊側邊欄 (拖拉功能增強版) --- */
 #fleet-sidebar {
     display: flex; 
     flex-direction: column; /* 電腦版垂直排 */
@@ -453,18 +453,16 @@ body {
     align-self: flex-start;
     justify-items: center;
 }
-/* --- 艦隊側邊欄 (拖拉功能修改版) --- */
+
 .fleet-unit {
     position: relative;
-    display: grid; /* 用 Grid 排列背景格仔 */
-    gap: 2px;      /* 格仔之間的空隙 */
+    display: grid; 
+    gap: 2px;      
     transition: all 0.3s;
     padding: 3px;
     border: 2px solid transparent;
     border-radius: 4px;
-    
-    /* ★ 新增：防止手機瀏覽器選取文字，影響拖拉體驗 ★ */
-    user-select: none; 
+    user-select: none; /* 禁止選取文字，拖拉更順 */
     -webkit-user-select: none;
 }
 
@@ -475,7 +473,7 @@ body {
     width: calc(100% - 6px); 
     height: calc(100% - 6px);
     
-    /* ★ 關鍵修改：解鎖互動 (原本係 none) ★ */
+    /* ★ 關鍵修改：解鎖互動 (原本係 none，依家改成 auto) ★ */
     pointer-events: auto !important; 
     z-index: 10; 
     cursor: grab; /* 手掌游標 */
@@ -485,13 +483,14 @@ body {
     transition: transform 0.1s, opacity 0.1s;
 }
 
-/* ★ 新增：當按住船隻時嘅特效 ★ */
+/* 按住時的效果 */
 .fleet-ship-img:active {
     cursor: grabbing;      
     transform: scale(1.1); 
     opacity: 0.8;          
     z-index: 100;          
 }
+
 .mini-cell {
     width: 25px;  
     height: 25px;
@@ -500,38 +499,39 @@ body {
     border-radius: 2px;
 }
 
-.ship-preview {
-    transition: all 0.3s;
-    border: 2px solid transparent;
-    border-radius: 4px;
-    padding: 2px;
-    background: rgba(255,255,255,0.05);
-}
-
-/* 狀態 1: 正準備放 (Active) - 發光 + 放大 */
-.fleet-unit.current {
-    border-color: var(--warning);
-    box-shadow: 0 0 15px var(--warning);
-    background: rgba(245, 158, 11, 0.1);
-    transform: scale(1.05); /* 稍微縮細少少放大率，防止遮住隔離 */
-}
-
-.fleet-unit.current .mini-cell {
-    background-color: rgba(245, 158, 11, 0.3); /* 格仔變黃 */
-    border-color: var(--warning);
-}
-
-/* 狀態 2: 未輪到 (Pending) - 實色但暗少少 */
-.fleet-unit.pending {
-    opacity: 0.6;
-    transform: scale(0.95);
-}
-
+/* 已部署狀態 (變暗 + 鎖定) */
 .fleet-unit.deployed {
     opacity: 0.3;
     filter: grayscale(100%);
     transform: scale(0.8);
     pointer-events: none; /* 鎖死已部署嘅船 */
+}
+
+/* --- 拖放互動特效 (格仔變色) --- */
+.cell.drag-hover-valid {
+    background-color: rgba(34, 197, 94, 0.5) !important;
+    box-shadow: inset 0 0 10px #22c55e;
+    transform: scale(1.05);
+    z-index: 5;
+}
+
+.cell.drag-hover-invalid {
+    background-color: rgba(239, 68, 68, 0.5) !important;
+    box-shadow: inset 0 0 10px #ef4444;
+}
+
+/* 棋盤上的船都可以再拖 */
+.ship-overlay {
+    cursor: grab; 
+    pointer-events: auto !important; 
+    touch-action: none;
+    transition: transform 0.1s;
+}
+.ship-overlay:active {
+    cursor: grabbing;
+    transform: scale(1.05);
+    opacity: 0.8;
+    z-index: 100;
 }
 /* --- 全局返回按鈕樣式 --- */
         #global-back-btn {
@@ -1525,9 +1525,6 @@ body {
     background: rgba(10, 20, 35, 0.95); /* 深色半透明背景 */
     backdrop-filter: blur(10px); /* 背景磨砂玻璃效果 */
 }
-/* =========================================
-   ★★★ 手機版緊急修正 (MOBILE FIXES) ★★★
-   ========================================= */
 /* =========================================
    ★★★ 手機版緊急修正 (KEYBOARD SAFE V2) ★★★
    ========================================= */
@@ -2591,8 +2588,7 @@ function initPVPListeners() {
         isVertical = !isVertical;
         document.getElementById('rotate-btn').innerText = isVertical ? "ROTATE: VERTICAL" : "ROTATE: HORIZONTAL";
     }
-
-
+    
     // --- 8. 戰鬥流程 ---
 function startBattle() {
         if (deploymentTimerInterval) clearInterval(deploymentTimerInterval);
@@ -4095,6 +4091,7 @@ function playBgm() {
 </div>
 </body>
 </html>
+
 
 
 
