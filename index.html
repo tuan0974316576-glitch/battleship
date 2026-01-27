@@ -439,100 +439,83 @@ body {
             #control-panel { flex-direction: column; gap: 5px; }
             .vocab-hint { font-size: 28px; letter-spacing: 4px; }
         }
-
-/* --- 艦隊側邊欄 (拖拉功能增強版) --- */
+/* --- 艦隊側邊欄 --- */
+/* --- 艦隊側邊欄 (修改版：雙列佈局) --- */
 #fleet-sidebar {
-    display: flex; 
-    flex-direction: column; /* 電腦版垂直排 */
-    gap: 10px;
+    /* ★ 改用 Grid 佈局，不再是一條直線 ★ */
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* 強制分兩列 (左右並排) */
+    
+    gap: 10px; /* 縮細船與船之間的距離 (原本係 20px) */
+    
     background: rgba(15, 23, 42, 0.8);
     padding: 15px 10px;
     border-radius: 8px;
     border: 1px solid var(--glass-border);
+    
+    /* 確保佢唔會拉到太長 */
     height: fit-content; 
-    align-self: flex-start;
-    justify-items: center;
+    align-self: center; /* 令側邊欄在畫面中間垂直置中 */
+    
+    justify-items: center; /* 內容置中 */
 }
-
 .fleet-unit {
-    position: relative;
-    display: grid; 
-    gap: 2px;      
-    transition: all 0.3s;
-    padding: 3px;
-    border: 2px solid transparent;
-    border-radius: 4px;
-    user-select: none; /* 禁止選取文字，拖拉更順 */
-    -webkit-user-select: none;
-}
-
+            position: relative;
+            display: grid; /* 用 Grid 排列背景格仔 */
+            gap: 2px;      /* 格仔之間的空隙 */
+            transition: all 0.3s;
+            padding: 3px;
+            border: 2px solid transparent;
+            border-radius: 4px;
+        }
 .fleet-ship-img {
-    position: absolute;
-    top: 3px;  
-    left: 3px;
-    width: calc(100% - 6px); 
-    height: calc(100% - 6px);
-    
-    /* ★ 關鍵修改：解鎖互動 (原本係 none，依家改成 auto) ★ */
-    pointer-events: auto !important; 
-    z-index: 10; 
-    cursor: grab; /* 手掌游標 */
-    touch-action: none; /* 手機專用 */
-    
-    filter: drop-shadow(0 0 2px #000);
-    transition: transform 0.1s, opacity 0.1s;
-}
-
-/* 按住時的效果 */
-.fleet-ship-img:active {
-    cursor: grabbing;      
-    transform: scale(1.1); 
-    opacity: 0.8;          
-    z-index: 100;          
-}
-
+            position: absolute;
+            top: 3px;  /* 對應 .fleet-unit 的 padding */
+            left: 3px;
+            width: calc(100% - 6px); /* 扣除 padding */
+            height: calc(100% - 6px);
+            z-index: 2; /* 確保在格仔上面 */
+            pointer-events: none; /* 讓點擊穿透 */
+            filter: drop-shadow(0 0 2px #000);
+        }
 .mini-cell {
-    width: 25px;  
-    height: 25px;
-    background-color: rgba(255, 255, 255, 0.1); 
-    border: 1px solid rgba(255, 255, 255, 0.3); 
-    border-radius: 2px;
-}
+            width: 25px;  /* 迷你格大細 */
+            height: 25px;
+            background-color: rgba(255, 255, 255, 0.1); /* 半透明底 */
+            border: 1px solid rgba(255, 255, 255, 0.3); /* 邊框 */
+            border-radius: 2px;
+        }
+        .ship-preview {
+            transition: all 0.3s;
+            border: 2px solid transparent;
+            border-radius: 4px;
+            padding: 2px;
+            background: rgba(255,255,255,0.05);
+        }
 
-/* 已部署狀態 (變暗 + 鎖定) */
+        /* 狀態 1: 正準備放 (Active) - 發光 + 放大 */
+.fleet-unit.current {
+            border-color: var(--warning);
+            box-shadow: 0 0 15px var(--warning);
+            background: rgba(245, 158, 11, 0.1);
+            transform: scale(1.1);
+        }
+.fleet-unit.current .mini-cell {
+            background-color: rgba(245, 158, 11, 0.3); /* 格仔變黃 */
+            border-color: var(--warning);
+        }
+        /* 狀態 2: 未輪到 (Pending) - 實色但暗少少 */
+.fleet-unit.pending {
+            opacity: 0.6;
+            transform: scale(0.95);
+        }
+
+        /* 狀態 3: 已部署 (Deployed) - 剪影/黑白/透明 */
 .fleet-unit.deployed {
-    opacity: 0.3;
-    filter: grayscale(100%);
-    transform: scale(0.8);
-    pointer-events: none; /* 鎖死已部署嘅船 */
-}
-
-/* --- 拖放互動特效 (格仔變色) --- */
-.cell.drag-hover-valid {
-    background-color: rgba(34, 197, 94, 0.5) !important;
-    box-shadow: inset 0 0 10px #22c55e;
-    transform: scale(1.05);
-    z-index: 5;
-}
-
-.cell.drag-hover-invalid {
-    background-color: rgba(239, 68, 68, 0.5) !important;
-    box-shadow: inset 0 0 10px #ef4444;
-}
-
-/* 棋盤上的船都可以再拖 */
-.ship-overlay {
-    cursor: grab; 
-    pointer-events: auto !important; 
-    touch-action: none;
-    transition: transform 0.1s;
-}
-.ship-overlay:active {
-    cursor: grabbing;
-    transform: scale(1.05);
-    opacity: 0.8;
-    z-index: 100;
-}
+            opacity: 0.3;
+            filter: grayscale(100%);
+            transform: scale(0.8);
+        }
 /* --- 全局返回按鈕樣式 --- */
         #global-back-btn {
             display: none; /* 一開始係 Start Screen，所以預設隱藏 */
@@ -888,17 +871,11 @@ body {
     }
 
         /* 3. 調整每隻船仔的大小 (稍微縮細以適應橫排) */
-.fleet-unit {
-    position: relative;
-    display: grid; 
-    gap: 2px;      
-    transition: all 0.3s;
-    padding: 3px;
-    border: 2px solid transparent;
-    border-radius: 4px;
-    user-select: none; /* 禁止選取文字，拖拉更順 */
-    -webkit-user-select: none;
-}
+        .fleet-unit {
+            transform: scale(0.85); /* 縮細 85% */
+            margin: 0; 
+            flex-shrink: 0; /* 防止被壓扁 */
+        }
         
         /* 選中時的放大效果稍微收斂，費事爆位 */
         .fleet-unit.current {
@@ -1526,6 +1503,9 @@ body {
     backdrop-filter: blur(10px); /* 背景磨砂玻璃效果 */
 }
 /* =========================================
+   ★★★ 手機版緊急修正 (MOBILE FIXES) ★★★
+   ========================================= */
+/* =========================================
    ★★★ 手機版緊急修正 (KEYBOARD SAFE V2) ★★★
    ========================================= */
 @media (max-width: 600px) {
@@ -1575,34 +1555,6 @@ body {
         padding: 12px !important;
         font-size: 16px !important;
     }
-}
-/* --- 拖放互動特效 (Drag & Drop Feedback) --- */
-
-/* --- 拖放互動特效 (格仔變色) --- */
-.cell.drag-hover-valid {
-    background-color: rgba(34, 197, 94, 0.5) !important;
-    box-shadow: inset 0 0 10px #22c55e;
-    transform: scale(1.05);
-    z-index: 5;
-}
-
-.cell.drag-hover-invalid {
-    background-color: rgba(239, 68, 68, 0.5) !important;
-    box-shadow: inset 0 0 10px #ef4444;
-}
-
-/* 確保棋盤上已放置嘅船都可以被拖走 */
-.ship-overlay {
-    cursor: grab; 
-    pointer-events: auto !important; 
-    touch-action: none;
-    transition: transform 0.1s;
-}
-.ship-overlay:active {
-    cursor: grabbing;
-    transform: scale(1.05);
-    opacity: 0.8;
-    z-index: 100;
 }
     </style>
 
@@ -2280,28 +2232,7 @@ function initPVPListeners() {
             }
         });
     }   
-
-// --- 7. 佈陣邏輯 (全新拖放版 V2.0) ---
-
-    let draggedShipIndex = -1; // 正在拖緊邊隻船
-    let isDraggingFromBoard = false; // 係咪從棋盤上拖起
-
-    // 1. 初始化拖放監聽
-    function initDragSystem() {
-        const grid = document.getElementById('player-grid');
-        const cells = grid.children;
-
-        Array.from(cells).forEach(cell => {
-            // 電腦版
-            cell.addEventListener('dragover', handleDragOver);
-            cell.addEventListener('dragleave', handleDragLeave);
-            cell.addEventListener('drop', handleDrop);
-        });
-
-        grid.addEventListener('dragover', (e) => e.preventDefault());
-    }
-
-    // 2. 建立棋盤 (包含拖放啟動)
+    // --- 7. 佈陣邏輯 ---
     function createGrid(elementId) {
         const board = document.getElementById(elementId);
         board.innerHTML = '';
@@ -2309,227 +2240,180 @@ function initPVPListeners() {
             const cell = document.createElement('div');
             cell.classList.add('cell');
             cell.dataset.index = i;
-            
-            // 敵人棋盤依然保留點擊攻擊功能
-            if (elementId === 'enemy-grid') {
+            if (elementId === 'player-grid') {
+                cell.addEventListener('mouseover', () => handleHover(i));
+                cell.addEventListener('click', () => handleClick(i));
+            } else {
                 cell.addEventListener('click', () => handleEnemyGridClick(i));
             }
-            // 玩家棋盤改用拖放，所以原本的 click/mouseover 移除
-            
             board.appendChild(cell);
         }
+        board.addEventListener('mouseleave', clearPreview);
+    }
+
+function getShipIndices(idx, conf, v) {
+        let indices = [];
+        let r = Math.floor(idx / GRID_SIZE);
+        let c = idx % GRID_SIZE;
         
-        // ★ 啟動拖放系統 (只針對玩家棋盤) ★
-        if (elementId === 'player-grid') {
-            initDragSystem();
-        }
-    }
-
-    // 3. 渲染側邊欄 (加入 draggable)
-    function renderSidebar() {
-        const sidebar = document.getElementById('fleet-sidebar');
-        if (!sidebar) return;
-        sidebar.innerHTML = ''; 
-
-        FLEET.forEach((ship, index) => {
-            const isDeployed = (ship.indices !== null);
-            
-            const container = document.createElement('div');
-            container.id = `ship-unit-${index}`;
-            container.classList.add('fleet-unit');
-            if(isDeployed) container.classList.add('deployed');
-            
-            container.style.gridTemplateColumns = `repeat(${ship.width}, 1fr)`;
-            
-            for(let i=0; i < ship.width * ship.height; i++) {
-                const cell = document.createElement('div');
-                cell.classList.add('mini-cell');
-                if (ship.custom && ship.layoutV[i] === 0) cell.style.visibility = 'hidden';
-                container.appendChild(cell);
-            }
-
-            const img = document.createElement('img');
-            img.src = ship.img;
-            img.classList.add('fleet-ship-img');
-            img.id = `sidebar-ship-${index}`;
-            
-            // ★ 設定 Draggable ★
-            img.draggable = !isDeployed; 
-            img.dataset.shipId = index;
-            addDragEvents(img, index); // 加入監聽
-
-            container.appendChild(img);
-            sidebar.appendChild(container);
-        });
-    }
-
-    // 4. 為圖片加入拖拉事件 (通用)
-    function addDragEvents(img, index) {
-        // --- 電腦版 ---
-        img.addEventListener('dragstart', (e) => {
-            draggedShipIndex = index;
-            isDraggingFromBoard = img.classList.contains('ship-overlay'); 
-            
-            e.dataTransfer.setData('text/plain', index);
-            e.dataTransfer.effectAllowed = 'move';
-            setTimeout(() => img.style.opacity = '0.5', 0);
-            playSound('deploy-sfx');
-        });
-
-        img.addEventListener('dragend', (e) => {
-            img.style.opacity = '1';
-            clearDragPreview();
-            draggedShipIndex = -1;
-        });
-
-        // --- 手機版 Touch ---
-        img.addEventListener('touchstart', (e) => {
-            draggedShipIndex = index;
-            isDraggingFromBoard = img.classList.contains('ship-overlay');
-            img.style.opacity = '0.7';
-            img.style.transform = 'scale(1.1)';
-            playSound('deploy-sfx');
-        }, {passive: false});
-
-        img.addEventListener('touchmove', (e) => {
-            e.preventDefault(); 
-            const touch = e.touches[0];
-            const element = document.elementFromPoint(touch.clientX, touch.clientY);
-            if (element && element.classList.contains('cell') && element.parentElement.id === 'player-grid') {
-                showDragPreview(parseInt(element.dataset.index));
-            } else {
-                clearDragPreview();
-            }
-        }, {passive: false});
-
-        img.addEventListener('touchend', (e) => {
-            img.style.opacity = '1';
-            img.style.transform = 'none';
-            const touch = e.changedTouches[0];
-            const element = document.elementFromPoint(touch.clientX, touch.clientY);
-            if (element && element.classList.contains('cell') && element.parentElement.id === 'player-grid') {
-                attemptDrop(parseInt(element.dataset.index));
-            }
-            clearDragPreview();
-            draggedShipIndex = -1;
-        });
-    }
-
-    // 5. 拖放過程預覽
-    function handleDragOver(e) {
-        e.preventDefault(); 
-        showDragPreview(parseInt(this.dataset.index));
-    }
-
-    function showDragPreview(index) {
-        if (draggedShipIndex === -1) return;
-        clearDragPreview();
+        // 如果是垂直(v=true)，用原本長闊；水平則對調
+        let w = v ? conf.width : conf.height;
+        let h = v ? conf.height : conf.width;
         
-        const ship = FLEET[draggedShipIndex];
-        let tempGrid = [...myGrid];
+        // 1. 檢查邊界 (出界就回傳 null)
+        if (r + h > GRID_SIZE || c + w > GRID_SIZE) return null;
         
-        // 如果是重置舊位，先暫時移除舊的佔位
-        if (isDraggingFromBoard && ship.indices) {
-            ship.indices.forEach(i => tempGrid[i] = 0);
+        // 2. 計算格仔位置
+        if (conf.custom) {
+            // ★ 特殊形狀邏輯 ★
+            const layout = v ? conf.layoutV : conf.layoutH;
+            
+            for (let i = 0; i < h; i++) {
+                for (let j = 0; j < w; j++) {
+                    // 檢查 layout 陣列：如果是 1 才算有船
+                    const layoutIdx = i * w + j;
+                    if (layout[layoutIdx] === 1) {
+                        indices.push((r + i) * GRID_SIZE + (c + j));
+                    }
+                }
+            }
+        } else {
+            // ★ 普通長方形邏輯 (舊代碼) ★
+            for (let i = 0; i < h; i++) {
+                for (let j = 0; j < w; j++) {
+                    indices.push((r + i) * GRID_SIZE + (c + j));
+                }
+            }
         }
         
-        const indices = getShipIndices(index, ship, isVertical);
+        return indices;
+    }
+
+    function handleHover(index) {
+        if (currentPhase !== 'DEPLOY') return;
+        clearPreview();
+        if (deployIndex >= FLEET.length) return;
+        
+        const indices = getShipIndices(index, FLEET[deployIndex], isVertical);
         const cells = document.getElementById('player-grid').children;
         
-        if (!indices) {
-            if (cells[index]) cells[index].classList.add('drag-hover-invalid');
-        } else {
-            const overlap = indices.some(idx => tempGrid[idx] === 1);
-            indices.forEach(idx => {
-                cells[idx].classList.add(overlap ? 'drag-hover-invalid' : 'drag-hover-valid');
-            });
-        }
-    }
-
-    function handleDragLeave(e) { clearDragPreview(); }
-
-    function clearDragPreview() {
-        document.querySelectorAll('.cell').forEach(c => {
-            c.classList.remove('drag-hover-valid', 'drag-hover-invalid');
-        });
-    }
-
-    // 6. 放置處理 (Drop)
-    function handleDrop(e) {
-        e.preventDefault();
-        attemptDrop(parseInt(this.dataset.index));
-    }
-
-    // 7. 嘗試放置核心邏輯
-    function attemptDrop(index) {
-        if (draggedShipIndex === -1) return;
-        
-        const ship = FLEET[draggedShipIndex];
-        
-        // 暫存舊位置 (如果放置失敗要還原)
-        const oldIndices = ship.indices ? [...ship.indices] : null;
-        
-        // 如果是從棋盤拖起，先清除舊記錄
-        if (isDraggingFromBoard && ship.indices) {
-            ship.indices.forEach(i => myGrid[i] = 0);
-            ship.indices = null;
-            const oldImg = document.getElementById(`board-ship-${draggedShipIndex}`);
-            if(oldImg) oldImg.remove();
+        if (!indices) { 
+            cells[index].classList.add('invalid-hover'); 
+            return; 
         }
         
-        const indices = getShipIndices(index, ship, isVertical);
-        
-        // 檢查有效性
-        if (!indices || indices.some(idx => myGrid[idx] === 1)) {
-            // --- 失敗處理 ---
-            if (isDraggingFromBoard && oldIndices) {
-                // 如果是移動失敗，還原舊位置
-                oldIndices.forEach(i => myGrid[i] = 1);
-                ship.indices = oldIndices;
-                // 還原圖片
-                placeShipImage('player-grid', oldIndices[0], ship, ship.isVertical); 
-                playSound('wrong-sfx');
-            } else {
-                playSound('wrong-sfx');
+        let overlap = indices.some(idx => myGrid[idx] === 1);
+        indices.forEach(idx => cells[idx].classList.add(overlap ? 'invalid-hover' : 'valid-hover'));
+    }
+
+    function clearPreview() { 
+        document.querySelectorAll('.cell').forEach(c => c.classList.remove('valid-hover', 'invalid-hover')); 
+    }
+
+function handleClick(index) {
+    // 1. 如果唔係部署階段 (戰鬥中)，處理發射邏輯
+    if (currentPhase !== 'DEPLOY') {
+        if (currentPhase === 'PLAYER_TURN') {
+            const cell = document.getElementById('enemy-grid').children[index];
+            if (!cell.classList.contains('revealed')) openLaunchModal(index);
+        }
+        return;
+    }
+
+    // 2. 回收船隻邏輯 (點擊已放置的船)
+    if (myGrid[index] === 1) {
+        let targetShipId = -1;
+        FLEET.forEach((ship, i) => {
+            if (ship.indices && ship.indices.includes(index)) {
+                targetShipId = i;
             }
+        });
+
+        if (targetShipId !== -1) {
+            FLEET[targetShipId].indices.forEach(idx => myGrid[idx] = 0);
+            FLEET[targetShipId].indices = null; 
+
+            const img = document.getElementById(`board-ship-${targetShipId}`);
+            if (img) img.remove();
+
+            playSound('delete-sfx');
+
+            if (deployIndex < FLEET.length) {
+                const currentHolding = document.getElementById(`ship-unit-${deployIndex}`);
+                if (currentHolding) {
+                    currentHolding.classList.remove('current');
+                    currentHolding.classList.add('pending');
+                }
+            }
+
+            deployIndex = targetShipId;
+            const newCurrent = document.getElementById(`ship-unit-${deployIndex}`);
+            if (newCurrent) {
+                newCurrent.classList.remove('deployed', 'pending');
+                newCurrent.classList.add('current');
+            }
+
+            // ★★★ 修改重點 A：拎起隻船，即係未放完，要 Disable 開始掣，並顯示返 Rotate 掣 ★★★
+            document.getElementById('start-btn').disabled = true;
+            document.getElementById('rotate-btn').style.display = 'inline-block'; 
+            
             return;
         }
-        
-        // --- 成功處理 ---
-        indices.forEach(i => myGrid[i] = 1);
-        ship.indices = indices;
-        ship.isVertical = isVertical; 
-        
-        // 放置圖片
-        placeShipImage('player-grid', index, ship, isVertical);
-        
-        // ★ 播放音效 (修正版) ★
-        const currentShipId = draggedShipIndex; // 鎖定 ID
-        playSound('deploy-sfx');
-        setTimeout(() => playSound(`ship-voice-${currentShipId}`), 200);
-        
-        renderSidebar(); // 更新側邊欄
-        checkAllDeployed(); // 檢查開始掣
     }
 
-    // 8. 放置圖片
+    // 3. 放置船隻邏輯
+    if (deployIndex >= FLEET.length) return;
+
+    const conf = FLEET[deployIndex];
+    const indices = getShipIndices(index, conf, isVertical);
+
+    // 如果位置無效或重疊，直接彈走
+    if (!indices || indices.some(idx => myGrid[idx] === 1)) return;
+
+    // 執行放置 
+    indices.forEach(idx => myGrid[idx] = 1);
+    FLEET[deployIndex].indices = indices;
+    FLEET[deployIndex].isVertical = isVertical; 
+
+    placeShipImage('player-grid', index, conf, isVertical);
+    
+playSound('deploy-sfx'); // 先播機械聲 (基底)
+    setTimeout(() => {
+        playSound(`ship-voice-${deployIndex}`); // 延遲 0.2秒 播人聲，更有層次感
+    }, 200);
+
+    const justPlaced = document.getElementById(`ship-unit-${deployIndex}`);
+    if (justPlaced) {
+        justPlaced.classList.remove('current');
+        justPlaced.classList.add('deployed');
+    }
+
+    deployIndex = findNextUnplaced();
+
+    if (deployIndex < FLEET.length) {
+        // 仲有船未放
+        const nextShip = document.getElementById(`ship-unit-${deployIndex}`);
+        if (nextShip) {
+            nextShip.classList.remove('pending');
+            nextShip.classList.add('current');
+        }
+    } else {
+        // ★★★ 修改重點 B：全部放晒！啟用開始掣，並隱藏 Rotate 掣 ★★★
+        document.getElementById('start-btn').disabled = false;
+        document.getElementById('rotate-btn').style.display = 'none'; // 隱藏 Rotate
+    }
+}
+
     function placeShipImage(boardId, idx, conf, v) {
         const board = document.getElementById(boardId);
-        // 安全檢查，防止 idx 出錯
-        if (!board.children[idx]) return; 
-        
         const startCell = board.children[idx];
         const img = document.createElement('img');
         img.src = conf.img;
         img.classList.add('ship-overlay');
         
-        // 修正 ID
-        const shipId = FLEET.indexOf(conf);
-        img.id = `board-ship-${shipId}`;
-        
-        // ★ 設定棋盤上的船可再拖 ★
-        img.draggable = true;
-        addDragEvents(img, shipId);
+        if (boardId === 'player-grid') {
+            img.id = `board-ship-${deployIndex}`;
+        }
         
         const pW = 35 * conf.width + 2 * (conf.width - 1);
         const pH = 35 * conf.height + 2 * (conf.height - 1);
@@ -2546,49 +2430,11 @@ function initPVPListeners() {
         board.appendChild(img);
     }
 
-    // 9. 檢查開始條件
-    function checkAllDeployed() {
-        const allPlaced = FLEET.every(ship => ship.indices !== null);
-        document.getElementById('start-btn').disabled = !allPlaced;
-        // 注意：拖放模式下，建議保留 Rotate 掣顯示，方便隨時調整
-    }
-
-    // 10. 計算座標 (這個函數通常不用動，保留即可)
-    function getShipIndices(idx, conf, v) {
-        let indices = [];
-        let r = Math.floor(idx / GRID_SIZE);
-        let c = idx % GRID_SIZE;
-        let w = v ? conf.width : conf.height;
-        let h = v ? conf.height : conf.width;
-        
-        if (r + h > GRID_SIZE || c + w > GRID_SIZE) return null;
-        
-        if (conf.custom) {
-            const layout = v ? conf.layoutV : conf.layoutH;
-            for (let i = 0; i < h; i++) {
-                for (let j = 0; j < w; j++) {
-                    const layoutIdx = i * w + j;
-                    if (layout[layoutIdx] === 1) {
-                        indices.push((r + i) * GRID_SIZE + (c + j));
-                    }
-                }
-            }
-        } else {
-            for (let i = 0; i < h; i++) {
-                for (let j = 0; j < w; j++) {
-                    indices.push((r + i) * GRID_SIZE + (c + j));
-                }
-            }
-        }
-        return indices;
-    }
-
-    // 旋轉函數 (保留)
     function rotateShip() {
         isVertical = !isVertical;
         document.getElementById('rotate-btn').innerText = isVertical ? "ROTATE: VERTICAL" : "ROTATE: HORIZONTAL";
     }
-    
+
     // --- 8. 戰鬥流程 ---
 function startBattle() {
         if (deploymentTimerInterval) clearInterval(deploymentTimerInterval);
@@ -3213,6 +3059,40 @@ function startPlayerTurn() {
         isMusicPlaying = !isMusicPlaying;
     }
 
+function renderSidebar() {
+    const sidebar = document.getElementById('fleet-sidebar');
+    if (!sidebar) return; // 安全檢查
+    sidebar.innerHTML = ''; 
+
+    FLEET.forEach((ship, index) => {
+        const container = document.createElement('div');
+        container.id = `ship-unit-${index}`;
+        container.classList.add('fleet-unit');
+        
+        container.style.gridTemplateColumns = `repeat(${ship.width}, 1fr)`;
+        
+        const totalCells = ship.width * ship.height;
+        for(let i=0; i<totalCells; i++) {
+            const cell = document.createElement('div');
+            cell.classList.add('mini-cell');
+            if (ship.custom && ship.layoutV[i] === 0) {
+                cell.style.visibility = 'hidden';
+            }
+            container.appendChild(cell);
+        }
+
+        const img = document.createElement('img');
+        img.src = ship.img;
+        img.classList.add('fleet-ship-img');
+        container.appendChild(img);
+        
+        // 設定初始狀態
+        if (index === 0) container.classList.add('current');
+        else container.classList.add('pending');
+        
+        sidebar.appendChild(container);
+    });
+}
 
     function findNextUnplaced() {
         for (let i = 0; i < FLEET.length; i++) {
@@ -4091,12 +3971,6 @@ function playBgm() {
 </div>
 </body>
 </html>
-
-
-
-
-
-
 
 
 
