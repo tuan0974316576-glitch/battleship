@@ -1535,6 +1535,32 @@ body {
 
 @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 @keyframes pulseText { from { opacity: 0.6; } to { opacity: 1; } }
+
+@media (max-width: 768px) {
+        
+        /* 1. 令按鈕容器可以換行，並置中 */
+        #game-mode-selection {
+            flex-wrap: wrap !important;      /* 關鍵：允許換行 */
+            justify-content: center !important; 
+            gap: 10px !important;           /* 手機版間距縮細少少，費事太闊 */
+        }
+
+        /* 2. 微調按鈕大細，確保頭兩粒掣 (VS AI / VS PLAYER) 夠位並排 */
+        .start-btn-large {
+            padding: 12px 10px !important;  /* 左右縮窄少少 Padding */
+            font-size: 18px !important;     /* 字體縮細少少，避免手機爆格 */
+            flex: 0 1 auto !important;      /* 自動調整闊度 */
+            min-width: 130px;               /* 設定最小闊度，確保好撳 */
+        }
+
+        /* 3. 強制 CODE LIST 按鈕獨佔下一行 (Full Width) */
+        .btn-code-list {
+            flex-basis: 90% !important;     /* 強制佔滿一行 (90% 闊度) */
+            margin-top: 5px !important;     /* 同上面分開少少 */
+            width: 90% !important;
+            max-width: 320px;               /* 限制最大闊度，唔好闊得太誇張 */
+        }
+    }
     </style>
 
 </head>
@@ -3977,6 +4003,7 @@ function playBgm() {
 </div>
 </body>
 </html>
+
 
 
 
