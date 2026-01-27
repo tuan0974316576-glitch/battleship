@@ -2370,8 +2370,8 @@ function handleClick(index) {
     // 如果位置無效或重疊，直接彈走
     if (!indices || indices.some(idx => myGrid[idx] === 1)) return;
 
-    // 執行放置
-// 執行放置    indices.forEach(idx => myGrid[idx] = 1);
+    // 執行放置 
+    indices.forEach(idx => myGrid[idx] = 1);
     FLEET[deployIndex].indices = indices;
     FLEET[deployIndex].isVertical = isVertical; 
 
@@ -3971,6 +3971,7 @@ function playBgm() {
 </div>
 </body>
 </html>
+
 
 
 
