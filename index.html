@@ -3785,21 +3785,42 @@ window.playAsGuest = function() {
 }
 
 // 2. Google 登入
+// 2. Google 登入 (修復版：解決閂窗卡死問題)
 window.loginWithGoogle = function() {
     const { getAuth, GoogleAuthProvider, signInWithPopup } = window.firebaseModules;
     if(typeof playSound === 'function') playSound('deploy-sfx');
     
-    // ★ 開啟鎖定遮罩 ★
-    document.getElementById('login-overlay').style.display = 'flex';
+    // 獲取遮罩元素
+    const overlay = document.getElementById('login-overlay');
+    
+    // 開啟遮罩
+    if(overlay) overlay.style.display = 'flex';
     
     playBgm();
     
-    signInWithPopup(getAuth(), new GoogleAuthProvider()).catch(e => {
-        // 失敗要關閉遮罩
-        document.getElementById('login-overlay').style.display = 'none';
+    signInWithPopup(getAuth(), new GoogleAuthProvider())
+    .then((result) => {
+        // 登入成功！
+        // 這裡不需要做任何 UI 操作 (例如隱藏遮罩)
+        // 因為 onAuthStateChanged 會偵測到登入，然後自動執行 showMainMenu()
+        // 讓遮罩繼續轉，直到轉場完成，體驗會最順滑
+    })
+    .catch(e => {
+        // ★★★ 關鍵修復：失敗/取消時，必須即刻移除遮罩 ★★★
+        if(overlay) overlay.style.display = 'none';
         
-        if(e.code === 'auth/unauthorized-domain') alert("請到 Firebase Console 加入 Authorized Domain!");
-        else alert(e.message);
+        // ★ 特判：如果是用戶自己閂咗個窗 (Popup Closed)，直接 Return，唔好彈 Alert
+        if (e.code === 'auth/popup-closed-by-user' || e.code === 'auth/cancelled-popup-request') {
+            console.log("User cancelled login.");
+            return; // 當無事發生，還原去 INITIALIZE LINK 畫面
+        }
+        
+        // 其他真正的錯誤才彈 Alert
+        if (e.code === 'auth/unauthorized-domain') {
+            alert("System Error: Unauthorized Domain (Check Firebase Console)");
+        } else {
+            alert("LOGIN FAILED: " + e.message);
+        }
     });
 }
 
@@ -4040,6 +4061,7 @@ function playBgm() {
 </div>
 </body>
 </html>
+
 
 
 
