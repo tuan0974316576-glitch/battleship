@@ -1589,36 +1589,26 @@ body {
 @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 @keyframes pulseText { from { opacity: 0.6; } to { opacity: 1; } }
 /* =========================================
-   ★★★ MOBILE MASTER FIX (V4 完美修復版) ★★★
-   1. 解決了「未登入就顯示」的 Bug
-   2. 實現「品」字形排版 (上兩粒，下中間一粒)
+   ★★★ MOBILE MASTER FIX (V5 修正版) ★★★
    ========================================= */
 @media (max-width: 600px) {
 
-    /* --- 1. 遊戲模式選單 (容器) --- */
+    /* --- 1. 遊戲模式按鈕 (品字形排列) --- */
     #game-mode-selection {
-        /* ★ 關鍵修正：刪除了 display: flex !important */
-        /* 依家會乖乖聽 JS 話，未登入唔會顯示 */
-        
-        flex-direction: row !important; /* 橫向排列 */
-        flex-wrap: wrap !important;     /* 容許換行 */
+        display: flex !important;
+        flex-direction: row !important; /* 橫向 */
+        flex-wrap: wrap !important;     /* 換行 */
         justify-content: center !important; /* 內容置中 */
-        
-        width: 95% !important; 
-        gap: 12px !important;  /* 按鈕之間的空位 */
+        width: 95% !important;
+        gap: 12px !important;
         margin: 20px auto !important;
     }
     
-    /* --- 2. 按鈕樣式 (統一寬度) --- */
     #game-mode-selection .start-btn-large {
-        /* 48% 闊度，保證一行放兩粒 (48+48+間距 < 100) */
-        width: 46% !important; 
-        
-        /* 確保 CODE LIST 唔會變長，同上面一樣闊 */
-        flex-grow: 0 !important; 
-        
-        font-size: 16px !important; 
-        padding: 15px 0 !important; 
+        width: 46% !important;  /* 一行兩粒 */
+        flex-grow: 0 !important;
+        font-size: 16px !important;
+        padding: 15px 0 !important;
         text-align: center !important;
         margin: 0 !important;
         
@@ -1628,11 +1618,11 @@ body {
         justify-content: center;
     }
 
-    /* --- 3. 視窗置中修正 (Lobby & Difficulty) --- */
+    /* --- 2. LOBBY & DIFFICULTY (強制正中間) --- */
     #level-screen, #lobby-screen {
         flex-direction: column !important;
-        justify-content: center !important;
-        align-items: center !important;
+        justify-content: center !important; /* 垂直置中 */
+        align-items: center !important;     /* 水平置中 (修正靠左問題) */
         padding: 0 !important;
         top: 0 !important;
         left: 0 !important;
@@ -1640,10 +1630,25 @@ body {
         height: 100% !important;
     }
 
-    /* --- 4. 註冊視窗 (保持靠上) --- */
+    .level-grid {
+        grid-template-columns: 1fr 1fr !important;
+        width: 90% !important;
+        gap: 10px !important;
+        justify-items: center !important; /* 確保 Grid 內容置中 */
+    }
+    
+    #lobby-screen > div {
+        width: 85% !important;
+        max-width: 350px !important;
+        margin: 0 !important;
+    }
+
+    /* --- 3. 註冊視窗 (強制靠頂 + 水平置中) --- */
     #registration-modal {
-        align-items: flex-start !important; 
-        padding-top: 50px !important; 
+        flex-direction: column !important;
+        justify-content: flex-start !important; /* ★ 關鍵：垂直靠頂 */
+        align-items: center !important;         /* ★ 關鍵：水平置中 */
+        padding-top: 50px !important;           /* 留位俾鍵盤 */
     }
     
     #registration-modal .cyber-modal-box {
@@ -1651,9 +1656,10 @@ body {
         padding: 25px 20px !important;
     }
 
-    /* --- 5. 解碼視窗 --- */
+    /* --- 4. 解碼視窗 (Launch Modal) --- */
     #launch-modal {
-        align-items: flex-start !important;
+        align-items: flex-start !important; /* 呢個用 flex-start 係啱嘅 (因為預設係 row) */
+        justify-content: center !important;
         padding-top: 30px !important;
     }
     
@@ -1662,7 +1668,7 @@ body {
         margin-bottom: 50vh !important;
     }
     
-    /* --- 6. 標題字體 --- */
+    /* --- 5. 標題字體 --- */
     .main-title { 
         font-size: 40px !important; 
         letter-spacing: 5px !important;
@@ -4110,6 +4116,7 @@ function playBgm() {
 </div>
 </body>
 </html>
+
 
 
 
