@@ -2361,7 +2361,7 @@ function handleClick(index) {
         }
     }
 
-    // 3. 放置船隻邏輯
+   // 3. 放置船隻邏輯
     if (deployIndex >= FLEET.length) return;
 
     const conf = FLEET[deployIndex];
@@ -2370,16 +2370,22 @@ function handleClick(index) {
     // 如果位置無效或重疊，直接彈走
     if (!indices || indices.some(idx => myGrid[idx] === 1)) return;
 
-    // 執行放置 
+    // 執行放置
     indices.forEach(idx => myGrid[idx] = 1);
     FLEET[deployIndex].indices = indices;
     FLEET[deployIndex].isVertical = isVertical; 
 
     placeShipImage('player-grid', index, conf, isVertical);
     
-playSound('deploy-sfx'); // 先播機械聲 (基底)
+    // ★★★ 關鍵修正：先鎖定當前嘅 ID (Snapshot) ★★★
+    // 這樣就算下面 deployIndex 變咗，這裡記住的 ID 都不會變！
+    const currentSoundIndex = deployIndex; 
+
+    playSound('deploy-sfx'); // 先播機械聲
+    
     setTimeout(() => {
-        playSound(`ship-voice-${deployIndex}`); // 延遲 0.2秒 播人聲，更有層次感
+        // ★ 這裡改用 currentSoundIndex，保證讀番正確嗰隻船！ ★
+        playSound(`ship-voice-${currentSoundIndex}`); 
     }, 200);
 
     const justPlaced = document.getElementById(`ship-unit-${deployIndex}`);
@@ -2388,19 +2394,19 @@ playSound('deploy-sfx'); // 先播機械聲 (基底)
         justPlaced.classList.add('deployed');
     }
 
+    // 這裡更新 deployIndex 準備下一隻 (現在這行不會影響上面的播聲了)
     deployIndex = findNextUnplaced();
 
+    // ... (之後的代碼不用改) ...
     if (deployIndex < FLEET.length) {
-        // 仲有船未放
         const nextShip = document.getElementById(`ship-unit-${deployIndex}`);
         if (nextShip) {
             nextShip.classList.remove('pending');
             nextShip.classList.add('current');
         }
     } else {
-        // ★★★ 修改重點 B：全部放晒！啟用開始掣，並隱藏 Rotate 掣 ★★★
         document.getElementById('start-btn').disabled = false;
-        document.getElementById('rotate-btn').style.display = 'none'; // 隱藏 Rotate
+        document.getElementById('rotate-btn').style.display = 'none';
     }
 }
 
@@ -3971,6 +3977,7 @@ function playBgm() {
 </div>
 </body>
 </html>
+
 
 
 
