@@ -516,37 +516,59 @@ body {
             filter: grayscale(100%);
             transform: scale(0.8);
         }
-/* --- 全局返回按鈕樣式 --- */
-        #global-back-btn {
-            display: none; /* 一開始係 Start Screen，所以預設隱藏 */
-            position: fixed;
-            bottom: 30px; /* 距離底部 */
-            left: 50%;
-            transform: translateX(-50%); /* 水平居中 */
-            
-            /* High-Tech 透明風格 */
-            background: transparent;
-            color: var(--primary); /* 用你的主色調 (青藍色) */
-            border: 2px solid var(--primary);
-            padding: 10px 30px;
-            font-family: 'Black Ops One', cursive;
-            font-size: 18px;
-            letter-spacing: 2px;
-            cursor: pointer;
-            z-index: 1000; /* 確保在最頂層 */
-            
-            /* 發光特效 */
-            box-shadow: 0 0 10px rgba(14, 165, 233, 0.3);
-            text-shadow: 0 0 5px var(--primary);
-            transition: all 0.3s ease;
-        }
+/* =========================================
+   ★★★ 全局返回按鈕 (頂部左上角 High-Tech 版) ★★★
+   ========================================= */
+#global-back-btn {
+    display: none; /* JS 控制顯示，預設隱藏 */
+    
+    /* 位置設定：固定在左上角 */
+    position: fixed !important;
+    top: 20px !important;
+    left: 20px !important;
+    bottom: auto !important; /* 確保唔會黐住底部 */
+    transform: none !important; /* 清除舊的置中設定 */
+    
+    /* 按鈕外觀：圓形科幻風格 */
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    background: rgba(15, 23, 42, 0.8); /* 深色半透明底 */
+    border: 1px solid rgba(14, 165, 233, 0.5); /* 藍色幼邊 */
+    
+    /* 內容排版 */
+    display: flex; /* 必須加 flex 才能置中個三角形 */
+    align-items: center;
+    justify-content: center;
+    
+    cursor: pointer;
+    z-index: 3000; /* 確保在最最最頂層 (高過所有 Modal) */
+    backdrop-filter: blur(4px);
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+    transition: all 0.3s ease;
+}
 
-        #global-back-btn:hover {
-            background: rgba(14, 165, 233, 0.2); /* Hover 時加少少底色 */
-            box-shadow: 0 0 20px var(--primary); /* 發光更強 */
-            transform: translateX(-50%) scale(1.1); /* 放大少少 */
-            color: #fff;
-        }
+/* Hover 發光特效 */
+#global-back-btn:hover {
+    border-color: #0ea5e9;
+    box-shadow: 0 0 20px rgba(14, 165, 233, 0.6); /* 強烈藍光 */
+    background: rgba(14, 165, 233, 0.1);
+    transform: scale(1.1);
+}
+
+#global-back-btn:active {
+    transform: scale(0.9);
+}
+
+/* ★ 手機版微調：稍微縮細少少，避免擋住太重要嘅 UI ★ */
+@media (max-width: 600px) {
+    #global-back-btn {
+        top: 15px !important;
+        left: 15px !important;
+        width: 40px;
+        height: 40px;
+    }
+}
 /* --- 高科技確認視窗樣式 --- */
         .tech-modal-overlay {
             display: none; /* 預設隱藏 */
@@ -1806,8 +1828,16 @@ body {
         </div>
     </div>
 <button id="global-back-btn" onclick="confirmExit()">
-        &lt; BACK TO MENU
-    </button>
+    <div style="
+        width: 0; 
+        height: 0; 
+        border-top: 8px solid transparent;
+        border-bottom: 8px solid transparent; 
+        border-right: 14px solid #0ea5e9; 
+        filter: drop-shadow(0 0 5px #0ea5e9);
+        transform: translateX(-2px); /* 微調位置令視覺置中 */
+    "></div>
+</button>
 <div id="tech-notification">
         <div id="notif-title">SYSTEM MESSAGE</div>
         <div id="notif-content">...</div>
@@ -4108,6 +4138,7 @@ function playBgm() {
 </div>
 </body>
 </html>
+
 
 
 
