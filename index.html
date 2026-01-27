@@ -519,54 +519,76 @@ body {
 /* =========================================
    ★★★ 全局返回按鈕 (頂部左上角 High-Tech 版) ★★★
    ========================================= */
+#/* =========================================
+   ★★★ 全局返回按鈕 (終極完美版 - 電腦手機通用) ★★★
+   ========================================= */
 #global-back-btn {
-    display: none; /* JS 控制顯示，預設隱藏 */
+    /* 1. 顯示控制 (由 JS 決定幾時彈出嚟) */
+    /* 注意：這裡我們不寫 display: none，因為 JS 會改 display: flex */
+    /* 如果 JS 未 load 完就見到，可以加番 display: none，但要確保 JS 識改做 flex */
     
-    /* 位置設定：固定在左上角 */
+    /* 2. 位置固定在左上角 */
     position: fixed !important;
     top: 20px !important;
     left: 20px !important;
-    bottom: auto !important; /* 確保唔會黐住底部 */
-    transform: none !important; /* 清除舊的置中設定 */
+    bottom: auto !important;
+    right: auto !important;
+    transform: none !important;
+    margin: 0 !important;
     
-    /* 按鈕外觀：圓形科幻風格 */
-    width: 45px;
-    height: 45px;
+    /* 3. 按鈕外觀：圓形 + 半透明 + 發光 */
+    width: 50px;  /* 電腦版大粒啲 */
+    height: 50px;
     border-radius: 50%;
-    background: rgba(15, 23, 42, 0.8); /* 深色半透明底 */
-    border: 1px solid rgba(14, 165, 233, 0.5); /* 藍色幼邊 */
+    padding: 0 !important; /* 確保無內邊距影響置中 */
     
-    /* 內容排版 */
-    display: flex; /* 必須加 flex 才能置中個三角形 */
+    /* ★ 半透明底色 (0.6) ★ */
+    background: rgba(15, 23, 42, 0.6) !important; 
+    
+    /* ★ 藍色發光邊框 ★ */
+    border: 2px solid #0ea5e9 !important;
+    box-shadow: 0 0 15px rgba(14, 165, 233, 0.5), /* 外發光 */
+                inset 0 0 10px rgba(14, 165, 233, 0.3) !important; /* 內發光 */
+    
+    /* 4. 內容完美置中 */
+    display: flex !important; 
     align-items: center;
     justify-content: center;
     
     cursor: pointer;
-    z-index: 3000; /* 確保在最最最頂層 (高過所有 Modal) */
-    backdrop-filter: blur(4px);
-    box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+    z-index: 3000; 
+    backdrop-filter: blur(5px); /* 磨砂效果 */
     transition: all 0.3s ease;
 }
 
-/* Hover 發光特效 */
+/* Hover 特效：變大、變光 */
 #global-back-btn:hover {
-    border-color: #0ea5e9;
-    box-shadow: 0 0 20px rgba(14, 165, 233, 0.6); /* 強烈藍光 */
-    background: rgba(14, 165, 233, 0.1);
-    transform: scale(1.1);
+    background: rgba(14, 165, 233, 0.2) !important;
+    box-shadow: 0 0 25px rgba(14, 165, 233, 0.8),
+                inset 0 0 15px rgba(14, 165, 233, 0.5) !important;
+    transform: scale(1.1) !important;
 }
 
+/* 按下特效 */
 #global-back-btn:active {
-    transform: scale(0.9);
+    transform: scale(0.95) !important;
 }
 
-/* ★ 手機版微調：稍微縮細少少，避免擋住太重要嘅 UI ★ */
+/* ★ 手機版微調：縮細少少 ★ */
 @media (max-width: 600px) {
     #global-back-btn {
+        width: 42px;
+        height: 42px;
         top: 15px !important;
         left: 15px !important;
-        width: 40px;
-        height: 40px;
+        border-width: 1.5px !important; /* 手機版邊框幼少少 */
+    }
+    
+    /* 手機版三角形縮細少少配合番 */
+    #global-back-btn div {
+        border-top-width: 6px !important;
+        border-bottom-width: 6px !important;
+        border-right-width: 10px !important;
     }
 }
 /* --- 高科技確認視窗樣式 --- */
@@ -1835,7 +1857,7 @@ body {
         border-bottom: 8px solid transparent; 
         border-right: 14px solid #0ea5e9; 
         filter: drop-shadow(0 0 5px #0ea5e9);
-        transform: translateX(-2px); /* 微調位置令視覺置中 */
+        /* 移除咗 translateX，由外層 button 負責置中 */
     "></div>
 </button>
 <div id="tech-notification">
@@ -3784,6 +3806,7 @@ function filterVocabList() {
 }
 // ★ 專門用來打開 Question Bank 的函數 ★
 function openVocabScreen() {
+    toggleGlobalBackBtn(false);
     playSound('open-room-sfx'); // 播放打開介面的聲
     
     document.getElementById('start-screen').style.display = 'none';
@@ -3939,6 +3962,7 @@ function updateHUD(name) {
 
 // 8. 顯示主選單 (隱藏 Login Panel)
 function showMainMenu() {
+    toggleGlobalBackBtn(false);
     const loginPanel = document.getElementById('login-panel');
     const profilePanel = document.getElementById('user-profile-panel');
     const gameModeSelect = document.getElementById('game-mode-selection');
@@ -4072,6 +4096,13 @@ function playBgm() {
         bgm.play().catch(e => console.log("BGM waiting for interaction"));
     }
 }
+function toggleGlobalBackBtn(show) {
+    const btn = document.getElementById('global-back-btn');
+    if (btn) {
+        // 如果 show 係 true，就用 flex (配合你個新 CSS 置中)，否則隱藏
+        btn.style.display = show ? 'flex' : 'none';
+    }
+}
 </script>
 <div id="registration-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 9999; flex-direction: column; align-items: center; justify-content: center;">
     
@@ -4138,6 +4169,7 @@ function playBgm() {
 </div>
 </body>
 </html>
+
 
 
 
