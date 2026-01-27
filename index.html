@@ -439,25 +439,19 @@ body {
             #control-panel { flex-direction: column; gap: 5px; }
             .vocab-hint { font-size: 28px; letter-spacing: 4px; }
         }
-/* --- 艦隊側邊欄 --- */
+
 /* --- 艦隊側邊欄 (修改版：雙列佈局) --- */
 #fleet-sidebar {
-    /* ★ 改用 Grid 佈局，不再是一條直線 ★ */
-    display: grid;
-    grid-template-columns: 1fr 1fr; /* 強制分兩列 (左右並排) */
-    
-    gap: 10px; /* 縮細船與船之間的距離 (原本係 20px) */
-    
+    display: flex; 
+    flex-direction: column; /* 電腦版垂直排 */
+    gap: 10px;
     background: rgba(15, 23, 42, 0.8);
     padding: 15px 10px;
     border-radius: 8px;
     border: 1px solid var(--glass-border);
-    
-    /* 確保佢唔會拉到太長 */
     height: fit-content; 
-    align-self: center; /* 令側邊欄在畫面中間垂直置中 */
-    
-    justify-items: center; /* 內容置中 */
+    align-self: flex-start;
+    justify-items: center;
 }
 /* --- 艦隊側邊欄 (拖拉功能修改版) --- */
 .fleet-unit {
@@ -476,38 +470,33 @@ body {
 
 .fleet-ship-img {
     position: absolute;
-    top: 3px;  /* 對應 .fleet-unit 的 padding */
+    top: 3px;  
     left: 3px;
-    width: calc(100% - 6px); /* 扣除 padding */
+    width: calc(100% - 6px); 
     height: calc(100% - 6px);
     
-    /* ★ 修改 1：提高層級，確保拖起時喺最頂層 ★ */
-    z-index: 10; 
-    
-    /* ★ 修改 2：開啟互動功能 (原本係 none，必須改做 auto) ★ */
+    /* ★ 關鍵修改：解鎖互動 (原本係 none) ★ */
     pointer-events: auto !important; 
-    
-    /* ★ 修改 3：加入手掌游標同禁止滾動 (為手機拖拉準備) ★ */
-    cursor: grab; 
-    touch-action: none; 
+    z-index: 10; 
+    cursor: grab; /* 手掌游標 */
+    touch-action: none; /* 手機專用 */
     
     filter: drop-shadow(0 0 2px #000);
-    transition: transform 0.1s, opacity 0.1s; /* 加少少動畫順滑啲 */
+    transition: transform 0.1s, opacity 0.1s;
 }
 
 /* ★ 新增：當按住船隻時嘅特效 ★ */
 .fleet-ship-img:active {
-    cursor: grabbing;      /* 變做抓緊嘅拳頭 */
-    transform: scale(1.1); /* 放大少少 */
-    opacity: 0.8;          /* 變半透明 */
-    z-index: 100;          /* 確保浮喺一切之上 */
+    cursor: grabbing;      
+    transform: scale(1.1); 
+    opacity: 0.8;          
+    z-index: 100;          
 }
-
 .mini-cell {
-    width: 25px;  /* 迷你格大細 */
+    width: 25px;  
     height: 25px;
-    background-color: rgba(255, 255, 255, 0.1); /* 半透明底 */
-    border: 1px solid rgba(255, 255, 255, 0.3); /* 邊框 */
+    background-color: rgba(255, 255, 255, 0.1); 
+    border: 1px solid rgba(255, 255, 255, 0.3); 
     border-radius: 2px;
 }
 
@@ -538,14 +527,11 @@ body {
     transform: scale(0.95);
 }
 
-/* 狀態 3: 已部署 (Deployed) - 剪影/黑白/透明 */
 .fleet-unit.deployed {
     opacity: 0.3;
     filter: grayscale(100%);
     transform: scale(0.8);
-    
-    /* ★ 新增：已部署就鎖死，唔俾再拖側邊欄嗰隻 (要拖就拖棋盤上面嗰隻) ★ */
-    pointer-events: none; 
+    pointer-events: none; /* 鎖死已部署嘅船 */
 }
 /* --- 全局返回按鈕樣式 --- */
         #global-back-btn {
@@ -902,11 +888,17 @@ body {
     }
 
         /* 3. 調整每隻船仔的大小 (稍微縮細以適應橫排) */
-        .fleet-unit {
-            transform: scale(0.85); /* 縮細 85% */
-            margin: 0; 
-            flex-shrink: 0; /* 防止被壓扁 */
-        }
+.fleet-unit {
+    position: relative;
+    display: grid; 
+    gap: 2px;      
+    transition: all 0.3s;
+    padding: 3px;
+    border: 2px solid transparent;
+    border-radius: 4px;
+    user-select: none; /* 禁止選取文字，拖拉更順 */
+    -webkit-user-select: none;
+}
         
         /* 選中時的放大效果稍微收斂，費事爆位 */
         .fleet-unit.current {
@@ -1589,15 +1581,14 @@ body {
 }
 /* --- 拖放互動特效 (Drag & Drop Feedback) --- */
 
-/* 當拖住船經過「有效」格仔時 (綠色) */
+/* --- 拖放互動特效 (格仔變色) --- */
 .cell.drag-hover-valid {
     background-color: rgba(34, 197, 94, 0.5) !important;
     box-shadow: inset 0 0 10px #22c55e;
-    transform: scale(1.05); /* 微微放大增加手感 */
+    transform: scale(1.05);
     z-index: 5;
 }
 
-/* 當拖住船經過「無效/重疊」格仔時 (紅色) */
 .cell.drag-hover-invalid {
     background-color: rgba(239, 68, 68, 0.5) !important;
     box-shadow: inset 0 0 10px #ef4444;
@@ -1610,7 +1601,6 @@ body {
     touch-action: none;
     transition: transform 0.1s;
 }
-
 .ship-overlay:active {
     cursor: grabbing;
     transform: scale(1.05);
@@ -2293,7 +2283,7 @@ function initPVPListeners() {
             }
         });
     }   
-    // --- 7. 佈陣邏輯 ---
+
 // --- 7. 佈陣邏輯 (全新拖放版 V2.0) ---
 
     let draggedShipIndex = -1; // 正在拖緊邊隻船
@@ -2517,8 +2507,9 @@ function initPVPListeners() {
         placeShipImage('player-grid', index, ship, isVertical);
         
         // ★ 播放音效 (修正版) ★
+        const currentShipId = draggedShipIndex; // 鎖定 ID
         playSound('deploy-sfx');
-        setTimeout(() => playSound(`ship-voice-${draggedShipIndex}`), 200);
+        setTimeout(() => playSound(`ship-voice-${currentShipId}`), 200);
         
         renderSidebar(); // 更新側邊欄
         checkAllDeployed(); // 檢查開始掣
@@ -2600,6 +2591,7 @@ function initPVPListeners() {
         isVertical = !isVertical;
         document.getElementById('rotate-btn').innerText = isVertical ? "ROTATE: VERTICAL" : "ROTATE: HORIZONTAL";
     }
+
 
     // --- 8. 戰鬥流程 ---
 function startBattle() {
@@ -4103,6 +4095,7 @@ function playBgm() {
 </div>
 </body>
 </html>
+
 
 
 
