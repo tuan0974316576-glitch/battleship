@@ -3784,7 +3784,6 @@ window.playAsGuest = function() {
     });
 }
 
-// 2. Google 登入
 // 2. Google 登入 (修復版：解決閂窗卡死問題)
 window.loginWithGoogle = function() {
     const { getAuth, GoogleAuthProvider, signInWithPopup } = window.firebaseModules;
@@ -3843,37 +3842,64 @@ window.changeName = function() {
 let currentUserUid = null;
 
 // 6. 提交註冊 (新兵改名)
+// --- 註冊/改名 確認按鈕 (修復版：強制寫入 Database) ---
 window.submitRegistration = function() {
     const input = document.getElementById('reg-input');
     const errorMsg = document.getElementById('reg-error');
-    const name = input.value.trim().toUpperCase();
-
-    if (name.length < 3) {
-        errorMsg.innerText = "ERROR: MIN 3 CHARS";
-        playSound('wrong-sfx'); return;
+    
+    // 1. 檢查輸入
+    if (!input) return;
+    const name = input.value.trim().toUpperCase(); // 強制大楷
+    
+    // 簡單驗證：唔准空，唔准太長
+    if (name.length < 2 || name.length > 12) {
+        if(errorMsg) errorMsg.innerText = "ERROR: NAME MUST BE 2-12 CHARS";
+        if(typeof playSound === 'function') playSound('wrong-sfx');
+        return;
     }
-    if (name.length > 12) {
-        errorMsg.innerText = "ERROR: MAX 12 CHARS";
-        playSound('wrong-sfx'); return;
+
+    // 2. 獲取 Firebase 工具
+    const { getDatabase, ref, update, getAuth } = window.firebaseModules;
+    const auth = getAuth();
+    const user = auth.currentUser; // 獲取當前登入者
+    
+    if (!user) {
+        alert("CRITICAL ERROR: USER NOT LOGGED IN");
+        return;
     }
 
-    const { getDatabase, ref, update } = window.firebaseModules;
     const db = getDatabase();
 
-    update(ref(db, 'users/' + currentUserUid), { displayName: name }).then(() => {
-        playSound('deploy-sfx');
-        document.getElementById('registration-modal').style.display = 'none';
+    // ★★★ 關鍵修復：將名寫入 Database ★★★
+    // 這樣 Auto-Login 下次先會搵到你！
+    update(ref(db, 'users/' + user.uid), { 
+        displayName: name,
+        lastLogin: Date.now() // 順便記低最後上線時間
+    }).then(() => {
+        // --- 成功儲存後的轉場 ---
+        if(typeof playSound === 'function') playSound('new-commander-sfx'); // 或者是 deploy-sfx
+        
+        // 1. 收埋註冊窗
+        const modal = document.getElementById('registration-modal');
+        if(modal) modal.style.display = 'none';
+        
+        // 2. 更新介面顯示
         updateHUD(name);
+        
+        // 3. 進入主選單
         showMainMenu();
+        
     }).catch(e => {
-        errorMsg.innerText = "ERROR: " + e.message;
+        console.error(e);
+        if(errorMsg) errorMsg.innerText = "DB ERROR: " + e.message;
+        if(typeof playSound === 'function') playSound('wrong-sfx');
     });
 }
 
-// 7. 更新 HUD 顯示名字
+// 輔助函數：更新左上角 HUD 名字
 function updateHUD(name) {
     const hudName = document.getElementById('hud-player-name');
-    if(hudName) hudName.innerText = name;
+    if (hudName) hudName.innerText = name;
 }
 
 // 8. 顯示主選單 (隱藏 Login Panel)
@@ -4061,6 +4087,7 @@ function playBgm() {
 </div>
 </body>
 </html>
+
 
 
 
