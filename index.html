@@ -1502,7 +1502,60 @@ body {
     background: rgba(10, 20, 35, 0.95); /* 深色半透明背景 */
     backdrop-filter: blur(10px); /* 背景磨砂玻璃效果 */
 }
+/* =========================================
+   ★★★ 手機版緊急修正 (MOBILE FIXES) ★★★
+   ========================================= */
+/* =========================================
+   ★★★ 手機版緊急修正 (KEYBOARD SAFE V2) ★★★
+   ========================================= */
+@media (max-width: 600px) {
+    
+    /* 1. 修正視窗位置：強制靠上 (避開鍵盤) */
+    #registration-modal {
+        align-items: flex-start !important; /* ★ 關鍵：由 center 改做 flex-start (靠頂) */
+        justify-content: center !important; /* 水平置中保持不變 */
+        
+        /* ★ 關鍵：頂部留 50px 空位，唔好貼死個邊，又夠高避開鍵盤 */
+        padding-top: 50px !important;       
+        padding-bottom: 20px !important;
+        
+        box-sizing: border-box;
+        overflow-y: auto; /* 萬一鍵盤真係太高，容許個畫面碌上去 */
+    }
 
+    /* 2. 修正個框寬度 */
+    #registration-modal .cyber-modal-box {
+        width: 90% !important;   
+        max-width: none !important; 
+        padding: 25px 20px !important; 
+        border-width: 1px !important;
+        margin-bottom: 50px; /* 底部留多啲位緩衝 */
+    }
+
+    /* 3. 字體縮細 */
+    #registration-modal .cyber-modal-box div[style*="font-size: 32px"] {
+        font-size: 24px !important; 
+        margin-bottom: 5px !important;
+    }
+    
+    #registration-modal .cyber-modal-box div[style*="font-size: 12px"] {
+        font-size: 10px !important;
+        letter-spacing: 1px !important;
+        margin-bottom: 20px !important;
+    }
+
+    /* 4. 輸入框與按鈕調整 */
+    #registration-modal input#reg-input {
+        font-size: 20px !important;
+        padding: 10px !important;
+        letter-spacing: 2px !important;
+    }
+
+    #registration-modal button {
+        padding: 12px !important;
+        font-size: 16px !important;
+    }
+}
 /* --- 登入鎖定遮罩 (Login Overlay) --- */
 #login-overlay {
     position: absolute;
@@ -1535,74 +1588,6 @@ body {
 
 @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 @keyframes pulseText { from { opacity: 0.6; } to { opacity: 1; } }
-
-@media (max-width: 768px) {
-        
-        @media (max-width: 768px) {
-        
-        #game-mode-selection {
-            flex-wrap: wrap !important;      /* 允許換行 */
-            justify-content: center !important; /* 整體置中 */
-            gap: 10px !important;           /* 按鈕之間的空隙 */
-        }
-
-        /* 統一所有大按鈕 (包括 Code List) */
-        .start-btn-large {
-            /* ★ 關鍵修改：全部統一 45% 闊 ★ */
-            flex: 0 0 45% !important;       
-            width: 45% !important;          
-            max-width: 200px !important;    /* 限制最大闊度，唔好太長 */
-            min-width: auto !important;     /* 取消最小闊度限制 */
-            
-            padding: 12px 2px !important;   /* 稍微減少左右 Padding，確保文字夠位 */
-            font-size: 16px !important;     /* 字體調整，防止爆行 */
-            
-            /* 確保文字垂直水平置中 */
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            
-            margin: 0 !important;           /* 清除不必要的 Margin */
-        }
-
-        /* 重置 CODE LIST 按鈕，令它不再是 Full Width */
-        .btn-code-list {
-            flex-basis: 45% !important;     /* 跟隨大隊，變回 45% */
-            width: 45% !important;
-            margin-top: 0px !important;     /* 唔使額外加 Top Margin */
-        }
-    }
-/* =========================================
-       ★★★ 強制 Level Select & Lobby 畫面置中 (新增) ★★★
-       ========================================= */
-    #level-screen, #lobby-screen {
-        /* 1. 確保啟動 Flex 佈局 */
-        display: flex !important;
-        flex-direction: column !important;
-        
-        /* 2. ★ 關鍵：水平置中 (解決靠左問題) ★ */
-        align-items: center !important;
-        
-        /* 3. 垂直置中 (確保畫面在正中間) */
-        justify-content: center !important;
-        
-        /* 保險：確保佔滿全屏 */
-        width: 100% !important;
-        height: 100% !important;
-        top: 0 !important;
-        left: 0 !important;
-    }
-
-    /* 4. 手機版特別優化 (只針對 Lobby) */
-    /* 因為 Lobby 有輸入框，為了避免手機鍵盤彈起時遮住，我們讓它稍微靠上一點，但依然水平置中 */
-    @media (max-width: 600px) {
-        #lobby-screen {
-            justify-content: flex-start !important; /* 改為靠頂排列 */
-            padding-top: 15vh !important;           /* 頂部留 15% 空位 */
-            align-items: center !important;         /* ★ 保持水平置中 ★ */
-            overflow-y: auto !important;            /* 容許滾動 */
-        }
-    }
     </style>
 
 </head>
@@ -4045,10 +4030,6 @@ function playBgm() {
 </div>
 </body>
 </html>
-
-
-
-
 
 
 
