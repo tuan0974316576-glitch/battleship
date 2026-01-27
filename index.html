@@ -3824,9 +3824,13 @@ window.loginWithGoogle = function() {
 }
 
 // 3. 登出
+// 3. 登出
 window.logout = function() {
     const { getAuth, signOut } = window.firebaseModules;
     if(typeof playSound === 'function') playSound('delete-sfx');
+    
+    localStorage.removeItem('battleship_username'); 
+    
     signOut(getAuth()).then(() => location.reload());
 }
 
@@ -3876,6 +3880,7 @@ window.submitRegistration = function() {
         displayName: name,
         lastLogin: Date.now() // 順便記低最後上線時間
     }).then(() => {
+        localStorage.setItem('battleship_username', name);
         // --- 成功儲存後的轉場 ---
         if(typeof playSound === 'function') playSound('new-commander-sfx'); // 或者是 deploy-sfx
         
@@ -3921,97 +3926,113 @@ function showMainMenu() {
     playBgm();
 }
 
-  // 9. 核心監聽器 (自動登入 + 一入即播歌版)
-    window.addEventListener('load', () => {
+ // 9. 核心監聽器 (混合極速版：0秒登入)
+window.addEventListener('load', () => {
+    
+    // 1. 立即嘗試播歌
+    playBgm();
+    document.body.addEventListener('click', playBgm, { once: true });
+
+    // ★★★ 2. 極速登入 (Local Storage Check) ★★★
+    // 唔好等 Firebase，即刻睇下本機有無名！
+    const cachedName = localStorage.getItem('battleship_username');
+    if (cachedName) {
+        console.log("🚀 FAST LOGIN: Found cached user -> " + cachedName);
+        // 有名！即刻扮登入成功，顯示主選單
+        const loginPanel = document.getElementById('login-panel');
+        if(loginPanel) loginPanel.style.display = 'none'; // 收埋登入掣
         
-        // ★ 1. 一入 Game 即刻嘗試播歌 (唔使等登入) ★
-        // 注意：部分瀏覽器 (如 Chrome) 必須要使用者「撳一下」畫面先俾播聲
-        // 所以我加多個 click listener 做後備，確保一定有聲
-        playBgm();
-        document.body.addEventListener('click', playBgm, { once: true });
+        // 更新 UI
+        updateHUD(cachedName);
+        showMainMenu(); 
+    }
 
-        // 延遲少少執行，確保 Firebase 載入
-        setTimeout(() => {
-            // ★ 注意：這裡加了 'get'，因為我們要讀取玩家名字 ★
-            const { initializeApp, getDatabase, getAuth, onAuthStateChanged, ref, onValue, get } = window.firebaseModules;
-            
-            app = initializeApp(firebaseConfig);
-            db = getDatabase(app);
-            auth = getAuth(app);
+    // 3. 延遲啟動 Firebase (當作後台驗證)
+    setTimeout(() => {
+        const { initializeApp, getDatabase, getAuth, onAuthStateChanged, ref, onValue, get } = window.firebaseModules;
+        
+        app = initializeApp(firebaseConfig);
+        db = getDatabase(app);
+        auth = getAuth(app);
 
-            // ★★★ 自動登入系統 (Auto-Login System) ★★★
-            onAuthStateChanged(auth, u => {
-                if (u) {
-                    // --- 情況 A：發現有舊登入記錄 (User 存在) ---
-                    myPlayerId = u.uid;
-                    const disp = document.getElementById('player-id-display');
-                    if(disp) disp.innerText = u.uid.substring(0,6).toUpperCase();
+        // Firebase 狀態監聽 (這是真的連線)
+        onAuthStateChanged(auth, u => {
+            if (u) {
+                // --- 情況 A：Firebase 連線成功 ---
+                myPlayerId = u.uid;
+                const disp = document.getElementById('player-id-display');
+                if(disp) disp.innerText = u.uid.substring(0,6).toUpperCase();
 
-                    // 檢查有無「改名記錄」
-                    // 如果有 -> 直接入主選單 (Show Main Menu)
-                    // 如果無 -> 彈出註冊窗 (Identity Unverified)
-                    const userRef = ref(db, 'users/' + u.uid);
-                    get(userRef).then((snapshot) => {
-                        if (snapshot.exists() && snapshot.val().displayName) {
-                            // 🟢 舊玩家：自動跳轉！
-                            updateHUD(snapshot.val().displayName);
-                            showMainMenu(); 
-                        } else {
-                            // 🟡 新兵 (或者未改名)：收埋 Login 掣，顯示註冊窗
-                            const loginPanel = document.getElementById('login-panel');
-                            if(loginPanel) loginPanel.style.display = 'none';
-                            const regModal = document.getElementById('registration-modal');
-                            if(regModal) regModal.style.display = 'flex';
-                        }
-                    });
-
-                } else {
-                    // --- 情況 B：無記錄 (未登入) ---
-                    // 保持在藍色 Start Screen，顯示 Login 按鈕
-                    // (無需做任何事，因為預設就係顯示 Login)
-                }
-            });
-
-            // ★★★ 連線狀態監測 (綠燈/紅燈) ★★★
-            const connectedRef = ref(db, ".info/connected");
-            onValue(connectedRef, (snap) => {
-                const el = document.getElementById('connection-status');
-                if (!el) return; 
-                
-                el.style.display = 'block';
-                if (snap.val() === true) {
-                    el.style.background = "#22c55e"; // 綠燈 (Online)
-                    el.style.boxShadow = "0 0 5px #22c55e";
-                } else {
-                    el.style.background = "#ef4444"; // 紅燈 (Offline)
-                    el.style.boxShadow = "0 0 5px #ef4444";
-                    
-                    if (typeof showNotification === 'function') {
-                        showNotification("CONNECTION LOST!", "error"); 
-                    }
-                }
-            });
-            
-            // --- 遊戲畫面初始化 ---
-            createGrid('player-grid');
-            createGrid('enemy-grid');
-            placeEnemyShips(); 
-            renderSidebar();
-
-            // --- 輸入框音效 ---
-            const roomInput = document.getElementById('room-id-input');
-            if (roomInput) {
-                roomInput.addEventListener('input', (e) => {
-                    if (e.inputType === 'deleteContentBackward' || e.inputType === 'deleteContentForward') {
-                        playSound('delete-sfx');
+                // 檢查 Database 確認真名
+                const userRef = ref(db, 'users/' + u.uid);
+                get(userRef).then((snapshot) => {
+                    if (snapshot.exists() && snapshot.val().displayName) {
+                        const realName = snapshot.val().displayName;
+                        
+                        // 更新快取 (以防佢用第二部機改咗名)
+                        localStorage.setItem('battleship_username', realName);
+                        updateHUD(realName);
+                        
+                        // 如果剛才 Local Storage 無野，而家先彈主選單
+                        if (!cachedName) showMainMenu();
+                        
                     } else {
-                        playSound('typing-sfx');
+                        // 🟡 雖然 Login 咗，但無改名 (新兵)
+                        // 這時候要強制彈改名窗 (即使 Local Storage 有假野都要彈)
+                        const loginPanel = document.getElementById('login-panel');
+                        if(loginPanel) loginPanel.style.display = 'none';
+                        const regModal = document.getElementById('registration-modal');
+                        if(regModal) regModal.style.display = 'flex';
                     }
                 });
-            }
 
-        }, 500); // Timeout End
-    });
+            } else {
+                // --- 情況 B：Firebase 說未登入 (可能 Logout 咗，或者 Token 過期) ---
+                // 如果之前用 Local Storage 扮登入咗，而家要「踢」佢出嚟！
+                if (cachedName) {
+                     console.log("⚠️ Auth Invalid. Reverting to Login Screen.");
+                     localStorage.removeItem('battleship_username'); // 清除假記錄
+                     location.reload(); // 重新整理，變回藍色畫面
+                }
+            }
+        });
+
+        // 連線狀態監測
+        const connectedRef = ref(db, ".info/connected");
+        onValue(connectedRef, (snap) => {
+            const el = document.getElementById('connection-status');
+            if (!el) return; 
+            el.style.display = 'block';
+            if (snap.val() === true) {
+                el.style.background = "#22c55e"; 
+                el.style.boxShadow = "0 0 5px #22c55e";
+            } else {
+                el.style.background = "#ef4444"; 
+                el.style.boxShadow = "0 0 5px #ef4444";
+                if (typeof showNotification === 'function') showNotification("CONNECTION LOST!", "error"); 
+            }
+        });
+        
+        // 遊戲初始化
+        createGrid('player-grid');
+        createGrid('enemy-grid');
+        placeEnemyShips(); 
+        renderSidebar();
+
+        // 音效監聽
+        const roomInput = document.getElementById('room-id-input');
+        if (roomInput) {
+            roomInput.addEventListener('input', (e) => {
+                if (e.inputType === 'deleteContentBackward' || e.inputType === 'deleteContentForward') {
+                    playSound('delete-sfx');
+                } else {
+                    playSound('typing-sfx');
+                }
+            });
+        }
+
+    }, 500);
+});
     
 // 10. BGM 播放
 function playBgm() {
@@ -4087,6 +4108,7 @@ function playBgm() {
 </div>
 </body>
 </html>
+
 
 
 
