@@ -1780,6 +1780,11 @@ body {
 <audio id="victory-sfx"><source src="victory.mp3" type="audio/mpeg"></audio>
 <audio id="lose-sfx"><source src="lose.mp3" type="audio/mpeg"></audio>
     <audio id="new-commander-sfx"><source src="new_commander.mp3" type="audio/mpeg"></audio>
+    <audio id="ship-voice-0"><source src="ship_0_ghost.mp3" type="audio/mpeg"></audio>
+<audio id="ship-voice-1"><source src="ship_1_striker.mp3" type="audio/mpeg"></audio>
+<audio id="ship-voice-2"><source src="ship_2_dreadnought.mp3" type="audio/mpeg"></audio>
+<audio id="ship-voice-3"><source src="ship_3_destroyer.mp3" type="audio/mpeg"></audio>
+<audio id="ship-voice-4"><source src="ship_4_spectre.mp3" type="audio/mpeg"></audio>
     
 <script src="vocab_data.js"></script>
 
@@ -2366,14 +2371,16 @@ function handleClick(index) {
     if (!indices || indices.some(idx => myGrid[idx] === 1)) return;
 
     // 執行放置
-    indices.forEach(idx => myGrid[idx] = 1);
+// 執行放置    indices.forEach(idx => myGrid[idx] = 1);
     FLEET[deployIndex].indices = indices;
-    
-    // ★ 記得加返我們之前修復的 isVertical 記錄 ★
     FLEET[deployIndex].isVertical = isVertical; 
 
     placeShipImage('player-grid', index, conf, isVertical);
-    playSound('deploy-sfx');
+    
+playSound('deploy-sfx'); // 先播機械聲 (基底)
+    setTimeout(() => {
+        playSound(`ship-voice-${deployIndex}`); // 延遲 0.2秒 播人聲，更有層次感
+    }, 200);
 
     const justPlaced = document.getElementById(`ship-unit-${deployIndex}`);
     if (justPlaced) {
@@ -3964,6 +3971,7 @@ function playBgm() {
 </div>
 </body>
 </html>
+
 
 
 
