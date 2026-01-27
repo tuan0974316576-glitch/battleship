@@ -516,81 +516,37 @@ body {
             filter: grayscale(100%);
             transform: scale(0.8);
         }
-/* =========================================
-   ★★★ 全局返回按鈕 (頂部左上角 High-Tech 版) ★★★
-   ========================================= */
-#/* =========================================
-   ★★★ 全局返回按鈕 (終極完美版 - 電腦手機通用) ★★★
-   ========================================= */
-#global-back-btn {
-    /* 1. 顯示控制 (由 JS 決定幾時彈出嚟) */
-    /* 注意：這裡我們不寫 display: none，因為 JS 會改 display: flex */
-    /* 如果 JS 未 load 完就見到，可以加番 display: none，但要確保 JS 識改做 flex */
-    
-    /* 2. 位置固定在左上角 */
-    position: fixed !important;
-    top: 20px !important;
-    left: 20px !important;
-    bottom: auto !important;
-    right: auto !important;
-    transform: none !important;
-    margin: 0 !important;
-    
-    /* 3. 按鈕外觀：圓形 + 半透明 + 發光 */
-    width: 50px;  /* 電腦版大粒啲 */
-    height: 50px;
-    border-radius: 50%;
-    padding: 0 !important; /* 確保無內邊距影響置中 */
-    
-    /* ★ 半透明底色 (0.6) ★ */
-    background: rgba(15, 23, 42, 0.6) !important; 
-    
-    /* ★ 藍色發光邊框 ★ */
-    border: 2px solid #0ea5e9 !important;
-    box-shadow: 0 0 15px rgba(14, 165, 233, 0.5), /* 外發光 */
-                inset 0 0 10px rgba(14, 165, 233, 0.3) !important; /* 內發光 */
-    
-    /* 4. 內容完美置中 */
-    display: flex !important; 
-    align-items: center;
-    justify-content: center;
-    
-    cursor: pointer;
-    z-index: 3000; 
-    backdrop-filter: blur(5px); /* 磨砂效果 */
-    transition: all 0.3s ease;
-}
+/* --- 全局返回按鈕樣式 --- */
+        #global-back-btn {
+            display: none; /* 一開始係 Start Screen，所以預設隱藏 */
+            position: fixed;
+            bottom: 30px; /* 距離底部 */
+            left: 50%;
+            transform: translateX(-50%); /* 水平居中 */
+            
+            /* High-Tech 透明風格 */
+            background: transparent;
+            color: var(--primary); /* 用你的主色調 (青藍色) */
+            border: 2px solid var(--primary);
+            padding: 10px 30px;
+            font-family: 'Black Ops One', cursive;
+            font-size: 18px;
+            letter-spacing: 2px;
+            cursor: pointer;
+            z-index: 1000; /* 確保在最頂層 */
+            
+            /* 發光特效 */
+            box-shadow: 0 0 10px rgba(14, 165, 233, 0.3);
+            text-shadow: 0 0 5px var(--primary);
+            transition: all 0.3s ease;
+        }
 
-/* Hover 特效：變大、變光 */
-#global-back-btn:hover {
-    background: rgba(14, 165, 233, 0.2) !important;
-    box-shadow: 0 0 25px rgba(14, 165, 233, 0.8),
-                inset 0 0 15px rgba(14, 165, 233, 0.5) !important;
-    transform: scale(1.1) !important;
-}
-
-/* 按下特效 */
-#global-back-btn:active {
-    transform: scale(0.95) !important;
-}
-
-/* ★ 手機版微調：縮細少少 ★ */
-@media (max-width: 600px) {
-    #global-back-btn {
-        width: 42px;
-        height: 42px;
-        top: 15px !important;
-        left: 15px !important;
-        border-width: 1.5px !important; /* 手機版邊框幼少少 */
-    }
-    
-    /* 手機版三角形縮細少少配合番 */
-    #global-back-btn div {
-        border-top-width: 6px !important;
-        border-bottom-width: 6px !important;
-        border-right-width: 10px !important;
-    }
-}
+        #global-back-btn:hover {
+            background: rgba(14, 165, 233, 0.2); /* Hover 時加少少底色 */
+            box-shadow: 0 0 20px var(--primary); /* 發光更強 */
+            transform: translateX(-50%) scale(1.1); /* 放大少少 */
+            color: #fff;
+        }
 /* --- 高科技確認視窗樣式 --- */
         .tech-modal-overlay {
             display: none; /* 預設隱藏 */
@@ -1850,16 +1806,8 @@ body {
         </div>
     </div>
 <button id="global-back-btn" onclick="confirmExit()">
-    <div style="
-        width: 0; 
-        height: 0; 
-        border-top: 8px solid transparent;
-        border-bottom: 8px solid transparent; 
-        border-right: 14px solid #0ea5e9; 
-        filter: drop-shadow(0 0 5px #0ea5e9);
-        /* 移除咗 translateX，由外層 button 負責置中 */
-    "></div>
-</button>
+        &lt; BACK TO MENU
+    </button>
 <div id="tech-notification">
         <div id="notif-title">SYSTEM MESSAGE</div>
         <div id="notif-content">...</div>
@@ -3806,7 +3754,6 @@ function filterVocabList() {
 }
 // ★ 專門用來打開 Question Bank 的函數 ★
 function openVocabScreen() {
-    toggleGlobalBackBtn(false);
     playSound('open-room-sfx'); // 播放打開介面的聲
     
     document.getElementById('start-screen').style.display = 'none';
@@ -3962,7 +3909,6 @@ function updateHUD(name) {
 
 // 8. 顯示主選單 (隱藏 Login Panel)
 function showMainMenu() {
-    toggleGlobalBackBtn(false);
     const loginPanel = document.getElementById('login-panel');
     const profilePanel = document.getElementById('user-profile-panel');
     const gameModeSelect = document.getElementById('game-mode-selection');
@@ -4096,13 +4042,6 @@ function playBgm() {
         bgm.play().catch(e => console.log("BGM waiting for interaction"));
     }
 }
-function toggleGlobalBackBtn(show) {
-    const btn = document.getElementById('global-back-btn');
-    if (btn) {
-        // 如果 show 係 true，就用 flex (配合你個新 CSS 置中)，否則隱藏
-        btn.style.display = show ? 'flex' : 'none';
-    }
-}
 </script>
 <div id="registration-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 9999; flex-direction: column; align-items: center; justify-content: center;">
     
@@ -4169,9 +4108,6 @@ function toggleGlobalBackBtn(show) {
 </div>
 </body>
 </html>
-
-
-
 
 
 
