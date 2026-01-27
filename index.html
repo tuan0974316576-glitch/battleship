@@ -1588,6 +1588,63 @@ body {
 
 @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 @keyframes pulseText { from { opacity: 0.6; } to { opacity: 1; } }
+@media (max-width: 600px) {
+
+    /* --- 1. 修正 3個按鈕 (VS AI / PVP / CODE) --- */
+    /* 強制變成垂直排列，唔好打橫排 */
+    #game-mode-selection {
+        flex-direction: column !important; 
+        width: 85% !important; /* 控制整體闊度 */
+        margin-left: auto !important;
+        margin-right: auto !important;
+        gap: 15px !important; /* 按鈕之間嘅距離 */
+    }
+    
+    /* 令按鈕佔滿闊度，字體縮細少少 */
+    #game-mode-selection .start-btn-large {
+        width: 100% !important; 
+        font-size: 20px !important; 
+        padding: 12px 0 !important; /* 上下 12px，左右自動 */
+        text-align: center !important;
+    }
+
+    /* --- 2. 修正 LOBBY 同 DIFFICULTY 唔置中 --- */
+    /* 強制畫面垂直同水平都置中 */
+    #level-screen, #lobby-screen {
+        display: none; /* 預設隱藏 (JS 會改做 flex) */
+        
+        /* 當 JS 改做 flex 時，強制執行以下排版： */
+        flex-direction: column !important;
+        justify-content: center !important; /* 垂直置中 */
+        align-items: center !important;     /* 水平置中 */
+        
+        padding: 0 !important; /* 清除多餘 Padding */
+        width: 100% !important;
+        height: 100% !important;
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+    }
+
+    /* 針對 Difficulty 畫面個 Grid */
+    .level-grid {
+        width: 90% !important; /* 唔好太闊 */
+        max-width: 350px !important;
+        gap: 10px !important; /* 縮細間距 */
+    }
+    
+    .level-btn {
+        font-size: 16px !important;
+        padding: 12px !important;
+    }
+
+    /* 針對 Lobby 畫面個框 */
+    #lobby-screen > div {
+        width: 85% !important;
+        max-width: 350px !important;
+        box-sizing: border-box !important;
+    }
+}
     </style>
 
 </head>
@@ -4030,6 +4087,7 @@ function playBgm() {
 </div>
 </body>
 </html>
+
 
 
 
