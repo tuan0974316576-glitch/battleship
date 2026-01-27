@@ -1556,6 +1556,38 @@ body {
         font-size: 16px !important;
     }
 }
+/* --- 登入鎖定遮罩 (Login Overlay) --- */
+#login-overlay {
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.85); /* 深色背景 */
+    z-index: 500; /* 確保蓋住登入掣 */
+    display: none; /* 預設隱藏 */
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(5px);
+}
+
+.login-loading-text {
+    font-family: 'Orbitron', sans-serif;
+    color: #0ea5e9;
+    font-size: 16px;
+    letter-spacing: 3px;
+    margin-top: 20px;
+    animation: pulseText 1s infinite alternate;
+}
+
+.login-spinner {
+    width: 40px; height: 40px;
+    border: 4px solid rgba(14, 165, 233, 0.3);
+    border-top: 4px solid #0ea5e9;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+@keyframes pulseText { from { opacity: 0.6; } to { opacity: 1; } }
     </style>
 
 </head>
@@ -1566,8 +1598,7 @@ body {
 
     <div id="login-hud" class="hud-container">
         
-        <div id="login-panel">
-            <div class="hud-line"></div>
+<div id="login-panel" style="position: relative; overflow: hidden;"> <div class="hud-line"></div>
             <div style="font-size: 10px; color: #ff4444; letter-spacing: 2px; margin-bottom: 15px; font-family: 'Orbitron';">SYSTEM ACCESS: RESTRICTED</div>
             
             <button id="google-login-btn" onclick="loginWithGoogle()" style="margin-bottom: 10px;">
@@ -1579,6 +1610,11 @@ body {
             <button class="logout-link" onclick="playAsGuest()" style="color: #64748b; font-size: 10px; margin-top: 5px;">
                &gt; BYPASS SECURITY (GUEST MODE)
             </button>
+
+            <div id="login-overlay">
+                <div class="login-spinner"></div>
+                <div class="login-loading-text">AUTHENTICATING...</div>
+            </div>
         </div>
 
         <div id="user-profile-panel" style="display: none;">
@@ -3717,21 +3753,38 @@ function openVocabScreen() {
    ★★★ CYBERPUNK HUD LOGIN SYSTEM (FINAL FIXED) ★★★
    ========================================= */
 
-// 1. 訪客登入 (對應 HTML 的 playAsGuest)
+// 1. 訪客登入
 window.playAsGuest = function() {
     const { getAuth, signInAnonymously } = window.firebaseModules;
     if(typeof playSound === 'function') playSound('deploy-sfx');
-    // 這裡按下按鈕才會登入訪客
+    
+    // ★ 開啟鎖定遮罩 ★
+    document.getElementById('login-overlay').style.display = 'flex';
+    
     playBgm();
-    signInAnonymously(getAuth()).catch(e => alert(e.message));
+    
+    // 這裡只負責登入，登入成功後 onAuthStateChanged 會自動處理轉場
+    signInAnonymously(getAuth()).catch(e => {
+        alert(e.message);
+        // 失敗要關閉遮罩，讓玩家重試
+        document.getElementById('login-overlay').style.display = 'none';
+    });
 }
 
 // 2. Google 登入
 window.loginWithGoogle = function() {
     const { getAuth, GoogleAuthProvider, signInWithPopup } = window.firebaseModules;
     if(typeof playSound === 'function') playSound('deploy-sfx');
+    
+    // ★ 開啟鎖定遮罩 ★
+    document.getElementById('login-overlay').style.display = 'flex';
+    
     playBgm();
+    
     signInWithPopup(getAuth(), new GoogleAuthProvider()).catch(e => {
+        // 失敗要關閉遮罩
+        document.getElementById('login-overlay').style.display = 'none';
+        
         if(e.code === 'auth/unauthorized-domain') alert("請到 Firebase Console 加入 Authorized Domain!");
         else alert(e.message);
     });
@@ -3977,6 +4030,7 @@ function playBgm() {
 </div>
 </body>
 </html>
+
 
 
 
