@@ -1588,61 +1588,85 @@ body {
 
 @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 @keyframes pulseText { from { opacity: 0.6; } to { opacity: 1; } }
+/* =========================================
+   ★★★ MOBILE MASTER FIX (終極整合版) ★★★
+   將所有手機版設定集中喺度，強制覆蓋舊設定！
+   ========================================= */
 @media (max-width: 600px) {
 
-    /* --- 1. 修正 3個按鈕 (VS AI / PVP / CODE) --- */
-    /* 強制變成垂直排列，唔好打橫排 */
+    /* --- 1. 遊戲模式按鈕 (3粒掣) --- */
+    /* 強制垂直排列，無視之前嘅設定 */
     #game-mode-selection {
-        flex-direction: column !important; 
-        width: 85% !important; /* 控制整體闊度 */
-        margin-left: auto !important;
-        margin-right: auto !important;
-        gap: 15px !important; /* 按鈕之間嘅距離 */
+        display: flex !important; /* 確保係 Flex */
+        flex-direction: column !important; /* 垂直排 */
+        width: 85% !important; /* 闊度 85% */
+        gap: 15px !important;  /* 按鈕間距 */
+        margin: 20px auto !important; /* 上下20px，左右置中 */
     }
     
     /* 令按鈕佔滿闊度，字體縮細少少 */
     #game-mode-selection .start-btn-large {
         width: 100% !important; 
-        font-size: 20px !important; 
-        padding: 12px 0 !important; /* 上下 12px，左右自動 */
+        font-size: 18px !important; 
+        padding: 15px 0 !important; 
         text-align: center !important;
+        margin: 0 !important; /* 清除多餘 Margin */
     }
 
-    /* --- 2. 修正 LOBBY 同 DIFFICULTY 唔置中 --- */
-    /* 強制畫面垂直同水平都置中 */
+    /* --- 2. 視窗置中 (Lobby & Difficulty) --- */
+    /* 修正這兩個畫面唔置中嘅問題 */
     #level-screen, #lobby-screen {
-        display: none; /* 預設隱藏 (JS 會改做 flex) */
-        
-        /* 當 JS 改做 flex 時，強制執行以下排版： */
         flex-direction: column !important;
         justify-content: center !important; /* 垂直置中 */
         align-items: center !important;     /* 水平置中 */
-        
-        padding: 0 !important; /* 清除多餘 Padding */
-        width: 100% !important;
-        height: 100% !important;
-        position: fixed !important;
+        padding: 0 !important;
         top: 0 !important;
         left: 0 !important;
+        width: 100% !important;
+        height: 100% !important;
     }
 
-    /* 針對 Difficulty 畫面個 Grid */
+    /* 難度按鈕 Grid */
     .level-grid {
-        width: 90% !important; /* 唔好太闊 */
-        max-width: 350px !important;
-        gap: 10px !important; /* 縮細間距 */
+        grid-template-columns: 1fr 1fr !important; /* 保持兩列 */
+        width: 90% !important;
+        gap: 10px !important;
     }
     
-    .level-btn {
-        font-size: 16px !important;
-        padding: 12px !important;
-    }
-
-    /* 針對 Lobby 畫面個框 */
+    /* Lobby 裡面的白色框 */
     #lobby-screen > div {
         width: 85% !important;
         max-width: 350px !important;
-        box-sizing: border-box !important;
+        margin: 0 !important;
+    }
+
+    /* --- 3. 註冊視窗 (Registration) - 保持靠上避鍵盤 --- */
+    /* 因為鍵盤會擋住，所以這個要維持「靠上」 */
+    #registration-modal {
+        align-items: flex-start !important; 
+        padding-top: 50px !important; 
+    }
+    
+    #registration-modal .cyber-modal-box {
+        width: 90% !important;
+        padding: 25px 20px !important;
+    }
+
+    /* --- 4. 解碼視窗 (Launch Modal) --- */
+    #launch-modal {
+        align-items: flex-start !important;
+        padding-top: 30px !important;
+    }
+    
+    .modal-content {
+        width: 85% !important;
+        margin-bottom: 50vh !important; /* 預留底部空間俾鍵盤 */
+    }
+    
+    /* --- 5. 標題字體修正 --- */
+    .main-title { 
+        font-size: 40px !important; 
+        letter-spacing: 5px !important;
     }
 }
     </style>
@@ -4087,6 +4111,7 @@ function playBgm() {
 </div>
 </body>
 </html>
+
 
 
 
