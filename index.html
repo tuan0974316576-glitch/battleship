@@ -2828,6 +2828,11 @@ function getShipIndices(idx, conf, v) {
 function startBattle() {
         if (deploymentTimerInterval) clearInterval(deploymentTimerInterval);
         document.getElementById('turn-timer-container').style.display = 'none';
+    const exitBtn = document.getElementById('game-exit-btn');
+    if(exitBtn) {
+        exitBtn.innerText = "SURRENDER";
+        exitBtn.style.borderColor = "var(--danger)"; // 確保係紅色
+    }
         document.getElementById('deploy-controls').style.display = 'none';
         document.getElementById('fleet-sidebar').style.display = 'none'; 
 initEnemyFleetIndicator();
@@ -3610,43 +3615,61 @@ function confirmExit() {
         document.getElementById('confirm-modal').style.display = 'none';
     }
 
-    // 3. 按下 "Confirm Abort" (執行重置)
-    function executeAbort() {
-        closeConfirmModal(); // 之前因為搵唔到上面個函數，所以這裡卡住了
+// ★ 修正版：執行放棄/投降 (區分 部署中 vs 戰鬥中) ★
+function executeAbort() {
+    // 1. 關閉確認視窗
+    document.getElementById('confirm-modal').style.display = 'none';
+
+    // 2. 判斷當前階段
+    // 如果還在大廳，或者還在部署船隻 (DEPLOY)，就直接重置 (當作退出)
+    if (currentPhase === 'DEPLOY' || document.getElementById('lobby-screen').style.display !== 'none') {
+        playSound('delete-sfx');
+        resetGame();
+    } 
+    else {
+        // ★★★ 戰鬥中投降 (SURRENDER) ★★★
         
-        // ... (原本的 executeAbort 內容不用改) ...
-        if (gameMode === 'PVP' && currentRoomId) {
-             // ...
-        }
-        resetGame(); 
-    }
-    // 3. 按下 "Confirm Abort" (執行重置)
-// ★ 修正版：執行放棄任務 (播放部署聲) ★
-    function executeAbort() {
-        // 1. 播放確認音效
-        playSound('deploy-sfx'); 
-
-        // 2. 手動關閉視窗 (唔好 Call closeConfirmModal，費事播錯 Delete 聲)
-        document.getElementById('confirm-modal').style.display = 'none';
-
-        // 3. 處理 PVP 投降邏輯
+        // A. 處理 PVP 數據 (通知對手我投降)
         if (gameMode === 'PVP' && currentRoomId) {
             const { ref, update } = window.firebaseModules;
             const opponentRole = (playerRole === 'host') ? 'guest' : 'host';
-            
-            // 寫入數據：贏家是對手，原因係投降
             update(ref(db, 'rooms/' + currentRoomId), {
                 winner: opponentRole,
                 endReason: 'surrendered'
             });
         }
 
-        // 4. 重置遊戲
-        resetGame(); 
+        // B. 觸發本地戰敗流程 (唔好 Reset 住！)
+        
+        // 1. 停止所有計時器 (費事背景仲倒數緊)
+        if (turnTimerInterval) clearInterval(turnTimerInterval);
+        if (timerInterval) clearInterval(timerInterval);
+        
+        // 2. 生成戰後報告 (這就是你要的！)
+        if(typeof renderReview === 'function') renderReview();
+
+        // 3. 設定 End Screen 文字
+        document.getElementById('end-title').innerText = "DEFEAT";
+        document.getElementById('end-title').style.color = "var(--danger)";
+        document.getElementById('end-title').style.textShadow = "0 0 30px var(--danger)";
+        document.getElementById('end-msg').innerText = "MISSION ABORTED // SURRENDERED";
+        
+        // 4. 顯示畫面 & 播片
+        document.getElementById('end-screen').style.display = "flex";
+        playSound('lose-sfx');
+        
+        // 5. 鎖死遊戲狀態
+        currentPhase = 'GAME_OVER';
     }
+}
 
 function resetGame() {
     battleLog = [];
+    // ★★★ 新增：將 SURRENDER 改返做 EXIT ★★★
+    const exitBtn = document.getElementById('game-exit-btn');
+    if(exitBtn) {
+        exitBtn.innerText = "EXIT";
+    }
     // 1. 斷開 Firebase 連線
     if (unsubscribeRoom) { unsubscribeRoom(); unsubscribeRoom = null; }
     if (battleUnsubscribe) { battleUnsubscribe(); battleUnsubscribe = null; }
@@ -4704,6 +4727,7 @@ function renderReview() {
 </div>
 </body>
 </html>
+
 
 
 
