@@ -153,9 +153,10 @@ body {
 }
 
 /* 3. 標題本體樣式 (修正版：掃描線內嵌) */
+/* 3. 標題本體樣式 (修正版：藍白藍漸變 + 掃描線) */
 .main-title {
     font-family: 'Black Ops One', cursive;
-    font-size: 80px; /* 統一 Desktop 大小 */
+    font-size: 80px;
     line-height: 1.1;
     text-align: center;
     letter-spacing: 12px;
@@ -167,27 +168,34 @@ body {
     background: none;
     padding: 0;
 
-    /* ★ 核心：文字透明，背景透出 ★ */
+    /* 文字透明，讓背景透出 */
     color: transparent; 
 
-    /* ★ 雙層背景：上層掃描線，下層白光 ★ */
+    /* ★★★ 重點修改：雙層背景組合 ★★★ */
     background-image: 
+        /* 層 1: 掃描線 (改用較亮嘅淺藍白色，增加對比度) */
         repeating-linear-gradient(
             transparent 0px,
             transparent 2px,
-            rgba(14, 165, 233, 0.6) 3px, /* 藍色掃描線 */
+            rgba(200, 230, 255, 0.5) 3px, 
             transparent 4px
         ),
-        linear-gradient(to bottom, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.95));
+        /* 層 2: 底色漸變 (上藍 -> 中白 -> 下藍) */
+        linear-gradient(to bottom,
+            rgba(14, 165, 233, 0.9) 0%,    /* 上方：深藍 */
+            rgba(255, 255, 255, 1) 40%,    /* 中間：純白 (開始) */
+            rgba(255, 255, 255, 1) 60%,    /* 中間：純白 (結束) - 拉闊白色區 */
+            rgba(14, 165, 233, 0.9) 100%   /* 下方：深藍 */
+        );
 
-    /* ★ 剪裁背景至文字 ★ */
+    /* 剪裁背景至文字 */
     -webkit-background-clip: text;
     background-clip: text;
 
     /* 設定背景大小 */
     background-size: 100% 200%, 100% 100%;
     
-    /* 結合 Glitch + Scan 動畫 */
+    /* 動畫 */
     animation: xcom-current-glitch 5s infinite, text-scan 6s linear infinite;
 }
 
@@ -4384,4 +4392,5 @@ function playBgm() {
 </div>
 </body>
 </html>
+
 
