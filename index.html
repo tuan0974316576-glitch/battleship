@@ -516,37 +516,7 @@ body {
             filter: grayscale(100%);
             transform: scale(0.8);
         }
-/* --- 全局返回按鈕樣式 --- */
-        #global-back-btn {
-            display: none; /* 一開始係 Start Screen，所以預設隱藏 */
-            position: fixed;
-            bottom: 30px; /* 距離底部 */
-            left: 50%;
-            transform: translateX(-50%); /* 水平居中 */
-            
-            /* High-Tech 透明風格 */
-            background: transparent;
-            color: var(--primary); /* 用你的主色調 (青藍色) */
-            border: 2px solid var(--primary);
-            padding: 10px 30px;
-            font-family: 'Black Ops One', cursive;
-            font-size: 18px;
-            letter-spacing: 2px;
-            cursor: pointer;
-            z-index: 1000; /* 確保在最頂層 */
-            
-            /* 發光特效 */
-            box-shadow: 0 0 10px rgba(14, 165, 233, 0.3);
-            text-shadow: 0 0 5px var(--primary);
-            transition: all 0.3s ease;
-        }
 
-        #global-back-btn:hover {
-            background: rgba(14, 165, 233, 0.2); /* Hover 時加少少底色 */
-            box-shadow: 0 0 20px var(--primary); /* 發光更強 */
-            transform: translateX(-50%) scale(1.1); /* 放大少少 */
-            color: #fff;
-        }
 /* --- 高科技確認視窗樣式 --- */
         .tech-modal-overlay {
             display: none; /* 預設隱藏 */
@@ -1726,6 +1696,7 @@ body {
             <button class="btn" onclick="joinRoom()" style="width: 100%;">JOIN MISSION</button>
         </div>
         <div id="lobby-msg" style="color: var(--danger); margin-top: 20px; height: 20px;"></div>
+        <button class="btn" onclick="joinRoom()" style="width: 100%;">JOIN MISSION</button>
     </div>
 
     <div id="game-ui">
@@ -1733,6 +1704,7 @@ body {
             <div id="connection-status" style="width: 10px; height: 10px; border-radius: 50%; background: grey; display: none; margin-left: 10px;"></div>
             <div id="game-status">PHASE: <span style="color: var(--warning);">DEPLOYMENT</span></div>
             <button id="music-btn" class="btn" onclick="toggleMusic()"> BGM: ON</button>
+<button class="btn" onclick="confirmExit()" style="border-color: var(--danger); color: var(--danger);">EXIT</button>
             <span id="deploy-controls">
                 <button id="rotate-btn" class="btn" onclick="rotateShip()">ROTATE: VERTICAL</button>
                 <button id="start-btn" class="btn" onclick="startBattle()" disabled>START BATTLE</button>
@@ -1805,9 +1777,7 @@ body {
             </div>
         </div>
     </div>
-<button id="global-back-btn" onclick="confirmExit()">
-        &lt; BACK TO MENU
-    </button>
+
 <div id="tech-notification">
         <div id="notif-title">SYSTEM MESSAGE</div>
         <div id="notif-content">...</div>
@@ -2026,19 +1996,17 @@ function startEnemyTurn() {
 
     // --- 5. 流程控制 ---
 function selectMode(mode) {
-        tempGameMode = mode; // 先記低你想玩乜 Mode
-        playSound('deploy-sfx');
-        
-        if (mode === 'AI') {
-            // AI 模式：照舊，先揀 Level
-            document.getElementById('level-screen').style.display = 'flex';
-        } else {
-            // PVP 模式：直接入 Lobby，唔好揀 Level 住
-            document.getElementById('start-screen').style.display = 'none';
-            document.getElementById('lobby-screen').style.display = 'flex';
-            document.getElementById('global-back-btn').style.display = 'block';
-        }
+    tempGameMode = mode; 
+    playSound('deploy-sfx');
+    
+    if (mode === 'AI') {
+        document.getElementById('level-screen').style.display = 'flex';
+    } else {
+        document.getElementById('start-screen').style.display = 'none';
+        document.getElementById('lobby-screen').style.display = 'flex';
+        // 刪除了 global-back-btn 的控制碼
     }
+}
     
     // 新增：關閉等級選單
     function closeLevelScreen() {
@@ -2071,21 +2039,22 @@ function selectMode(mode) {
         }
     }
 function enterGameUI() {
-        const bgm = document.getElementById('bgm');
-        if (bgm) { bgm.volume = 0.5; bgm.play().then(()=>isMusicPlaying=true).catch(e=>{}); }
+    const bgm = document.getElementById('bgm');
+    if (bgm) { bgm.volume = 0.5; bgm.play().then(()=>isMusicPlaying=true).catch(e=>{}); }
 
-        document.getElementById('start-screen').style.display = 'none';
-        document.getElementById('lobby-screen').style.display = 'none';
-        
-        const gameUI = document.getElementById('game-ui');
-        gameUI.style.display = 'flex';
-        setTimeout(() => { gameUI.style.opacity = '1'; }, 50);
-        
-        // ★ 關鍵：進入遊戲畫面先開始佈陣倒數 ★
-        startDeploymentTimer();
-        
-        if (gameMode === 'PVP') initPVPListeners();
-    }
+    document.getElementById('start-screen').style.display = 'none';
+    document.getElementById('lobby-screen').style.display = 'none';
+    
+    const gameUI = document.getElementById('game-ui');
+    gameUI.style.display = 'flex';
+    setTimeout(() => { gameUI.style.opacity = '1'; }, 50);
+    
+    startDeploymentTimer();
+    
+    // 刪除了 global-back-btn 的控制碼
+    
+    if (gameMode === 'PVP') initPVPListeners();
+}
 
     // --- 6. PVP 邏輯 ---
 function createRoom() {
@@ -3263,42 +3232,33 @@ function confirmExit() {
     }
 
 function resetGame() {
-        // 1. 斷開 Firebase 連線
-        if (unsubscribeRoom) {
-            unsubscribeRoom();
-            unsubscribeRoom = null;
-        }
-        if (battleUnsubscribe) {
-            battleUnsubscribe(); 
-            battleUnsubscribe = null; 
-        }
-        // 額外保險
-        if (currentRoomId) {
-             const { ref, off } = window.firebaseModules;
-             off(ref(db, 'rooms/' + currentRoomId));
-        }
+    // 1. 斷開 Firebase 連線
+    if (unsubscribeRoom) { unsubscribeRoom(); unsubscribeRoom = null; }
+    if (battleUnsubscribe) { battleUnsubscribe(); battleUnsubscribe = null; }
+    if (currentRoomId) {
+            const { ref, off } = window.firebaseModules;
+            off(ref(db, 'rooms/' + currentRoomId));
+    }
 
-        // 2. 清除所有計時器
-        if (turnTimerInterval) clearInterval(turnTimerInterval);
-        if (timerInterval) clearInterval(timerInterval);
-        if (deploymentTimerInterval) clearInterval(deploymentTimerInterval);
+    // 2. 清除所有計時器
+    if (turnTimerInterval) clearInterval(turnTimerInterval);
+    if (timerInterval) clearInterval(timerInterval);
+    if (deploymentTimerInterval) clearInterval(deploymentTimerInterval);
+    if (typeof gameTimeouts !== 'undefined') {
+            gameTimeouts.forEach(id => clearTimeout(id));
+            gameTimeouts = [];
+    }
 
-        // 清除幽靈計時器 (Timeout)
-        if (typeof gameTimeouts !== 'undefined') {
-             gameTimeouts.forEach(id => clearTimeout(id));
-             gameTimeouts = [];
-        }
-
-        // 3. 隱藏 UI 元件
-        document.getElementById('turn-timer-container').style.display = 'none';
-        document.getElementById('global-back-btn').style.display = 'none'; 
-        document.getElementById('end-screen').style.display = 'none';
-        document.getElementById('game-ui').style.display = 'none';
-        document.getElementById('lobby-screen').style.display = 'none'; 
-        
-        // 4. 顯示 Start Screen
-        document.getElementById('start-screen').style.display = 'flex';
-        document.getElementById('start-screen').style.opacity = '1';
+    // 3. 隱藏 UI 元件
+    document.getElementById('turn-timer-container').style.display = 'none';
+    // 刪除了 global-back-btn 的控制碼
+    document.getElementById('end-screen').style.display = 'none';
+    document.getElementById('game-ui').style.display = 'none';
+    document.getElementById('lobby-screen').style.display = 'none'; 
+    
+    // 4. 顯示 Start Screen
+    document.getElementById('start-screen').style.display = 'flex';
+    document.getElementById('start-screen').style.opacity = '1';
 
         // 5. 重置變數
         myGrid.fill(0);
@@ -4108,6 +4068,7 @@ function playBgm() {
 </div>
 </body>
 </html>
+
 
 
 
