@@ -1676,137 +1676,56 @@ body {
 /* (已刪除 .mode-desc 樣式) */
 
 
-/* =========================================
-   ★★★ CYBERPUNK ARROWS (全息幼身版) ★★★
-   ========================================= */
-
+/* 4. 左右導航箭咀 (銀白色，無圓圈) */
 .nav-arrow {
+    /* 移除背景同邊框 */
     background: transparent;
     border: none;
+    /* 銀白色 */
+    color: #e2e8f0;
+    
+    /* 加大少少個箭咀 */
+    font-size: 35px;
+    width: 50px; height: 50px;
+    
     cursor: pointer;
     z-index: 10;
-    
-    /* 設定按鈕大小，方便點擊 */
-    width: 60px; height: 100%; /* 高度跟隨容器 */
-    position: absolute; /* 絕對定位，確保左右對稱 */
-    top: 0;
-    
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.3s ease;
-    
-    /* 移除舊有的發光，改由內部元素發光 */
-    text-shadow: none;
-    box-shadow: none;
-    
-    /* 微微半透明，扮全息投影 */
-    opacity: 0.6;
+    transition: all 0.2s;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    /* 加入少少陰影令佢立體啲 */
+    text-shadow: 0 2px 5px rgba(0,0,0,0.5);
 }
 
-/* 定位：左邊 */
-.nav-arrow.left { 
-    left: -60px; /* 移出容器外面 */
-}
-
-/* 定位：右邊 */
-.nav-arrow.right { 
-    right: -60px; /* 移出容器外面 */
-}
-
-/* --- 核心箭咀形狀 (用 CSS border 畫出幼身線條) --- */
-.arrow-shape {
-    width: 20px; 
-    height: 20px;
-    
-    /* 銀白色線條 */
-    border-top: 2px solid #e2e8f0; 
-    border-right: 2px solid #e2e8f0; 
-    
-    /* 發光特效 (幼細光暈) */
-    box-shadow: 2px -2px 10px rgba(255, 255, 255, 0.5); 
-    
-    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-}
-
-/* 左箭咀：旋轉 -135度 */
-.nav-arrow.left .arrow-shape {
-    transform: rotate(-135deg);
-}
-
-/* 右箭咀：旋轉 45度 */
-.nav-arrow.right .arrow-shape {
-    transform: rotate(45deg);
-}
-
-
-/* --- Hover 動畫 (滑鼠指上去) --- */
+/* 滑鼠指住 */
 .nav-arrow:hover {
-    opacity: 1; /* 變光 */
+    color: #ffffff; /* 變純白 */
+    transform: scale(1.1); /* 輕微放大 */
 }
 
-/* 左箭咀 Hover：向左彈一下 */
-.nav-arrow.left:hover .arrow-shape {
-    border-color: #00f0ff; /* 變 Cyber Blue */
-    box-shadow: 4px -4px 15px #00f0ff; /* 藍色強光 */
-    transform: rotate(-135deg) translate(5px, -5px); /* 向尖端方向移動 */
+/* 撳落去發白光 */
+.nav-arrow:active {
+    transform: scale(0.9);
+    /* 強烈白色發光 */
+    text-shadow: 0 0 15px #ffffff, 0 0 30px #ffffff;
 }
 
-/* 右箭咀 Hover：向右彈一下 */
-.nav-arrow.right:hover .arrow-shape {
-    border-color: #00f0ff; 
-    box-shadow: 4px -4px 15px #00f0ff;
-    transform: rotate(45deg) translate(5px, -5px);
-}
 
-/* --- Active 動畫 (撳落去) --- */
-.nav-arrow:active .arrow-shape {
-    border-color: #fff; /* 變白 */
-    transform: scale(0.9) rotate(var(--r)); /* 縮細 */
-    transition: 0.1s;
-}
+/* --- ★ 手機/平板 響應式調整 (RESPONSIVE) ★ --- */
 
-/* --- 常駐呼吸動畫 (Idle Animation) --- */
-@keyframes arrowFloatLeft {
-    0%, 100% { transform: rotate(-135deg) translate(0, 0); }
-    50% { transform: rotate(-135deg) translate(3px, -3px); } /* 輕微向左浮動 */
-}
-
-@keyframes arrowFloatRight {
-    0%, 100% { transform: rotate(45deg) translate(0, 0); }
-    50% { transform: rotate(45deg) translate(3px, -3px); } /* 輕微向右浮動 */
-}
-
-/* 套用呼吸動畫 */
-.nav-arrow.left .arrow-shape { animation: arrowFloatLeft 2s infinite ease-in-out; }
-.nav-arrow.right .arrow-shape { animation: arrowFloatRight 2s infinite ease-in-out; }
-
-
-/* --- 手機版調整 --- */
 @media (max-width: 768px) {
     .nav-arrow {
-        width: 40px;
-        /* 手機版放番入去容器裡面，費事爆邊 */
-        position: absolute; 
-        top: 50%;
-        transform: translateY(-50%); /* 垂直置中 */
-        opacity: 0.8; /* 手機版光少少，因為無 Hover */
+        position: absolute;
+        top: 50%; transform: translateY(-50%);
+        /* 手機版都可以加番少少半透明底色防止撞背景，如果你想完全透明就刪除下面呢行 */
+        /* background: rgba(0,0,0,0.3); */ 
     }
+    .nav-arrow.left { left: -10px; } /* 移出一點 */
+    .nav-arrow.right { right: -10px; }
     
-    .nav-arrow.left { left: 0; }
-    .nav-arrow.right { right: 0; }
-    
-    .arrow-shape {
-        width: 15px; height: 15px; /* 縮細少少 */
-        border-width: 3px; /* 手機版線條粗番少少，容易睇 */
+    .carousel-track {
+        padding: 20px 15%; 
     }
-    
-    /* 手機版取消呼吸動畫，慳電同埋防眼花 */
-    .nav-arrow.left .arrow-shape, 
-    .nav-arrow.right .arrow-shape { 
-        animation: none; 
-    }
-}
 
     .carousel-item {
         width: 60vw; 
@@ -1846,140 +1765,101 @@ body {
 @keyframes blinker {
     50% { opacity: 0; }
 }
-/* =========================================
-   ★★★ 強制修復 LOBBY & LEVEL 畫面置中 ★★★
-   ========================================= */
-
-/* 1. 強制確保這兩個畫面開啟時，一定是 Flex 模式 (修正 JS 寫錯 Block 的問題) */
-#level-screen[style*="display: block"],
-#lobby-screen[style*="display: block"],
-#level-screen[style*="display: flex"],
-#lobby-screen[style*="display: flex"] {
-    display: flex !important;
-    flex-direction: column !important;
-    align-items: center !important;
-    justify-content: center !important;
-}
-
-/* 2. 確保畫面內的文字同標題都置中 */
-#level-screen, 
-#lobby-screen {
-    text-align: center !important;
-}
-
-/* 3. 確保標題 H2 自己置中 */
-#level-screen h2, 
-#lobby-screen h2 {
-    width: 100%;
-    text-align: center !important;
-    margin-left: auto !important;
-    margin-right: auto !important;
-}
-
-/* 4. 確保 Level 按鈕容器置中 */
-.level-grid {
-    display: grid; /* 確保 Grid 佈局生效 */
-    margin: 0 auto !important; /* 水平置中 */
-    justify-content: center !important;
-}
     </style>
 
 </head>
 <body>
-    <div id="splash-screen" onclick="startExperience()">
-        <div class="splash-content">
-            <div class="main-title" style="position: relative; z-index: 10000;">VOCAB<br>CONQUEROR</div>
-            
-            <div class="blink-text" style="font-family: 'Orbitron'; color: #0ea5e9; font-size: 18px; letter-spacing: 5px; margin-top: 20px;">
-                >> TAP TO START <<
-            </div>
-            <div style="font-family: 'Orbitron'; color: #64748b; font-size: 10px; margin-top: 10px;">INITIALIZING SYSTEM...</div>
-        </div>
-    </div>
-
-    <div id="start-screen" class="screen active" style="display: flex; flex-direction: column; justify-content: center; align-items: center;">
+<div id="splash-screen" onclick="startExperience()">
+    <div class="splash-content">
+        <div class="main-title" style="font-size: 60px; position: relative; z-index: 10000;">VOCAB<br>CONQUEROR</div>
         
-        <div class="main-title">VOCAB<br>CONQUEROR</div>
+        <div class="blink-text" style="font-family: 'Orbitron'; color: #0ea5e9; font-size: 18px; letter-spacing: 5px; margin-top: 20px;">
+            >> TAP TO START <<
+        </div>
+        <div style="font-family: 'Orbitron'; color: #64748b; font-size: 10px; margin-top: 10px;">INITIALIZING SYSTEM...</div>
+    </div>
+</div>
 
-        <div id="login-hud" class="hud-container">
-            
-            <div id="connecting-panel" style="text-align: center; padding: 20px;">
-                <div class="login-spinner" style="margin: 0 auto; border-top-color: #f59e0b;"></div>
-                <div style="margin-top: 15px; color: #f59e0b; font-family: 'Orbitron'; letter-spacing: 2px; font-size: 12px; font-weight: bold;">
-                    ESTABLISHING LINK...
-                </div>
-            </div>
+<div id="start-screen" class="screen active" style="display: flex; flex-direction: column; justify-content: center; align-items: center;">
+    
+    <div class="main-title">VOCAB<br>CONQUEROR</div>
 
-            <div id="login-panel" style="position: relative; overflow: hidden; display: none;"> 
-                <div class="hud-line"></div>
-                <div style="font-size: 10px; color: #ff4444; letter-spacing: 2px; margin-bottom: 15px; font-family: 'Orbitron';">SYSTEM ACCESS: RESTRICTED</div>
-                
-                <button id="google-login-btn" onclick="loginWithGoogle()" style="margin-bottom: 10px;">
-                    <span class="icon">G</span> 
-                    <span class="text">INITIALIZE LINK</span>
-                    <div class="btn-glitch"></div>
-                </button>
-
-                <button class="logout-link" onclick="playAsGuest()" style="color: #64748b; font-size: 10px; margin-top: 5px;">
-                &gt; BYPASS SECURITY (GUEST MODE)
-                </button>
-
-                <div id="login-overlay">
-                    <div class="login-spinner"></div>
-                    <div class="login-loading-text">AUTHENTICATING...</div>
-                </div>
-            </div>
-
-            <div id="user-profile-panel" style="display: none;">
-                <div class="hud-corner-tl"></div>
-                <div class="hud-corner-br"></div>
-                
-                <div class="profile-grid">
-                    <div class="profile-rank">
-                        <div style="font-size: 10px; color: #64748b;">CURRENT RANK</div>
-                        <div id="hud-rank-title" style="color: #fbbf24; font-size: 18px; text-shadow: 0 0 10px #fbbf24; font-family: 'Black Ops One';">CADET</div>
-                    </div>
-
-                    <div class="profile-name-box">
-                        <div style="font-size: 10px; color: #0ea5e9;">OPERATOR</div>
-                        <div style="display: flex; align-items: center; gap: 10px;">
-                            <div id="hud-player-name" class="scrolling-text">LOADING...</div>
-                            <button class="edit-btn" onclick="changeName()">✏️</button>
-                        </div>
-                    </div>
-                </div>
-
-                <button class="logout-link" onclick="logout()">TERMINATE SESSION</button>
+    <div id="login-hud" class="hud-container">
+        
+        <div id="connecting-panel" style="text-align: center; padding: 20px;">
+            <div class="login-spinner" style="margin: 0 auto; border-top-color: #f59e0b;"></div>
+            <div style="margin-top: 15px; color: #f59e0b; font-family: 'Orbitron'; letter-spacing: 2px; font-size: 12px; font-weight: bold;">
+                ESTABLISHING LINK...
             </div>
         </div>
 
-        <div id="main-menu-carousel" class="mode-carousel-wrapper" style="display: none;">
+        <div id="login-panel" style="position: relative; overflow: hidden; display: none;"> 
+            <div class="hud-line"></div>
+            <div style="font-size: 10px; color: #ff4444; letter-spacing: 2px; margin-bottom: 15px; font-family: 'Orbitron';">SYSTEM ACCESS: RESTRICTED</div>
             
-            <button class="nav-arrow left" onclick="scrollMenu(-1)">
-                <div class="arrow-shape"></div>
+            <button id="google-login-btn" onclick="loginWithGoogle()" style="margin-bottom: 10px;">
+                <span class="icon">G</span> 
+                <span class="text">INITIALIZE LINK</span>
+                <div class="btn-glitch"></div>
             </button>
 
-            <div id="game-mode-selection" class="carousel-track">
-                <button class="start-btn-large carousel-item" onclick="selectMode('AI')">
-                    <div class="mode-title">VS A.I.</div>
-                </button>
+            <button class="logout-link" onclick="playAsGuest()" style="color: #64748b; font-size: 10px; margin-top: 5px;">
+               &gt; BYPASS SECURITY (GUEST MODE)
+            </button>
 
-                <button class="start-btn-large btn-pvp carousel-item" onclick="selectMode('PVP')">
-                    <div class="mode-title">VS PLAYER</div>
-                </button>
+            <div id="login-overlay">
+                <div class="login-spinner"></div>
+                <div class="login-loading-text">AUTHENTICATING...</div>
+            </div>
+        </div>
 
-                <button class="start-btn-large btn-code-list carousel-item" onclick="openVocabScreen()">
-                    <div class="mode-title">CODE LIST</div>
-                </button>
+        <div id="user-profile-panel" style="display: none;">
+            <div class="hud-corner-tl"></div>
+            <div class="hud-corner-br"></div>
+            
+            <div class="profile-grid">
+                <div class="profile-rank">
+                    <div style="font-size: 10px; color: #64748b;">CURRENT RANK</div>
+                    <div id="hud-rank-title" style="color: #fbbf24; font-size: 18px; text-shadow: 0 0 10px #fbbf24; font-family: 'Black Ops One';">CADET</div>
+                </div>
+
+                <div class="profile-name-box">
+                    <div style="font-size: 10px; color: #0ea5e9;">OPERATOR</div>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <div id="hud-player-name" class="scrolling-text">LOADING...</div>
+                        <button class="edit-btn" onclick="changeName()">✏️</button>
+                    </div>
+                </div>
             </div>
 
-            <button class="nav-arrow right" onclick="scrollMenu(1)">
-                <div class="arrow-shape"></div>
-            </button>
+            <button class="logout-link" onclick="logout()">TERMINATE SESSION</button>
         </div>
-        
-        <div id="system-status-text" style="margin-top: 30px; color: #94a3b8; font-size: 12px; opacity: 0.5; font-family: 'Orbitron';">WAITING FOR AUTHENTICATION...</div>
     </div>
+<div id="main-menu-carousel" class="mode-carousel-wrapper" style="display: none;">
+    
+    <button class="nav-arrow left" onclick="scrollMenu(-1)">&#10094;</button>
+
+    <div id="game-mode-selection" class="carousel-track">
+        
+        <button class="start-btn-large carousel-item" onclick="selectMode('AI')">
+            <div class="mode-title">VS A.I.</div>
+        </button>
+
+        <button class="start-btn-large btn-pvp carousel-item" onclick="selectMode('PVP')">
+            <div class="mode-title">VS PLAYER</div>
+        </button>
+
+        <button class="start-btn-large btn-code-list carousel-item" onclick="openVocabScreen()">
+            <div class="mode-title">CODE LIST</div>
+        </button>
+        
+    </div>
+
+    <button class="nav-arrow right" onclick="scrollMenu(1)">&#10095;</button>
+</div>
+    
+    <div id="system-status-text" style="margin-top: 30px; color: #94a3b8; font-size: 12px; opacity: 0.5; font-family: 'Orbitron';">WAITING FOR AUTHENTICATION...</div>
+</div>
 
 <div id="vocab-screen">
     <div class="tech-header">
@@ -2815,7 +2695,7 @@ function startBattle() {
         document.getElementById('turn-timer-container').style.display = 'none';
         document.getElementById('deploy-controls').style.display = 'none';
         document.getElementById('fleet-sidebar').style.display = 'none'; 
-        initEnemyFleetIndicator();
+initEnemyFleetIndicator();
         playSound('deploy-sfx');
 
         if (gameMode === 'AI') {
@@ -2826,9 +2706,9 @@ function startBattle() {
             const field = (playerRole === 'host') ? 'hostBoard' : 'guestBoard';
             updates[field] = myGrid;
             
-            // 發送我的艦隊位置給對手
+            // ★ 新增：發送我的艦隊位置給對手 (傳送 shipId) ★
             const myShipsForSending = FLEET.map((s, index) => ({
-                shipId: index,
+                shipId: index, // 重要：告訴對手這是第幾號船
                 indices: s.indices,
                 width: s.width,
                 height: s.height
@@ -2840,34 +2720,32 @@ function startBattle() {
             update(ref(db, 'rooms/' + currentRoomId), updates);
             document.getElementById('game-status').innerHTML = "WAITING FOR OPPONENT...";
 
-            battleUnsubscribe = onValue(ref(db, 'rooms/' + currentRoomId), (snapshot) => {
-                const data = snapshot.val();
-                if (!data) return;
-                
-                // 當雙方都準備好
-                if (data.hostReady && data.guestReady) {
-                    if (battleUnsubscribe) {
-                        battleUnsubscribe(); // 停止監聽準備狀態
-                        battleUnsubscribe = null;
-                    }
-                    
-                    if (playerRole === 'host') {
-                        enemyGrid = data.guestBoard;
-                        processEnemyFleetData(data.guestBoardShips);
-                        startPlayerTurn();
-                    } else {
-                        enemyGrid = data.hostBoard;
-                        processEnemyFleetData(data.hostBoardShips);
-                        currentPhase = 'ENEMY_TURN';
-                        document.getElementById('game-status').innerHTML = "OPPONENT'S TURN";
-                        switchScene('ENEMY');
-                    }
-                }
-            });
-        }
-    } 
+battleUnsubscribe = onValue(ref(db, 'rooms/' + currentRoomId), (snapshot) => {
+    const data = snapshot.val();
+    if (!data) return;
     
-function switchScene(sceneName) {
+    // 當雙方都準備好
+    if (data.hostReady && data.guestReady) {
+        if (battleUnsubscribe) {
+            battleUnsubscribe(); // ★ 關鍵：一旦進入戰鬥，停止監聽準備狀態，防止重複觸發
+            battleUnsubscribe = null;
+        }
+        
+        if (playerRole === 'host') {
+            enemyGrid = data.guestBoard;
+            processEnemyFleetData(data.guestBoardShips);
+            startPlayerTurn();
+        } else {
+            enemyGrid = data.hostBoard;
+            processEnemyFleetData(data.hostBoardShips);
+            currentPhase = 'ENEMY_TURN';
+            document.getElementById('game-status').innerHTML = "OPPONENT'S TURN";
+            switchScene('ENEMY');
+        }
+    }
+});
+        }
+    }    function switchScene(sceneName) {
         document.getElementById('player-board').classList.remove('active');
         document.getElementById('enemy-board').classList.remove('active');
         
@@ -3548,13 +3426,23 @@ function confirmExit() {
         document.getElementById('confirm-modal').style.display = 'none';
     }
 
-// 3. 按下 "Confirm Abort" (執行重置)
-    // ★ 修正版：執行放棄任務 (播放部署聲) ★
+    // 3. 按下 "Confirm Abort" (執行重置)
+    function executeAbort() {
+        closeConfirmModal(); // 之前因為搵唔到上面個函數，所以這裡卡住了
+        
+        // ... (原本的 executeAbort 內容不用改) ...
+        if (gameMode === 'PVP' && currentRoomId) {
+             // ...
+        }
+        resetGame(); 
+    }
+    // 3. 按下 "Confirm Abort" (執行重置)
+// ★ 修正版：執行放棄任務 (播放部署聲) ★
     function executeAbort() {
         // 1. 播放確認音效
         playSound('deploy-sfx'); 
 
-        // 2. 手動關閉視窗
+        // 2. 手動關閉視窗 (唔好 Call closeConfirmModal，費事播錯 Delete 聲)
         document.getElementById('confirm-modal').style.display = 'none';
 
         // 3. 處理 PVP 投降邏輯
@@ -4470,10 +4358,6 @@ function playBgm() {
 </div>
 </body>
 </html>
-
-
-
-
 
 
 
