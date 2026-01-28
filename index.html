@@ -152,10 +152,10 @@ body {
     100% { background-position: 0 200%, 0 0; } /* 只移動第一層(掃描線) */
 }
 
-/* 3. 標題本體樣式 (每行獨立漸變修正版) */
+/* 3. 標題本體樣式 (修正版：藍白藍漸變 + 掃描線) */
 .main-title {
     font-family: 'Black Ops One', cursive;
-    font-size: 80px;
+    font-size: 80px; /* 統一 Desktop 大小 */
     line-height: 1.1;
     text-align: center;
     letter-spacing: 12px;
@@ -167,12 +167,12 @@ body {
     background: none;
     padding: 0;
 
-    /* 文字透明，讓背景透出 */
+    /* ★ 核心：文字透明，讓背景透出 ★ */
     color: transparent; 
 
-    /* ★★★ 雙層背景 ★★★ */
+    /* ★ 雙層背景：上層掃描線，下層漸變 ★ */
     background-image: 
-        /* 層 1: 掃描線 (保持不變) */
+        /* 層 1: 掃描線 (淺藍白色) */
         repeating-linear-gradient(
             transparent 0px,
             transparent 2px,
@@ -182,24 +182,24 @@ body {
         /* 層 2: 底色漸變 (上藍 -> 中白 -> 下藍) */
         linear-gradient(to bottom,
             rgba(14, 165, 233, 0.9) 0%,    /* 上：深藍 */
-            rgba(255, 255, 255, 1) 45%,    /* 中：純白 (稍微收窄範圍) */
-            rgba(255, 255, 255, 1) 55%,    /* 中：純白 */
+            rgba(255, 255, 255, 1) 40%,    /* 中：純白 (開始) */
+            rgba(255, 255, 255, 1) 60%,    /* 中：純白 (結束) */
             rgba(14, 165, 233, 0.9) 100%   /* 下：深藍 */
         );
 
-    /* 剪裁背景至文字 */
+    /* ★ 剪裁背景至文字 ★ */
     -webkit-background-clip: text;
     background-clip: text;
 
-    /* ★★★ 關鍵修正：改變背景大小 (Background Size) ★★★ */
-    /* 層 1 (掃描線): 100% 闊, 200% 高 (方便捲動) */
-    /* 層 2 (漸變色): 100% 闊, 50% 高 (重點！令漸變只佔一半高度，即係一行嘅高度) */
+    /* ★ 關鍵設定：令漸變色每行獨立計算 ★ */
+    /* 層 1 (掃描線): 100% 闊, 200% 高 */
+    /* 層 2 (漸變色): 100% 闊, 50% 高 (即係一行的高度) */
     background-size: 100% 200%, 100% 50%;
     
     /* 確保背景重複 (令第二行字都食到個漸變) */
     background-repeat: repeat;
-
-    /* 動畫 */
+    
+    /* 結合 Glitch + Scan 動畫 */
     animation: xcom-current-glitch 5s infinite, text-scan 6s linear infinite;
 }
 
@@ -1806,7 +1806,7 @@ body {
 <body>
 <div id="splash-screen" onclick="startExperience()">
     <div class="splash-content">
-        <div class="main-title" style="font-size: 60px; position: relative; z-index: 10000;">VOCAB<br>CONQUEROR</div>
+        <div class="main-title" style="position: relative; z-index: 10000;">VOCAB<br>CONQUEROR</div>
         
         <div class="blink-text" style="font-family: 'Orbitron'; color: #0ea5e9; font-size: 18px; letter-spacing: 5px; margin-top: 20px;">
             >> TAP TO START <<
@@ -4397,6 +4397,7 @@ function playBgm() {
 </div>
 </body>
 </html>
+
 
 
 
