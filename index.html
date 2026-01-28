@@ -1628,6 +1628,114 @@ body {
     /* 加強紅色發光效果 */
     box-shadow: 0 0 15px var(--danger), inset 0 0 5px var(--danger);
 }
+
+/* =========================================
+   ★★★ CAROUSEL MENU (旋轉選單 - 無 Icon 版) ★★★
+   ========================================= */
+
+/* 1. 外層容器：用來定位左右箭咀 */
+.mode-carousel-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    max-width: 800px; /* 電腦版最大寬度 */
+    position: relative;
+    margin-top: 20px;
+    animation: fadeIn 0.5s;
+}
+
+/* 2. 捲動軌道 (核心) */
+.carousel-track {
+    display: flex;
+    gap: 20px; /* 按鈕之間的距離 */
+    
+    overflow-x: auto; /* 容許橫向捲動 */
+    scroll-snap-type: x mandatory; /* ★ 關鍵：啟動吸附效果 ★ */
+    scroll-behavior: smooth; /* 平滑捲動 */
+    
+    width: 100%;
+    padding: 20px 10px; /* 上下留位俾陰影顯示 */
+    
+    /* 隱藏核突嘅 Scrollbar */
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none;  /* IE */
+}
+.carousel-track::-webkit-scrollbar { display: none; } /* Chrome/Safari */
+
+/* 3. 按鈕項目 (Card Style) */
+.carousel-item {
+    /* 強制唔准縮細，確保每個掣一樣大 */
+    flex: 0 0 auto; 
+    
+    /* ★ 吸附點：每次停喺中間 ★ */
+    scroll-snap-align: center;
+    
+    /* 預設大小 (電腦版) */
+    width: 200px; 
+    height: 120px; /* 稍微整矮少少，因為無咗 Icon */
+    
+    /* 內容排版 */
+    display: flex !important; /* Override 舊設定 */
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px; /* 標題同描述之間嘅距離 */
+}
+
+/* 按鈕入面嘅 Title, Desc */
+.mode-title { font-size: 20px; font-weight: bold; letter-spacing: 2px; }
+.mode-desc { font-size: 10px; font-family: 'Orbitron'; opacity: 0.7; letter-spacing: 1px; }
+
+
+/* 4. 左右導航箭咀 */
+.nav-arrow {
+    background: rgba(0,0,0,0.5);
+    border: 1px solid var(--primary);
+    color: var(--primary);
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    font-size: 20px;
+    cursor: pointer;
+    z-index: 10;
+    transition: all 0.2s;
+    display: flex; align-items: center; justify-content: center;
+    
+    /* 唔好俾人壓縮 */
+    flex-shrink: 0; 
+}
+.nav-arrow:hover {
+    background: var(--primary); color: #000;
+    box-shadow: 0 0 15px var(--primary);
+}
+.nav-arrow:active { transform: scale(0.9); }
+
+
+/* --- ★ 手機/平板 響應式調整 (RESPONSIVE) ★ --- */
+
+@media (max-width: 768px) {
+    /* 平板/手機：箭咀改為「浮」在上面，或者直接收埋靠手指掃 */
+    .nav-arrow {
+        position: absolute;
+        top: 50%; transform: translateY(-50%);
+        background: rgba(0,0,0,0.8);
+    }
+    .nav-arrow.left { left: 0; }
+    .nav-arrow.right { right: 0; }
+    
+    .carousel-track {
+        /* 手機版左右留空，確保第一同最後一個掣可以碌到中間 */
+        padding: 20px 15%; 
+    }
+
+    .carousel-item {
+        /* ★ 關鍵：手機版每個掣佔畫面 60% 闊度 ★ */
+        /* 咁樣你就一定會見到中間嗰個，同埋隔離左右各露出少少 */
+        width: 60vw; 
+        max-width: 250px;
+        height: 100px; /* 手機版再矮少少 */
+    }
+}
     </style>
 
 </head>
@@ -1680,15 +1788,31 @@ body {
         </div>
     </div>
 
-    <div id="game-mode-selection" style="display: none; gap: 20px; margin-top: 20px; animation: fadeIn 0.5s;">
-        <button class="start-btn-large" onclick="selectMode('AI')">VS A.I.</button>
-        <button class="start-btn-large btn-pvp" onclick="selectMode('PVP')">
-            VS PLAYER
+<div class="mode-carousel-wrapper">
+    
+    <button class="nav-arrow left" onclick="scrollMenu(-1)">&#10094;</button>
+
+    <div id="game-mode-selection" class="carousel-track">
+        
+        <button class="start-btn-large carousel-item" onclick="selectMode('AI')">
+            <div class="mode-title">VS A.I.</div>
+            <div class="mode-desc">TRAINING SIM</div>
         </button>
-        <button class="start-btn-large btn-code-list" onclick="openVocabScreen()">
-            CODE LIST
+
+        <button class="start-btn-large btn-pvp carousel-item" onclick="selectMode('PVP')">
+            <div class="mode-title">VS PLAYER</div>
+            <div class="mode-desc">ONLINE BATTLE</div>
         </button>
-    </div>
+
+        <button class="start-btn-large btn-code-list carousel-item" onclick="openVocabScreen()">
+            <div class="mode-title">CODE LIST</div>
+            <div class="mode-desc">DATABASE</div>
+        </button>
+        
+        </div>
+
+    <button class="nav-arrow right" onclick="scrollMenu(1)">&#10095;</button>
+</div>
     
     <div id="system-status-text" style="margin-top: 30px; color: #94a3b8; font-size: 12px; opacity: 0.5; font-family: 'Orbitron';">WAITING FOR AUTHENTICATION...</div>
 </div>
@@ -4072,6 +4196,23 @@ function playBgm() {
         bgm.play().catch(e => console.log("BGM waiting for interaction"));
     }
 }
+// --- Carousel 左右捲動控制 ---
+    function scrollMenu(direction) {
+        const track = document.getElementById('game-mode-selection');
+        // 搵出第一個卡片嘅闊度 (動態計算，無論電腦定手機都準)
+        const itemWidth = track.querySelector('.carousel-item').offsetWidth;
+        const gap = 20; // 對應 CSS 嘅 gap
+        
+        // 計算每次捲動距離 (一個卡片 + 一個空隙)
+        const scrollAmount = itemWidth + gap;
+        
+        track.scrollBy({
+            left: direction * scrollAmount,
+            behavior: 'smooth'
+        });
+        
+        playSound('deploy-sfx'); 
+    }
 </script>
 <div id="registration-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 9999; flex-direction: column; align-items: center; justify-content: center;">
     
@@ -4138,6 +4279,7 @@ function playBgm() {
 </div>
 </body>
 </html>
+
 
 
 
