@@ -1676,137 +1676,52 @@ body {
 /* (已刪除 .mode-desc 樣式) */
 
 
-/* =========================================
-   ★★★ CYBERPUNK ARROWS (全息幼身版) ★★★
-   ========================================= */
-
+/* 4. 左右導航箭咀 (銀白色，無圓圈) */
 .nav-arrow {
+    /* 移除背景同邊框 */
     background: transparent;
     border: none;
+    /* 銀白色 */
+    color: #e2e8f0;
+    
+    /* 加大少少個箭咀 */
+    font-size: 35px;
+    width: 50px; height: 50px;
+    
     cursor: pointer;
     z-index: 10;
-    
-    /* 設定按鈕大小，方便點擊 */
-    width: 60px; height: 100%; /* 高度跟隨容器 */
-    position: absolute; /* 絕對定位，確保左右對稱 */
-    top: 0;
-    
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.3s ease;
-    
-    /* 移除舊有的發光，改由內部元素發光 */
-    text-shadow: none;
-    box-shadow: none;
-    
-    /* 微微半透明，扮全息投影 */
-    opacity: 0.6;
+    transition: all 0.2s;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    /* 加入少少陰影令佢立體啲 */
+    text-shadow: 0 2px 5px rgba(0,0,0,0.5);
 }
 
-/* 定位：左邊 */
-.nav-arrow.left { 
-    left: -60px; /* 移出容器外面 */
-}
-
-/* 定位：右邊 */
-.nav-arrow.right { 
-    right: -60px; /* 移出容器外面 */
-}
-
-/* --- 核心箭咀形狀 (用 CSS border 畫出幼身線條) --- */
-.arrow-shape {
-    width: 20px; 
-    height: 20px;
-    
-    /* 銀白色線條 */
-    border-top: 2px solid #e2e8f0; 
-    border-right: 2px solid #e2e8f0; 
-    
-    /* 發光特效 (幼細光暈) */
-    box-shadow: 2px -2px 10px rgba(255, 255, 255, 0.5); 
-    
-    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-}
-
-/* 左箭咀：旋轉 -135度 */
-.nav-arrow.left .arrow-shape {
-    transform: rotate(-135deg);
-}
-
-/* 右箭咀：旋轉 45度 */
-.nav-arrow.right .arrow-shape {
-    transform: rotate(45deg);
-}
-
-
-/* --- Hover 動畫 (滑鼠指上去) --- */
+/* 滑鼠指住 */
 .nav-arrow:hover {
-    opacity: 1; /* 變光 */
+    color: #ffffff; /* 變純白 */
+    transform: scale(1.1); /* 輕微放大 */
 }
 
-/* 左箭咀 Hover：向左彈一下 */
-.nav-arrow.left:hover .arrow-shape {
-    border-color: #00f0ff; /* 變 Cyber Blue */
-    box-shadow: 4px -4px 15px #00f0ff; /* 藍色強光 */
-    transform: rotate(-135deg) translate(5px, -5px); /* 向尖端方向移動 */
+/* 撳落去發白光 */
+.nav-arrow:active {
+    transform: scale(0.9);
+    /* 強烈白色發光 */
+    text-shadow: 0 0 15px #ffffff, 0 0 30px #ffffff;
 }
 
-/* 右箭咀 Hover：向右彈一下 */
-.nav-arrow.right:hover .arrow-shape {
-    border-color: #00f0ff; 
-    box-shadow: 4px -4px 15px #00f0ff;
-    transform: rotate(45deg) translate(5px, -5px);
-}
 
-/* --- Active 動畫 (撳落去) --- */
-.nav-arrow:active .arrow-shape {
-    border-color: #fff; /* 變白 */
-    transform: scale(0.9) rotate(var(--r)); /* 縮細 */
-    transition: 0.1s;
-}
+/* --- ★ 手機/平板 響應式調整 (RESPONSIVE) ★ --- */
 
-/* --- 常駐呼吸動畫 (Idle Animation) --- */
-@keyframes arrowFloatLeft {
-    0%, 100% { transform: rotate(-135deg) translate(0, 0); }
-    50% { transform: rotate(-135deg) translate(3px, -3px); } /* 輕微向左浮動 */
-}
-
-@keyframes arrowFloatRight {
-    0%, 100% { transform: rotate(45deg) translate(0, 0); }
-    50% { transform: rotate(45deg) translate(3px, -3px); } /* 輕微向右浮動 */
-}
-
-/* 套用呼吸動畫 */
-.nav-arrow.left .arrow-shape { animation: arrowFloatLeft 2s infinite ease-in-out; }
-.nav-arrow.right .arrow-shape { animation: arrowFloatRight 2s infinite ease-in-out; }
-
-
-/* --- 手機版調整 --- */
 @media (max-width: 768px) {
     .nav-arrow {
-        width: 40px;
-        /* 手機版放番入去容器裡面，費事爆邊 */
-        position: absolute; 
-        top: 50%;
-        transform: translateY(-50%); /* 垂直置中 */
-        opacity: 0.8; /* 手機版光少少，因為無 Hover */
+        position: absolute;
+        top: 50%; transform: translateY(-50%);
+        /* 手機版都可以加番少少半透明底色防止撞背景，如果你想完全透明就刪除下面呢行 */
+        /* background: rgba(0,0,0,0.3); */ 
     }
-    
-    .nav-arrow.left { left: 0; }
-    .nav-arrow.right { right: 0; }
-    
-    .arrow-shape {
-        width: 15px; height: 15px; /* 縮細少少 */
-        border-width: 3px; /* 手機版線條粗番少少，容易睇 */
-    }
-    
-    /* 手機版取消呼吸動畫，慳電同埋防眼花 */
-    .nav-arrow.left .arrow-shape, 
-    .nav-arrow.right .arrow-shape { 
-        animation: none; 
-    }
-}
+    .nav-arrow.left { left: -10px; } /* 移出一點 */
+    .nav-arrow.right { right: -10px; }
     
     .carousel-track {
         padding: 20px 15%; 
@@ -1922,9 +1837,7 @@ body {
     </div>
 <div id="main-menu-carousel" class="mode-carousel-wrapper" style="display: none;">
     
-<button class="nav-arrow left" onclick="scrollMenu(-1)">
-    <div class="arrow-shape"></div>
-</button>
+    <button class="nav-arrow left" onclick="scrollMenu(-1)">&#10094;</button>
 
     <div id="game-mode-selection" class="carousel-track">
         
@@ -1942,9 +1855,8 @@ body {
         
     </div>
 
-<button class="nav-arrow right" onclick="scrollMenu(1)">
-    <div class="arrow-shape"></div>
-</button>
+    <button class="nav-arrow right" onclick="scrollMenu(1)">&#10095;</button>
+</div>
     
     <div id="system-status-text" style="margin-top: 30px; color: #94a3b8; font-size: 12px; opacity: 0.5; font-family: 'Orbitron';">WAITING FOR AUTHENTICATION...</div>
 </div>
