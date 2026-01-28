@@ -2503,7 +2503,7 @@ function initPVPListeners() {
                     document.getElementById('end-msg').innerText = `ENEMY ${reason}`;
                     
                     document.getElementById('end-screen').style.display = "flex";
-                    playSound('deploy-sfx'); 
+                    playSound('victory-sfx'); 
                 } else {
                     document.getElementById('end-title').innerText = "DEFEAT";
                     document.getElementById('end-title').style.color = "var(--warning)";
@@ -2511,7 +2511,7 @@ function initPVPListeners() {
                     document.getElementById('end-msg').innerText = "FLEET DESTROYED";
                     
                     document.getElementById('end-screen').style.display = "flex";
-                    playSound('wrong-sfx');
+                    playSound('lose-sfx');
                 }
                 currentPhase = 'GAME_OVER';
                 return; 
@@ -4564,6 +4564,7 @@ function generateGuestId() {
 </div>
 </body>
 </html>
+
 
 
 
