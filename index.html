@@ -3594,20 +3594,39 @@ function renderSidebar() {
         return false;
     }
 
+// ★ 優化版：確認離開/投降 (動態改字) ★
 function confirmExit() {
-        const lobbyScreen = document.getElementById('lobby-screen');
-        
-        // 判斷：如果 Lobby 正在顯示 (display 不係 none)，代表你係大廳
-        if (lobbyScreen.style.display && lobbyScreen.style.display !== 'none') {
-            // 直接離開，無需警告
-            playSound('delete-sfx'); // 播個輕鬆啲嘅取消聲
-            resetGame(); 
-        } else {
-            // 如果係遊戲中，先彈出警告視窗
-            document.getElementById('confirm-modal').style.display = 'flex';
-            playSound('wrong-sfx'); // 播警報聲
-        }
+    const lobbyScreen = document.getElementById('lobby-screen');
+    
+    // 1. 如果在大廳，直接離開，唔使問
+    if (lobbyScreen.style.display && lobbyScreen.style.display !== 'none') {
+        playSound('delete-sfx');
+        resetGame(); 
+        return;
+    } 
+
+    // 2. 獲取視窗內的文字元素
+    const title = document.querySelector('#confirm-modal .tech-warning-title');
+    const msg = document.querySelector('#confirm-modal .tech-warning-msg');
+    const confirmBtn = document.querySelector('#confirm-modal .tech-btn.confirm');
+
+    // 3. 判斷狀態：決定顯示邊套文字
+    if (currentPhase === 'DEPLOY') {
+        // --- A. 部署階段 (只是離開) ---
+        title.innerText = "⚠ WARNING // ABORT?";
+        msg.innerHTML = "ALL MISSION PROGRESS WILL BE LOST.<br>CONFIRM ABORT SEQUENCE?";
+        confirmBtn.innerText = "CONFIRM ABORT";
+    } else {
+        // --- B. 戰鬥階段 (投降) ---
+        title.innerText = "⚠ WARNING // SURRENDER?";
+        msg.innerHTML = "YOU ARE ABOUT TO SURRENDER THIS MISSION.<br>THIS WILL BE RECORDED AS A DEFEAT.";
+        confirmBtn.innerText = "CONFIRM SURRENDER";
     }
+
+    // 4. 顯示視窗 & 播聲
+    document.getElementById('confirm-modal').style.display = 'flex';
+    playSound('wrong-sfx'); 
+}
 // ★ 補回這個函數，否則兩個掣都會死火 ★
 // ★ 修正版：關閉確認窗 (播放取消聲) ★
     function closeConfirmModal() {
@@ -4727,6 +4746,7 @@ function renderReview() {
 </div>
 </body>
 </html>
+
 
 
 
