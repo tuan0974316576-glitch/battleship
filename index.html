@@ -35,10 +35,19 @@
 
     <style>
 @import url('https://fonts.googleapis.com/css2?family=Black+Ops+One&family=Orbitron:wght@400;500;700;900&family=Roboto+Mono:wght@400;700&display=swap');
-{
-        -webkit-tap-highlight-color: transparent; /* 針對 iOS/Android 手機 */
-        outline: none; 
-    }
+
+* {
+    -webkit-tap-highlight-color: transparent; /* 針對 iOS/Android：移除點擊時的藍色/灰色半透明背景 */
+    outline: none;       /* 移除電腦版點擊時的聚焦框 */
+    -webkit-touch-callout: none; /* (選用) 針對 iOS：長按時不要彈出系統選單 */
+    user-select: none;   /* (選用) 防止玩家點太快變成長按選取文字，讓遊戲體驗更像 App */
+}
+
+/* 恢復輸入框可以選取文字 (因為上面設定了 user-select: none) */
+input, textarea {
+    user-select: text; 
+    -webkit-user-select: text;
+}
         :root {
             --primary: #0ea5e9; 
             --danger: #ef4444;  
@@ -4117,6 +4126,7 @@ function playBgm() {
 </div>
 </body>
 </html>
+
 
 
 
