@@ -2020,7 +2020,7 @@ function selectMode(mode) {
         document.getElementById('level-screen').style.display = 'flex';
     }
 
-    function selectLevel(level) {
+function selectLevel(level) {
         selectedLevel = level;
         activeVocabList = VOCAB_DB[level]; // 設定題庫
         
@@ -2029,7 +2029,7 @@ function selectMode(mode) {
 
         if (tempGameMode === 'AI') {
             gameMode = 'AI';
-            document.getElementById('global-back-btn').style.display = 'block';
+      
             enterGameUI();
         } else {
             // PVP 模式：來到這裡代表係 Host 剛揀完 Level
@@ -4069,6 +4069,7 @@ function playBgm() {
 </div>
 </body>
 </html>
+
 
 
 
