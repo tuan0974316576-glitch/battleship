@@ -2525,6 +2525,7 @@ function initPVPListeners() {
                 if (currentPhase === 'GAME_OVER') return; // 如果已經完咗就唔好再彈
                 
                 if (data.winner === playerRole) {
+                    renderReview();
                     document.getElementById('end-title').innerText = "VICTORY";
                     document.getElementById('end-title').style.color = "var(--success)";
                     document.getElementById('end-title').style.textShadow = "0 0 30px var(--success)";
@@ -2536,6 +2537,7 @@ function initPVPListeners() {
                     document.getElementById('end-screen').style.display = "flex";
                     playSound('victory-sfx'); 
                 } else {
+                    renderReview();
                     document.getElementById('end-title').innerText = "DEFEAT";
                     document.getElementById('end-title').style.color = "var(--warning)";
                     document.getElementById('end-title').style.textShadow = "0 0 30px var(--warning)";
@@ -3034,19 +3036,36 @@ function handlePlayerTimeout() {
     }
 
 function checkAnswer() {
-        const val = document.getElementById('hidden-input').value.toUpperCase().trim();
-        
-        // ★★★ 修正重點：將 currentVocab.en 都轉做大楷先至比較 ★★★
-        if (val === currentVocab.en.toUpperCase()) { 
-            playerFire(true);
-        } else {
-            playSound('wrong-sfx');
-            document.getElementById('msg-area').innerText = "CODE INVALID!";
-            const d = document.getElementById('q-display');
-            d.style.color = "var(--danger)";
-            setTimeout(() => d.style.color = "var(--primary)", 500);
-        }
+    const input = document.getElementById('hidden-input');
+    const val = input.value.toUpperCase().trim();
+    
+    // ★★★ 新增部分：記錄這一回合的戰況 ★★★
+    // 獲取正確答案 (currentVocab 是全局變數)
+    const correctAnswer = currentVocab.en; 
+    const isCorrect = (val === correctAnswer.toUpperCase());
+
+    // 將資料推入 battleLog (你之前已經宣告咗這個變數)
+    if (typeof battleLog !== 'undefined') {
+        battleLog.push({
+            turn: (typeof turnCounter !== 'undefined' ? turnCounter : 1), // 記錄這是第幾回合
+            user: input.value,      // 學生輸入的原始文字
+            correct: correctAnswer, // 正確答案
+            isCorrect: isCorrect    // 結果 (true/false)
+        });
     }
+    // ★★★ 新增結束 ★★★
+
+    // 原本的判斷邏輯
+    if (isCorrect) { 
+        playerFire(true);
+    } else {
+        playSound('wrong-sfx');
+        document.getElementById('msg-area').innerText = "CODE INVALID!";
+        const d = document.getElementById('q-display');
+        d.style.color = "var(--danger)";
+        setTimeout(() => d.style.color = "var(--primary)", 500);
+    }
+}
 
     // --- 10. 攻擊執行 ---
 function playerFire(success) {
@@ -3534,6 +3553,7 @@ function renderSidebar() {
             
             // 延遲 2.5 秒彈出畫面並播放勝利音效
             setTimeout(() => {
+                renderReview();
                 // ★ 修改點：播放 victory-sfx ★
                 const vSfx = document.getElementById('victory-sfx');
                 if(vSfx) { vSfx.currentTime = 0; vSfx.play().catch(e=>{}); }
@@ -3554,6 +3574,7 @@ function renderSidebar() {
             
             // 延遲 2.5 秒彈出畫面並播放失敗音效
             setTimeout(() => {
+                renderReview();
                 // ★ 修改點：播放 lose-sfx ★
                 const lSfx = document.getElementById('lose-sfx');
                 if(lSfx) { lSfx.currentTime = 0; lSfx.play().catch(e=>{}); }
@@ -4683,6 +4704,7 @@ function renderReview() {
 </div>
 </body>
 </html>
+
 
 
 
