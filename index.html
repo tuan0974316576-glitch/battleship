@@ -57,18 +57,24 @@ input, textarea {
             --glass-border: rgba(255, 255, 255, 0.2);
         }
 
+/* --- 1. 背景無限捲動動畫 --- */
+@keyframes spaceScroll {
+    from { background-position: center 0; }
+    to { background-position: center 1000px; } /* 數值越大，流動越快 */
+}
+
 body {
     background-color: #000;
     
     background-image: url('stars_texture.png'); 
-    /* ★ 重點修正：改用 500px，同 Splash Screen 一樣高清密集 ★ */
     background-repeat: repeat; 
     background-size: 500px; 
     
-    background-position: center;
-    background-attachment: fixed; /* 固定背景，令星星唔會跟住捲動 */
-    color: var(--text);
+    background-position: center 0;
+    /* ★ 改動：加入動畫，令背景不斷向下捲動 (60秒一圈，Linear 均速) ★ */
+    animation: spaceScroll 60s linear infinite; 
     
+    color: var(--text);
     font-family: 'Orbitron', sans-serif; 
     letter-spacing: 1px;
     display: flex;
@@ -1847,6 +1853,22 @@ body {
     border-color: #ef4444 !important;
     box-shadow: 0 0 10px #ef4444 inset;
 }
+/* --- 2. 隨機閃爍星星樣式 --- */
+.star-twinkle {
+    position: absolute;
+    background: white;
+    border-radius: 50%;
+    z-index: -1; /* 喺 UI 後面，但喺背景圖前面 */
+    pointer-events: none; /* 唔阻住滑鼠點擊 */
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.8); /* 發光效果 */
+}
+
+/* 定義閃爍動畫：大 -> 細 -> 大 */
+@keyframes twinkleAnim {
+    0% { opacity: 0.2; transform: scale(0.5); }
+    50% { opacity: 1; transform: scale(1.2); box-shadow: 0 0 15px white; }
+    100% { opacity: 0.2; transform: scale(0.5); }
+}
     </style>
 
 </head>
@@ -2249,81 +2271,6 @@ function startEnemyTurn() {
     let myDamage = 0;    // 我被打中幾多格 (我輸的進度)
     let enemyDamage = 0; // 敵人被打中幾多格 (我贏的進度)
     let unsubscribeRoom = null; // 用來儲存 Firebase 監聽器
-
-   // --- 4. 初始化 ---
-    window.addEventListener('load', () => {
-        // --- Firebase Init ---
-        // ★ 注意：這裡加了 ref 和 onValue，用於監測連線 ★
-        const { initializeApp, getDatabase, getAuth, signInAnonymously, onAuthStateChanged, ref, onValue } = window.firebaseModules;
-        
-        app = initializeApp(firebaseConfig);
-        db = getDatabase(app);
-        auth = getAuth(app);
-
-        // ★★★ 重要修改：我刪除了 signInAnonymously(auth)... 這一行 ★★★
-        // 現在系統唔會再自動登入，會乖乖地停在藍色畫面等你撳掣！
-
-        onAuthStateChanged(auth, u => {
-            if (u) {
-                myPlayerId = u.uid;
-                const disp = document.getElementById('player-id-display');
-                if(disp) disp.innerText = u.uid.substring(0,6).toUpperCase();
-            }
-        });
-
-        // ★★★ 連線狀態監測 (綠燈/紅燈) ★★★
-        // 連線狀態監測 (修正版：Splash Screen 顯示緊嗰陣，唔好彈 Error 聲)
-        const connectedRef = ref(db, ".info/connected");
-        onValue(connectedRef, (snap) => {
-            const el = document.getElementById('connection-status');
-            if (!el) return; 
-            
-            el.style.display = 'block';
-            
-            if (snap.val() === true) {
-                // 連線成功 (綠燈)
-                el.style.background = "#22c55e"; 
-                el.style.boxShadow = "0 0 5px #22c55e";
-            } else {
-                // 斷線 (紅燈)
-                el.style.background = "#ef4444"; 
-                el.style.boxShadow = "0 0 5px #ef4444";
-                
-                // ★★★ 關鍵修正：檢查 Splash Screen 係咪仲喺度 ★★★
-                // 如果 Splash Screen 仲顯示緊 (即係剛入 Game)，就唔好彈 Error 聲住
-                const splash = document.getElementById('splash-screen');
-                if (splash && splash.style.display !== 'none' && splash.style.opacity !== '0') {
-                    return; // 靜靜地離開，唔好嘈
-                }
-
-                // 如果入咗 Game 先斷線，先至彈提示
-                if (typeof showNotification === 'function') {
-                    showNotification("CONNECTION LOST!", "error"); 
-                }
-            }
-        });
-        
-        // --- 遊戲畫面初始化 ---
-        createGrid('player-grid');
-        createGrid('enemy-grid');
-        placeEnemyShips(); 
-        renderSidebar();
-
-        // --- 輸入框音效 ---
-        const roomInput = document.getElementById('room-id-input');
-        if (roomInput) {
-            roomInput.addEventListener('input', (e) => {
-                // 如果係刪除 (Backspace/Delete)
-                if (e.inputType === 'deleteContentBackward' || e.inputType === 'deleteContentForward') {
-                    playSound('delete-sfx'); 
-                } 
-                // 如果係輸入 (打字)
-                else {
-                    playSound('enter-sfx'); 
-                }
-            });
-        }
-    });
 
     // --- 5. 流程控制 ---
 function selectMode(mode) {
@@ -4306,6 +4253,7 @@ function switchHudPanel(panelId) {
 
 // 9. 核心監聽器 (修正版：修復 Guest Login 同 Logout 卡死問題)
 window.addEventListener('load', () => {
+    createTwinklingStars();
     
     // ★ 1. 確保隨機名生成器存在 (如果未有，就在這裡定義)
     if (typeof generateGuestId !== 'function') {
@@ -4498,6 +4446,35 @@ function generateGuestId() {
     const nums = Math.floor(100 + Math.random() * 900); // 100-999
     return `${l1}${l2}${nums}`; // 例如: AK479
 }
+// ★★★ 新增：生成隨機閃爍背景星星 ★★★
+function createTwinklingStars() {
+    const starCount = 50; // 星星數量 (唔好太多，費事拖慢)
+    const container = document.body;
+
+    for (let i = 0; i < starCount; i++) {
+        const star = document.createElement('div');
+        star.classList.add('star-twinkle');
+        
+        // 隨機位置 (0% - 100% 螢幕範圍)
+        const x = Math.random() * 100;
+        const y = Math.random() * 100;
+        
+        // 隨機大小 (1px - 3px)
+        const size = Math.random() * 3 + 1;
+        
+        // 隨機動畫延遲 (令佢地唔會同時閃)
+        const delay = Math.random() * 5;
+        const duration = Math.random() * 3 + 2; // 閃爍速度 2-5秒
+
+        star.style.left = x + '%';
+        star.style.top = y + '%';
+        star.style.width = size + 'px';
+        star.style.height = size + 'px';
+        star.style.animation = `twinkleAnim ${duration}s infinite ease-in-out ${delay}s`;
+
+        container.appendChild(star);
+    }
+}
 </script>
 <div id="registration-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 9999; flex-direction: column; align-items: center; justify-content: center;">
     
@@ -4564,6 +4541,7 @@ function generateGuestId() {
 </div>
 </body>
 </html>
+
 
 
 
