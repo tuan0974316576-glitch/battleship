@@ -1894,6 +1894,49 @@ body {
     50% { opacity: 0.7; transform: scale(1); } 
     100% { opacity: 0; transform: scale(0.3) rotate(45deg); }
 }
+/* --- 戰後回顧樣式 --- */
+.review-item {
+    display: grid;
+    grid-template-columns: 0.5fr 1fr 1fr; /* 3欄比例 */
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(71, 85, 105, 0.3);
+    font-family: 'Orbitron', sans-serif;
+    font-size: 14px;
+    align-items: center;
+}
+
+.review-turn {
+    color: #fff; /* Turn: 白色 */
+    opacity: 0.7;
+}
+
+.review-user.correct {
+    color: var(--success); /* 答啱: 綠色 */
+    text-shadow: 0 0 5px rgba(34, 197, 94, 0.5);
+}
+
+.review-user.wrong {
+    color: var(--danger); /* 答錯: 紅色 */
+    text-decoration: line-through; /* 加刪除線更清楚係錯 */
+    opacity: 0.9;
+}
+
+.review-answer {
+    color: #0ea5e9; /* 正確答案: 藍色 */
+    font-weight: bold;
+}
+
+/* 捲軸美化 */
+#review-list::-webkit-scrollbar {
+    width: 5px;
+}
+#review-list::-webkit-scrollbar-track {
+    background: #0f172a;
+}
+#review-list::-webkit-scrollbar-thumb {
+    background: #334155;
+    border-radius: 3px;
+}
     </style>
 
 </head>
@@ -2122,11 +2165,26 @@ body {
     </div>
 
     <div id="warning-overlay"></div>
-<div id="end-screen" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 300; background: rgba(0,0,0,0.9); flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(10px);">
-        <h1 id="end-title" style="font-family: 'Black Ops One'; font-size: 80px; margin-bottom: 20px; text-shadow: 0 0 30px currentColor;">VICTORY</h1>
-        <div id="end-msg" style="color: #94a3b8; margin-bottom: 40px; font-size: 20px;">ENEMY FLEET ELIMINATED</div>
-        <button class="start-btn-large" onclick="resetGame()">RETURN TO BASE</button>
+<div id="end-screen" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 300; background: rgba(0,0,0,0.95); flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(10px);">
+    
+    <h1 id="end-title" style="font-family: 'Black Ops One'; font-size: 60px; margin-bottom: 10px; text-shadow: 0 0 30px currentColor;">VICTORY</h1>
+    <div id="end-msg" style="color: #94a3b8; margin-bottom: 20px; font-size: 18px;">ENEMY FLEET ELIMINATED</div>
+
+    <div id="review-container" style="width: 90%; max-width: 600px; background: rgba(15, 23, 42, 0.8); border: 1px solid #334155; border-radius: 10px; padding: 15px; margin-bottom: 20px; display: flex; flex-direction: column;">
+        <div style="font-family: 'Orbitron'; color: #0ea5e9; font-size: 16px; margin-bottom: 10px; text-align: center; letter-spacing: 2px;">>> MISSION DEBRIEF <<</div>
+        
+        <div style="display: grid; grid-template-columns: 0.5fr 1fr 1fr; border-bottom: 1px solid #475569; padding-bottom: 5px; margin-bottom: 10px; color: #94a3b8; font-size: 12px; font-weight: bold;">
+            <span>TURN</span>
+            <span>YOUR INPUT</span>
+            <span>CORRECT CODE</span>
+        </div>
+
+        <div id="review-list" style="overflow-y: auto; max-height: 300px; padding-right: 5px;">
+            </div>
     </div>
+
+    <button class="start-btn-large" onclick="resetGame()">RETURN TO BASE</button>
+</div>
 <div id="confirm-modal" class="tech-modal-overlay">
         <div class="tech-modal-box">
             <div class="tech-warning-title">⚠ WARNING // ABORT?</div>
@@ -2169,6 +2227,7 @@ body {
 <script src="vocab_data.js"></script>
 
 <script>
+let battleLog = [];
     // ★★★ 新增：自動排序功能 ★★★
     // 這段代碼會走遍所有 Level (L1, L2...), 自動按英文字母 A-Z 排列
     function sortDatabase() {
@@ -3557,6 +3616,7 @@ function confirmExit() {
     }
 
 function resetGame() {
+    battleLog = [];
     // 1. 斷開 Firebase 連線
     if (unsubscribeRoom) { unsubscribeRoom(); unsubscribeRoom = null; }
     if (battleUnsubscribe) { battleUnsubscribe(); battleUnsubscribe = null; }
@@ -4528,6 +4588,26 @@ function createTwinklingStars() {
         container.appendChild(star);
     }
 }
+// ★★★ 新增：渲染戰後報告 ★★★
+function renderReview() {
+    const list = document.getElementById('review-list');
+    list.innerHTML = ""; // 清空舊內容
+
+    battleLog.forEach(log => {
+        const item = document.createElement('div');
+        item.className = 'review-item';
+        
+        // 根據對錯設定 class
+        const userClass = log.isCorrect ? 'correct' : 'wrong';
+        
+        item.innerHTML = `
+            <div class="review-turn">T-${log.turn}</div>
+            <div class="review-user ${userClass}">${log.user}</div>
+            <div class="review-answer">${log.correct}</div>
+        `;
+        list.appendChild(item);
+    });
+}
 </script>
 <div id="registration-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 9999; flex-direction: column; align-items: center; justify-content: center;">
     
@@ -4594,6 +4674,7 @@ function createTwinklingStars() {
 </div>
 </body>
 </html>
+
 
 
 
