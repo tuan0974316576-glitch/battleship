@@ -2162,38 +2162,44 @@ let turnCounter = 0; // 回合計數器
     // --- 2. 遊戲參數 ---
     const GRID_SIZE = 10;
 
-const FLEET = [
-        { width: 1, height: 2, img: '1x2.png' },
-        { width: 1, height: 3, img: '1x3.png' },
-        { width: 1, height: 4, img: '1x4.png' },
-        { width: 2, height: 4, img: '2x4.png' },
-        // 新增：1x3+1 戰艦 (T型)
+/* =========================================
+       ★★★ 1. 戰艦數據 (已更新次序：T型排第3) ★★★
+       ========================================= */
+    const FLEET = [
+        // 1. GHOST (1x2)
         { 
-            width: 2,    // 垂直時的總闊度
-            height: 3,   // 垂直時的總高度
-            img: '1x3+1.png', // 記得將你的圖片改名做這個
-            custom: true, // 標記為特殊形狀
-            // 垂直佈局 (2x3): 左邊3格直條，右邊中間突出一格
-            // 1=有船, 0=透明
-            layoutV: [
-                1, 0,
-                1, 1,
-                1, 0
-            ],
-            // 水平佈局 (3x2): 上面中間突出一格，下面3格橫條
-            // 旋轉90度後的樣子
-            layoutH: [
-                0, 1, 0,
-                1, 1, 1
-            ]
+            width: 1, height: 2, img: '1x2.png', 
+            voiceId: 'ship-voice-0' // 綁定 ship_0 聲音
+        },
+        // 2. STRIKER (1x3)
+        { 
+            width: 1, height: 3, img: '1x3.png', 
+            voiceId: 'ship-voice-1' // 綁定 ship_1 聲音
+        },
+        // 3. SPECTRE (3+1 "T-Shape") ★ 搬咗上黎做第 3 ★
+        { 
+            width: 2, height: 3, img: '1x3+1.png', custom: true, 
+            layoutV: [1, 0, 1, 1, 1, 0], 
+            layoutH: [0, 1, 0, 1, 1, 1],
+            voiceId: 'ship-voice-4' // ★ 關鍵：即使排第3，依然用番 ship_4 (Spectre) 把聲
+        },
+        // 4. DREADNOUGHT (1x4) ★ 搬咗落去 ★
+        { 
+            width: 1, height: 4, img: '1x4.png', 
+            voiceId: 'ship-voice-2' 
+        },
+        // 5. DESTROYER (2x4) ★ 搬咗落去 ★
+        { 
+            width: 2, height: 4, img: '2x4.png', 
+            voiceId: 'ship-voice-3' 
         }
     ];
 const DAMAGED_IMAGES = [
-        '1x2_damaged.png', 
-        '1x3_damaged.png', 
-        '1x4_damaged.png', 
-        '2x4_damaged.png',
-        '1x3+1_damaged.png' // 暫時用原圖頂住先，如果你有 1x3+1_damaged.png 就改呢度
+        '1x2_damaged.png',   // 1. Ghost
+        '1x3_damaged.png',   // 2. Striker
+        '1x3+1_damaged.png', // 3. Spectre (T型) ★ 跟住搬上黎
+        '1x4_damaged.png',   // 4. Dreadnought
+        '2x4_damaged.png'    // 5. Destroyer
     ];
 
    
@@ -2653,109 +2659,106 @@ function getShipIndices(idx, conf, v) {
         document.querySelectorAll('.cell').forEach(c => c.classList.remove('valid-hover', 'invalid-hover')); 
     }
 
-function handleClick(index) {
-    // 1. 如果唔係部署階段 (戰鬥中)，處理發射邏輯
-    if (currentPhase !== 'DEPLOY') {
-        if (currentPhase === 'PLAYER_TURN') {
-            const cell = document.getElementById('enemy-grid').children[index];
-            if (!cell.classList.contains('revealed')) openLaunchModal(index);
-        }
-        return;
-    }
-
-    // 2. 回收船隻邏輯 (點擊已放置的船)
-    if (myGrid[index] === 1) {
-        let targetShipId = -1;
-        FLEET.forEach((ship, i) => {
-            if (ship.indices && ship.indices.includes(index)) {
-                targetShipId = i;
+/* =========================================
+       ★★★ 3. 點擊放置 (修正版：讀取 voiceId) ★★★
+       ========================================= */
+    function handleClick(index) {
+        // 1. 非部署階段 -> 處理發射
+        if (currentPhase !== 'DEPLOY') {
+            if (currentPhase === 'PLAYER_TURN') {
+                const cell = document.getElementById('enemy-grid').children[index];
+                if (!cell.classList.contains('revealed')) openLaunchModal(index);
             }
-        });
-
-        if (targetShipId !== -1) {
-            FLEET[targetShipId].indices.forEach(idx => myGrid[idx] = 0);
-            FLEET[targetShipId].indices = null; 
-
-            const img = document.getElementById(`board-ship-${targetShipId}`);
-            if (img) img.remove();
-
-            playSound('delete-sfx');
-
-            if (deployIndex < FLEET.length) {
-                const currentHolding = document.getElementById(`ship-unit-${deployIndex}`);
-                if (currentHolding) {
-                    currentHolding.classList.remove('current');
-                    currentHolding.classList.add('pending');
-                }
-            }
-
-            deployIndex = targetShipId;
-            const newCurrent = document.getElementById(`ship-unit-${deployIndex}`);
-            if (newCurrent) {
-                newCurrent.classList.remove('deployed', 'pending');
-                newCurrent.classList.add('current');
-            }
-
-            // ★★★ 修改重點 A：拎起隻船，即係未放完，要隱藏 START 掣，並顯示返 Rotate 掣 ★★★
-            const sBtn = document.getElementById('start-btn');
-            sBtn.style.display = 'none'; // 隱藏
-            sBtn.disabled = true;        // 鎖定
-            
-            document.getElementById('rotate-btn').style.display = 'inline-block'; 
-            
             return;
         }
-    }
 
-   // 3. 放置船隻邏輯
-    if (deployIndex >= FLEET.length) return;
+        // 2. 回收船隻邏輯
+        if (myGrid[index] === 1) {
+            let targetShipId = -1;
+            FLEET.forEach((ship, i) => {
+                if (ship.indices && ship.indices.includes(index)) {
+                    targetShipId = i;
+                }
+            });
 
-    const conf = FLEET[deployIndex];
-    const indices = getShipIndices(index, conf, isVertical);
+            if (targetShipId !== -1) {
+                FLEET[targetShipId].indices.forEach(idx => myGrid[idx] = 0);
+                FLEET[targetShipId].indices = null; 
 
-    // 如果位置無效或重疊，直接彈走
-    if (!indices || indices.some(idx => myGrid[idx] === 1)) return;
+                const img = document.getElementById(`board-ship-${targetShipId}`);
+                if (img) img.remove();
 
-    // 執行放置
-    indices.forEach(idx => myGrid[idx] = 1);
-    FLEET[deployIndex].indices = indices;
-    FLEET[deployIndex].isVertical = isVertical; 
+                playSound('delete-sfx');
 
-    placeShipImage('player-grid', index, conf, isVertical);
-    
-    // ★ 鎖定當前嘅 ID (Snapshot)，防止讀錯聲
-    const currentSoundIndex = deployIndex; 
+                if (deployIndex < FLEET.length) {
+                    const currentHolding = document.getElementById(`ship-unit-${deployIndex}`);
+                    if (currentHolding) {
+                        currentHolding.classList.remove('current');
+                        currentHolding.classList.add('pending');
+                    }
+                }
 
-    playSound('deploy-sfx'); // 先播機械聲
-    
-    setTimeout(() => {
-        playSound(`ship-voice-${currentSoundIndex}`); 
-    }, 200);
+                deployIndex = targetShipId;
+                const newCurrent = document.getElementById(`ship-unit-${deployIndex}`);
+                if (newCurrent) {
+                    newCurrent.classList.remove('deployed', 'pending');
+                    newCurrent.classList.add('current');
+                }
 
-    const justPlaced = document.getElementById(`ship-unit-${deployIndex}`);
-    if (justPlaced) {
-        justPlaced.classList.remove('current');
-        justPlaced.classList.add('deployed');
-    }
-
-    // 這裡更新 deployIndex 準備下一隻
-    deployIndex = findNextUnplaced();
-
-    if (deployIndex < FLEET.length) {
-        const nextShip = document.getElementById(`ship-unit-${deployIndex}`);
-        if (nextShip) {
-            nextShip.classList.remove('pending');
-            nextShip.classList.add('current');
+                const sBtn = document.getElementById('start-btn');
+                sBtn.style.display = 'none';
+                sBtn.disabled = true;
+                
+                document.getElementById('rotate-btn').style.display = 'inline-block'; 
+                
+                return;
+            }
         }
-    } else {
-        // ★★★ 修改重點 B：放齊船啦！隱藏 Rotate，彈出 START 掣！ ★★★
-        document.getElementById('rotate-btn').style.display = 'none';
+
+        // 3. 放置船隻邏輯
+        if (deployIndex >= FLEET.length) return;
+
+        const conf = FLEET[deployIndex];
+        const indices = getShipIndices(index, conf, isVertical);
+
+        if (!indices || indices.some(idx => myGrid[idx] === 1)) return;
+
+        indices.forEach(idx => myGrid[idx] = 1);
+        FLEET[deployIndex].indices = indices;
+        FLEET[deployIndex].isVertical = isVertical; 
+
+        placeShipImage('player-grid', index, conf, isVertical);
         
-        const sBtn = document.getElementById('start-btn');
-        sBtn.style.display = 'inline-block'; // 顯示 (Pop Up)
-        sBtn.disabled = false;               // 解鎖
+        // ★★★ 重點修正：不再依賴 Index，而是讀取 conf.voiceId ★★★
+        // 這樣 Spectre 排第幾都好，都會讀番 'ship-voice-4'
+        playSound('deploy-sfx'); 
+        
+        const voiceToPlay = conf.voiceId || `ship-voice-${deployIndex}`;
+        setTimeout(() => {
+            playSound(voiceToPlay); 
+        }, 200);
+
+        const justPlaced = document.getElementById(`ship-unit-${deployIndex}`);
+        if (justPlaced) {
+            justPlaced.classList.remove('current');
+            justPlaced.classList.add('deployed');
+        }
+
+        deployIndex = findNextUnplaced();
+
+        if (deployIndex < FLEET.length) {
+            const nextShip = document.getElementById(`ship-unit-${deployIndex}`);
+            if (nextShip) {
+                nextShip.classList.remove('pending');
+                nextShip.classList.add('current');
+            }
+        } else {
+            document.getElementById('rotate-btn').style.display = 'none';
+            const sBtn = document.getElementById('start-btn');
+            sBtn.style.display = 'inline-block';
+            sBtn.disabled = false;
+        }
     }
-}
 
     function placeShipImage(boardId, idx, conf, v) {
         const board = document.getElementById(boardId);
@@ -4539,6 +4542,7 @@ function generateGuestId() {
 </div>
 </body>
 </html>
+
 
 
 
