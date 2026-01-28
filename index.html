@@ -1835,7 +1835,7 @@ body {
             <button class="logout-link" onclick="logout()">TERMINATE SESSION</button>
         </div>
     </div>
-<div class="mode-carousel-wrapper">
+<div id="main-menu-carousel" class="mode-carousel-wrapper" style="display: none;">
     
     <button class="nav-arrow left" onclick="scrollMenu(-1)">&#10094;</button>
 
@@ -4106,15 +4106,22 @@ function updateHUD(name) {
 }
 
 // 8. 顯示主選單 (隱藏 Login Panel)
+// 8. 顯示主選單 (隱藏 Login Panel)
 function showMainMenu() {
-    const loginPanel = document.getElementById('login-panel');
-    const profilePanel = document.getElementById('user-profile-panel');
+    // 切換去 Profile 面板
+    switchHudPanel('user-profile-panel');
+
     const gameModeSelect = document.getElementById('game-mode-selection');
     const statusText = document.getElementById('system-status-text');
 
-    if(loginPanel) loginPanel.style.display = 'none';
-    if(profilePanel) profilePanel.style.display = 'block';
     if(gameModeSelect) gameModeSelect.style.display = 'flex';
+    
+    // ★★★ 關鍵修正：顯示 Carousel 容器 ★★★
+    const carouselWrapper = document.getElementById('main-menu-carousel');
+    if(carouselWrapper) {
+        carouselWrapper.style.display = 'flex'; // 顯示選單！
+        carouselWrapper.style.animation = 'fadeIn 0.5s'; // 加個淡入特效
+    }
     
     if(statusText) {
         statusText.innerText = "IDENTITY CONFIRMED // SYSTEM READY";
@@ -4142,16 +4149,21 @@ function startExperience() {
 
 // 輔助函數：切換 HUD 面板
 function switchHudPanel(panelId) {
-    // 先隱藏所有面板
+    // 1. 先隱藏所有面板
     document.getElementById('connecting-panel').style.display = 'none';
     document.getElementById('login-panel').style.display = 'none';
     document.getElementById('user-profile-panel').style.display = 'none';
     
-    // 顯示目標面板
+    // ★★★ 2. 關鍵修正：同時隱藏 Carousel 選單 ★★★
+    // 確保轉去 Login 或 Connecting 時，選單唔會出現
+    const carousel = document.getElementById('main-menu-carousel');
+    if(carousel) carousel.style.display = 'none';
+
+    // 3. 顯示目標面板
     const target = document.getElementById(panelId);
     if(target) {
         target.style.display = 'block';
-        target.style.animation = 'fadeIn 0.5s'; // 加個過場動畫
+        target.style.animation = 'fadeIn 0.5s'; 
     }
 }
 
@@ -4346,6 +4358,7 @@ function playBgm() {
 </div>
 </body>
 </html>
+
 
 
 
