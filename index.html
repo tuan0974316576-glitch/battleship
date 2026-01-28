@@ -2248,20 +2248,31 @@ function startEnemyTurn() {
         });
 
         // ★★★ 連線狀態監測 (綠燈/紅燈) ★★★
+        // 連線狀態監測 (修正版：Splash Screen 顯示緊嗰陣，唔好彈 Error 聲)
         const connectedRef = ref(db, ".info/connected");
         onValue(connectedRef, (snap) => {
             const el = document.getElementById('connection-status');
             if (!el) return; 
             
             el.style.display = 'block';
+            
             if (snap.val() === true) {
-                el.style.background = "#22c55e"; // 綠燈 (Online)
+                // 連線成功 (綠燈)
+                el.style.background = "#22c55e"; 
                 el.style.boxShadow = "0 0 5px #22c55e";
             } else {
-                el.style.background = "#ef4444"; // 紅燈 (Offline)
+                // 斷線 (紅燈)
+                el.style.background = "#ef4444"; 
                 el.style.boxShadow = "0 0 5px #ef4444";
                 
-                // 額外功能：斷線時彈出高科技提示
+                // ★★★ 關鍵修正：檢查 Splash Screen 係咪仲喺度 ★★★
+                // 如果 Splash Screen 仲顯示緊 (即係剛入 Game)，就唔好彈 Error 聲住
+                const splash = document.getElementById('splash-screen');
+                if (splash && splash.style.display !== 'none' && splash.style.opacity !== '0') {
+                    return; // 靜靜地離開，唔好嘈
+                }
+
+                // 如果入咗 Game 先斷線，先至彈提示
                 if (typeof showNotification === 'function') {
                     showNotification("CONNECTION LOST!", "error"); 
                 }
@@ -4459,6 +4470,7 @@ function generateGuestId() {
 </div>
 </body>
 </html>
+
 
 
 
