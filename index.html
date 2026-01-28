@@ -2969,42 +2969,51 @@ function openLaunchModal(index) {
         }, 500); // 這裡的 500ms 對應上面的 transition 0.5s
     }
 
-/* =========================================
-   ★★★ 修正版：處理打字超時 (修復 PVP 卡死問題) ★★★
-   ========================================= */
+// --- 修正版：處理輸入超時 (完整邏輯 + 鎖死操作) ---
 function handlePlayerTimeout() {
     // 1. 介面清理
+    if (typeof timerInterval !== 'undefined') clearInterval(timerInterval);
     document.getElementById('launch-modal').style.display = "none";
     playSound('timeout-sfx');
     
+    // ★★★ 關鍵修正：即刻鎖死狀態，防止玩家在轉場前再撳棋盤 ★★★
+    currentPhase = 'PHASE_SWITCH'; 
+
     const status = document.getElementById('game-status');
     status.innerHTML = `PHASE: <span style="color:var(--danger)">TIMEOUT - TURN LOST</span>`;
     document.getElementById('control-panel').style.borderColor = "var(--danger)";
     
-    const lastLog = battleLog[battleLog.length - 1];
-    if (!lastLog || lastLog.turn !== turnCount) {
-        battleLog.push({
-            turn: turnCount,
-            user: "(TIMEOUT)",    // 顯示超時
-            correct: currentVocab.en, 
-            isCorrect: false
-        });
+    // 2. 記錄入戰後報告 (Battle Log)
+    // 確保 battleLog 存在且未記錄過這一回合
+    if (typeof battleLog !== 'undefined' && typeof currentVocab !== 'undefined') {
+        const lastLog = battleLog[battleLog.length - 1];
+        // 修正變數名：用 turnCounter 而唔係 turnCount
+        const currentTurn = (typeof turnCounter !== 'undefined' ? turnCounter : 1);
+        
+        if (!lastLog || lastLog.turn !== currentTurn) {
+            battleLog.push({
+                turn: currentTurn,
+                user: "(TIMEOUT)",    // 顯示超時
+                correct: currentVocab.en, 
+                isCorrect: false
+            });
+        }
     }
-    // 2. 邏輯分支
+
+    // 3. 邏輯分支 (保留你原本既正確邏輯)
     if (gameMode === 'PVP') {
-        // ★★★ PVP 關鍵修復：必須通知 Firebase 對手，我 Timeout 啦 (index: -1) ★★★
         const { ref, update } = window.firebaseModules;
         
         // 計算下一位係邊個
         const nextTurn = (playerRole === 'host') ? 'guest' : 'host';
 
-        // 更新 Database：發送 Miss Turn 訊號 + 交更
+        // 更新 Database：發送 Miss Turn 訊號 (index: -1 代表無打中任何野，即係無白點)
         update(ref(db, 'rooms/' + currentRoomId), {
             lastMove: { attacker: playerRole, index: -1, timestamp: Date.now() },
             turn: nextTurn 
         });
 
-        // 本地轉場：進入等待對手狀態
+        // 本地轉場
         setGameTimeout(() => {
             currentPhase = 'ENEMY_TURN';
             document.getElementById('game-status').innerHTML = "OPPONENT'S TURN";
@@ -3012,8 +3021,10 @@ function handlePlayerTimeout() {
         }, 1500);
 
     } else {
-        // AI 模式 (原本的邏輯)
-        setGameTimeout(startEnemyTurn, 1500);
+        // AI 模式：直接交更，唔好 Call playerFire(false)
+        setGameTimeout(() => {
+            startEnemyTurn(); 
+        }, 1500);
     }
 }
 
@@ -4746,6 +4757,7 @@ function renderReview() {
 </div>
 </body>
 </html>
+
 
 
 
