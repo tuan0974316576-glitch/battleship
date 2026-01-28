@@ -1626,8 +1626,10 @@ body {
     box-shadow: 0 0 15px var(--danger), inset 0 0 5px var(--danger);
 }
 
+
 /* =========================================
-   ★★★ CAROUSEL MENU (簡約銀白箭咀版) ★★★
+   ★★★ CAROUSEL MENU (FINAL 完整整合版) ★★★
+   包含：Cyberpunk 箭咀 + 智能置中 + 手機版修正
    ========================================= */
 
 /* 1. 外層容器 */
@@ -1642,66 +1644,58 @@ body {
     animation: fadeIn 0.5s;
 }
 
-/* 2. 捲動軌道 */
+/* 2. 捲動軌道 (智能置中設定) */
 .carousel-track {
     display: flex;
     gap: 20px;
+    
     overflow-x: auto;
     scroll-snap-type: x mandatory;
     scroll-behavior: smooth;
-    width: 100%;
+    
     padding: 20px 10px;
     scrollbar-width: none;
     -ms-overflow-style: none;
+
+    /* ★ 智能置中核心 ★ */
+    width: fit-content;    /* 內容幾闊，個框就幾闊 */
+    max-width: 100%;       /* 但最大唔好超過螢幕 */
+    margin: 0 auto;        /* 如果個框細過螢幕，就居中 */
 }
 .carousel-track::-webkit-scrollbar { display: none; }
 
-/* 3. 按鈕項目 (Card Style) */
+/* 3. 按鈕項目 */
 .carousel-item {
     flex: 0 0 auto;
     scroll-snap-align: center;
-    /* 因為少咗字，高度可以再矮少少 */
     width: 200px; height: 100px;
     display: flex !important;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    /* 只有一行字，唔需要 gap */
     gap: 0; 
 }
 
-/* 按鈕入面嘅 Title */
 .mode-title { font-size: 20px; font-weight: bold; letter-spacing: 2px; }
 
-/* =========================================
-   ★★★ CYBERPUNK ARROWS (全息幼身版 - 修正版) ★★★
-   ========================================= */
 
+/* 4. Cyberpunk 箭咀設定 */
 .nav-arrow {
     background: transparent;
     border: none;
     cursor: pointer;
     z-index: 10;
-    
-    /* 設定按鈕大小 */
     width: 60px; height: 100%; 
     position: absolute; 
     top: 0;
-    
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    display: flex; align-items: center; justify-content: center;
     transition: all 0.3s ease;
-    
-    text-shadow: none;
-    box-shadow: none;
-    opacity: 0.6;
+    text-shadow: none; box-shadow: none; opacity: 0.6;
 }
-
 .nav-arrow.left { left: -60px; }
 .nav-arrow.right { right: -60px; }
 
-/* --- 箭咀形狀 --- */
+/* 箭咀形狀 */
 .arrow-shape {
     width: 20px; height: 20px;
     border-top: 2px solid #e2e8f0; 
@@ -1709,33 +1703,24 @@ body {
     box-shadow: 2px -2px 10px rgba(255, 255, 255, 0.5); 
     transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
-
 .nav-arrow.left .arrow-shape { transform: rotate(-135deg); }
 .nav-arrow.right .arrow-shape { transform: rotate(45deg); }
 
-/* --- Hover --- */
+/* Hover & Active */
 .nav-arrow:hover { opacity: 1; }
-
 .nav-arrow.left:hover .arrow-shape {
-    border-color: #00f0ff; 
-    box-shadow: 4px -4px 15px #00f0ff; 
+    border-color: #00f0ff; box-shadow: 4px -4px 15px #00f0ff; 
     transform: rotate(-135deg) translate(5px, -5px); 
 }
-
 .nav-arrow.right:hover .arrow-shape {
-    border-color: #00f0ff; 
-    box-shadow: 4px -4px 15px #00f0ff;
+    border-color: #00f0ff; box-shadow: 4px -4px 15px #00f0ff;
     transform: rotate(45deg) translate(5px, -5px);
 }
-
-/* --- Active --- */
 .nav-arrow:active .arrow-shape {
-    border-color: #fff; 
-    transform: scale(0.9) rotate(var(--r)); 
-    transition: 0.1s;
+    border-color: #fff; transform: scale(0.9) rotate(var(--r)); transition: 0.1s;
 }
 
-/* --- 動畫 --- */
+/* 呼吸動畫 */
 @keyframes arrowFloatLeft {
     0%, 100% { transform: rotate(-135deg) translate(0, 0); }
     50% { transform: rotate(-135deg) translate(3px, -3px); } 
@@ -1744,45 +1729,32 @@ body {
     0%, 100% { transform: rotate(45deg) translate(0, 0); }
     50% { transform: rotate(45deg) translate(3px, -3px); } 
 }
-
 .nav-arrow.left .arrow-shape { animation: arrowFloatLeft 2s infinite ease-in-out; }
 .nav-arrow.right .arrow-shape { animation: arrowFloatRight 2s infinite ease-in-out; }
 
 
-/* --- ★ 手機版調整 (括號修正重點) ★ --- */
+/* 5. 手機版響應式調整 */
 @media (max-width: 768px) {
     .nav-arrow {
-        width: 40px;
-        position: absolute; 
-        top: 50%;
-        transform: translateY(-50%);
-        opacity: 0.8;
+        width: 40px; position: absolute; top: 50%; transform: translateY(-50%); opacity: 0.8;
     }
-    
     .nav-arrow.left { left: 0; }
     .nav-arrow.right { right: 0; }
-    
-    .arrow-shape {
-        width: 15px; height: 15px; 
-        border-width: 3px; 
-    }
-    
-    .nav-arrow.left .arrow-shape, 
-    .nav-arrow.right .arrow-shape { 
-        animation: none; 
-    }
+    .arrow-shape { width: 15px; height: 15px; border-width: 3px; }
+    .nav-arrow.left .arrow-shape, .nav-arrow.right .arrow-shape { animation: none; }
 
-    /* ★ 修正重點：下面呢兩段必須包番喺 @media 入面 ★ */
+    /* ★ 手機版 Track 設定 (靠左 + 100%闊) ★ */
     .carousel-track {
         padding: 20px 15%; 
+        justify-content: flex-start; /* 手機維持靠左 */
+        width: 100%; 
+        max-width: none;
     }
 
     .carousel-item {
-        width: 60vw; 
-        max-width: 250px;
-        height: 90px; 
+        width: 60vw; max-width: 250px; height: 90px; 
     }
-} /* <--- 呢個括號係關閉 @media，之前你漏咗包住上面果兩段 */
+}
 /* =========================================
    ★★★ SPLASH SCREEN (TAP TO START) ★★★
    ========================================= */
@@ -4448,6 +4420,7 @@ function playBgm() {
 </div>
 </body>
 </html>
+
 
 
 
