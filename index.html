@@ -60,18 +60,15 @@ input, textarea {
 body {
     background-color: #000;
     
-    /* 1. 移除不存在嘅 .jpg，只用 .png */
     background-image: url('stars_texture.png'); 
-    
-    /* 2. 關鍵修正：唔好拉伸 (Cover)，改用平鋪 (Repeat) */
+    /* ★ 重點修正：改用 500px，同 Splash Screen 一樣高清密集 ★ */
     background-repeat: repeat; 
-    background-size: auto; /* 或者試下 500px 令啲星星密啲/疏啲 */
+    background-size: 500px; 
     
     background-position: center;
-    background-attachment: fixed;
+    background-attachment: fixed; /* 固定背景，令星星唔會跟住捲動 */
     color: var(--text);
     
-    /* ... 其他原本嘅設定 ... */
     font-family: 'Orbitron', sans-serif; 
     letter-spacing: 1px;
     display: flex;
@@ -96,7 +93,7 @@ body {
             background-repeat: no-repeat;
             background-position: center;
             mix-blend-mode: screen; 
-            opacity: 0.8; 
+            opacity: 0.6; 
             z-index: -1;
             animation: rotateGalaxy 120s linear infinite;
         }
@@ -4348,6 +4345,7 @@ function playBgm() {
 </div>
 </body>
 </html>
+
 
 
 
