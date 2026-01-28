@@ -103,131 +103,95 @@ body {
             to { transform: translate(-50%, -50%) rotate(360deg); }
         }
 
-        /* --- 標題畫面 (Start Screen) --- */
-        #start-screen {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 200;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            background: rgba(0, 0, 0, 0.6); transition: opacity 0.5s;
-        }
+/* --- 標題畫面 (Start Screen) --- */
+#start-screen {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 200;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    background: rgba(0, 0, 0, 0.6); transition: opacity 0.5s;
+}
 
-/* --- ★ 最終版 XCOM 風格：無框全息電流 (Unframed Hologram Current) ★ --- */
+/* --- ★ 最終版 XCOM 風格：無框全息電流 (TRUE TEXT SCANLINE) ★ --- */
 
-/* 1. 定義全息電流動畫 */
+/* 1. 定義全息電流動畫 (Glitch) */
 @keyframes xcom-current-glitch {
-    /* --- 正常狀態：平穩呼吸 --- */
+    /* --- 正常狀態 --- */
     0%, 75% {
-        opacity: 1;
-        transform: scale(1) skew(0deg);
-        text-shadow: 
-            0 0 10px rgba(14, 165, 233, 0.8), /* 核心光 */
-            0 0 20px rgba(14, 165, 233, 0.4), /* 中層光暈 */
-            0 0 40px rgba(14, 165, 233, 0.2); /* 外層朦朧氣氛 */
-        filter: blur(0.5px); /* 長期保持極輕微模糊，增加投影感 */
-    }
-    
-    /* --- 電流衝擊開始 (Glitch Start) --- */
-    76% {
-        opacity: 0.8;
-        transform: skew(-3deg); /* 輕微訊號扭曲 */
-    }
-    77% {
-        opacity: 1;
-        /* 爆光 + 色差分裂 (青/白) 模擬電流經過 */
-        text-shadow: 
-            -3px 0 0px rgba(255,255,255,0.8), 
-            3px 0 0px var(--primary),
-            0 0 50px var(--primary),
-            0 0 80px #fff;
-        filter: blur(1px); /* 變得更朦 */
-        transform: scale(1.05) skew(2deg);
-    }
-    78% {
-        opacity: 0.2; /* 訊號丟失 */
-        transform: scale(0.95);
-    }
-    79% {
-        opacity: 1;
-        /* 另一種分裂 */
-        text-shadow: 
-            3px 0 0px rgba(255,255,255,0.8), 
-            -3px 0 0px var(--primary),
-            0 0 30px var(--primary);
-        filter: blur(2px); /* 最朦一刻 */
-        transform: skew(-1deg);
-    }
-    80% {
-        /* 回復正常前的瞬間穩定 */
-        transform: scale(1) skew(0deg);
-        text-shadow: 0 0 20px var(--primary);
-        filter: blur(0px);
-    }
-    
-    /* --- 餘波 (微震) --- */
-    82% { transform: translate(1px, 0); }
-    84% { transform: translate(-1px, 0); }
-    85% { transform: translate(0, 0); }
-    
-    /* --- 回復平穩 --- */
-    100% {
-        opacity: 1;
-        transform: scale(1);
+        opacity: 1; transform: scale(1) skew(0deg);
         text-shadow: 
             0 0 10px rgba(14, 165, 233, 0.8),
             0 0 20px rgba(14, 165, 233, 0.4),
             0 0 40px rgba(14, 165, 233, 0.2);
         filter: blur(0.5px);
     }
+    
+    /* --- 電流衝擊 (Glitch) --- */
+    76% { opacity: 0.8; transform: skew(-3deg); }
+    77% {
+        opacity: 1; transform: scale(1.05) skew(2deg); filter: blur(1px);
+        text-shadow: -3px 0 0px rgba(255,255,255,0.8), 3px 0 0px var(--primary), 0 0 50px var(--primary);
+    }
+    78% { opacity: 0.2; transform: scale(0.95); }
+    79% {
+        opacity: 1; transform: skew(-1deg); filter: blur(2px);
+        text-shadow: 3px 0 0px rgba(255,255,255,0.8), -3px 0 0px var(--primary);
+    }
+    80% { transform: scale(1) skew(0deg); filter: blur(0px); text-shadow: 0 0 20px var(--primary); }
+    
+    /* --- 餘波 --- */
+    82% { transform: translate(1px, 0); }
+    84% { transform: translate(-1px, 0); }
+    100% {
+        opacity: 1; transform: scale(1); filter: blur(0.5px);
+        text-shadow: 0 0 10px rgba(14, 165, 233, 0.8);
+    }
 }
 
-/* 2. 掃描線紋理 (增加儀器感) */
-@keyframes xcom-hologram-scan {
-    0% { background-position: 0 -100vh; }
-    100% { background-position: 0 100vh; }
+/* 2. 定義文字內部掃描線捲動動畫 */
+@keyframes text-scan {
+    0% { background-position: 0 0, 0 0; }
+    100% { background-position: 0 200%, 0 0; } /* 只移動第一層(掃描線) */
 }
 
-/* 3. 標題本體樣式 */
+/* 3. 標題本體樣式 (修正版：掃描線內嵌) */
 .main-title {
     font-family: 'Black Ops One', cursive;
-    font-size: 80px; /* 再大氣啲 */
+    font-size: 80px; /* 統一 Desktop 大小 */
     line-height: 1.1;
-    
-    /* 本體顏色：接近透明的白，主要靠光暈顯色 */
-    color: rgba(255, 255, 255, 0.85);
-    
     text-align: center;
-    letter-spacing: 12px; /* 戰術感寬字距 */
+    letter-spacing: 12px;
     margin-bottom: 40px;
     
     position: relative;
     z-index: 201;
-    
-    /* 應用電流動畫：5秒一個循環 */
-    animation: xcom-current-glitch 5s infinite;
-    
-    /* 確保無邊框 */
     border: none;
     background: none;
     padding: 0;
+
+    /* ★ 核心：文字透明，背景透出 ★ */
+    color: transparent; 
+
+    /* ★ 雙層背景：上層掃描線，下層白光 ★ */
+    background-image: 
+        repeating-linear-gradient(
+            transparent 0px,
+            transparent 2px,
+            rgba(14, 165, 233, 0.6) 3px, /* 藍色掃描線 */
+            transparent 4px
+        ),
+        linear-gradient(to bottom, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.95));
+
+    /* ★ 剪裁背景至文字 ★ */
+    -webkit-background-clip: text;
+    background-clip: text;
+
+    /* 設定背景大小 */
+    background-size: 100% 200%, 100% 100%;
+    
+    /* 結合 Glitch + Scan 動畫 */
+    animation: xcom-current-glitch 5s infinite, text-scan 6s linear infinite;
 }
 
-/* 4. 覆蓋一層淡淡的掃描線 */
-.main-title::before {
-    content: '';
-    position: absolute;
-    top: -50%; left: 0; width: 100%; height: 200%; /* 拉高覆蓋範圍確保動畫順滑 */
-    background: repeating-linear-gradient(
-        transparent 0px,
-        transparent 2px,
-        rgba(14, 165, 233, 0.15) 3px, /* 極淡的青色掃描線 */
-        transparent 4px
-    );
-    pointer-events: none; /* 唔阻住滑鼠 */
-    animation: xcom-hologram-scan 8s linear infinite; /* 緩慢向下掃描 */
-    opacity: 0.7;
-    z-index: -1; /* 喺字嘅後面 */
-}
-
-/* 手機版調整 */
+/* 4. 手機版調整 */
 @media (max-width: 500px) {
     .main-title { 
         font-size: 46px; 
@@ -4420,3 +4384,4 @@ function playBgm() {
 </div>
 </body>
 </html>
+
