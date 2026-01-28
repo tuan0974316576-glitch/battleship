@@ -1855,41 +1855,40 @@ body {
 }
 /* --- 2. 隨機閃爍星星樣式 (更新版：圓點 + 十字) --- */
 
-/* 通用動畫設定 */
+/* --- 2. 隨機閃爍星星樣式 (高級光影版) --- */
+
 .star-item {
     position: absolute;
-    background: white;
     z-index: -1; 
     pointer-events: none;
     opacity: 0; /* 預設隱藏，靠動畫顯示 */
+    background: #fff; /* 星星核心顏色 */
 }
 
-/* 樣式 A: 圓點 (細細粒) */
+/* 樣式 A: 圓點 (加強光暈，核心改細) */
 .star-dot {
     border-radius: 50%;
-    box-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+    /* 核心細，光暈大且散，造出「遠處發光」嘅感覺 */
+    box-shadow: 0 0 4px 1px rgba(255, 255, 255, 0.8), 
+                0 0 10px 2px rgba(255, 255, 255, 0.4); 
 }
 
-/* 樣式 B: 十字星芒 (大少少，好似鑽石咁閃) */
+/* 樣式 B: 十字星芒 (改用 drop-shadow 做光暈) */
 .star-cross {
-    /* 用 clip-path 畫出四角星形狀 (十字) */
+    /* 十字形狀 */
     clip-path: polygon(50% 0%, 60% 40%, 100% 50%, 60% 60%, 50% 100%, 40% 60%, 0% 50%, 40% 40%);
-    /* 十字星加光暈要用 drop-shadow */
-    filter: drop-shadow(0 0 8px rgba(255, 255, 255, 1)); 
+    
+    /* ★ 關鍵：用 drop-shadow 才能在 clip-path 邊緣產生光暈 */
+    /* 兩層光暈：一層近且光，一層遠且淡 */
+    filter: drop-shadow(0 0 2px rgba(255, 255, 255, 1))
+            drop-shadow(0 0 8px rgba(255, 255, 255, 0.6));
 }
 
-/* 定義閃爍動畫：慢呼吸效果 */
+/* 動畫稍微調暗一點，不要閃到純白刺眼 */
 @keyframes twinkleAnim {
     0% { opacity: 0; transform: scale(0.3) rotate(0deg); }
-    50% { opacity: 1; transform: scale(1); } /* 最光嗰陣 */
-    100% { opacity: 0; transform: scale(0.3) rotate(45deg); } /* 十字星會邊閃邊微轉 */
-}
-
-/* 定義閃爍動畫：大 -> 細 -> 大 */
-@keyframes twinkleAnim {
-    0% { opacity: 0.2; transform: scale(0.5); }
-    50% { opacity: 1; transform: scale(1.2); box-shadow: 0 0 15px white; }
-    100% { opacity: 0.2; transform: scale(0.5); }
+    50% { opacity: 0.9; transform: scale(1); } /* 最高 0.9 透明度，保留一點通透感 */
+    100% { opacity: 0; transform: scale(0.3) rotate(45deg); }
 }
     </style>
 
@@ -4581,6 +4580,7 @@ function createTwinklingStars() {
 </div>
 </body>
 </html>
+
 
 
 
