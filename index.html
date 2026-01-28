@@ -1914,7 +1914,7 @@ body {
         <div style="font-family: 'Orbitron'; color: #64748b; font-size: 10px; margin-top: 10px;">INITIALIZING SYSTEM...</div>
     </div>
 </div>
-
+<div id="game-content-wrapper" style="display: none;">
 <div id="start-screen" class="screen active" style="display: flex; flex-direction: column; justify-content: center; align-items: center;">
     
     <div class="main-title">VOCAB<br>CONQUEROR</div>
@@ -2171,7 +2171,7 @@ body {
 <audio id="ship-voice-2"><source src="ship_2_dreadnought.mp3" type="audio/mpeg"></audio>
 <audio id="ship-voice-3"><source src="ship_3_destroyer.mp3" type="audio/mpeg"></audio>
 <audio id="ship-voice-4"><source src="ship_4_spectre.mp3" type="audio/mpeg"></audio>
-    
+</div>
 <script src="vocab_data.js"></script>
 
 <script>
@@ -4247,6 +4247,7 @@ function showMainMenu() {
 }
 
 // --- 新增：點擊開始遊戲 ---
+// --- 新增：點擊開始遊戲 (修正版：顯示大箱) ---
 function startExperience() {
     // 1. 播放音樂
     playBgm();
@@ -4260,6 +4261,15 @@ function startExperience() {
     setTimeout(() => {
         splash.style.display = 'none';
     }, 500);
+
+    // ★★★ 關鍵新增：顯示遊戲內容大箱 ★★★
+    // 如果唔加呢句，因為大箱預設係 display: none，你會見到全黑畫面
+    const gameWrapper = document.getElementById('game-content-wrapper');
+    if (gameWrapper) {
+        gameWrapper.style.display = 'block'; 
+        // 額外保險：確保 Login Screen 係 Active 嘅
+        document.getElementById('start-screen').style.display = 'flex';
+    }
 }
 
 // 輔助函數：切換 HUD 面板
@@ -4590,6 +4600,7 @@ function createTwinklingStars() {
 </div>
 </body>
 </html>
+
 
 
 
