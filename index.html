@@ -2931,23 +2931,44 @@ function openLaunchModal(index) {
         }, 500); // 這裡的 500ms 對應上面的 transition 0.5s
     }
 
+/* =========================================
+   ★★★ 修正版：處理打字超時 (修復 PVP 卡死問題) ★★★
+   ========================================= */
 function handlePlayerTimeout() {
-        document.getElementById('launch-modal').style.display = "none";
-        playSound('timeout-sfx');
+    // 1. 介面清理
+    document.getElementById('launch-modal').style.display = "none";
+    playSound('timeout-sfx');
+    
+    const status = document.getElementById('game-status');
+    status.innerHTML = `PHASE: <span style="color:var(--danger)">TIMEOUT - TURN LOST</span>`;
+    document.getElementById('control-panel').style.borderColor = "var(--danger)";
+    
+    // 2. 邏輯分支
+    if (gameMode === 'PVP') {
+        // ★★★ PVP 關鍵修復：必須通知 Firebase 對手，我 Timeout 啦 (index: -1) ★★★
+        const { ref, update } = window.firebaseModules;
         
-        const status = document.getElementById('game-status');
-        status.innerHTML = `PHASE: <span style="color:var(--danger)">TIMEOUT - TURN LOST</span>`;
-        document.getElementById('control-panel').style.borderColor = "var(--danger)";
-        
-        // ★ 改用 setGameTimeout ★
+        // 計算下一位係邊個
+        const nextTurn = (playerRole === 'host') ? 'guest' : 'host';
+
+        // 更新 Database：發送 Miss Turn 訊號 + 交更
+        update(ref(db, 'rooms/' + currentRoomId), {
+            lastMove: { attacker: playerRole, index: -1, timestamp: Date.now() },
+            turn: nextTurn 
+        });
+
+        // 本地轉場：進入等待對手狀態
         setGameTimeout(() => {
-            if (gameMode === 'AI') startEnemyTurn();
-            else {
-                currentPhase = 'ENEMY_TURN';
-                document.getElementById('game-status').innerHTML = "OPPONENT'S TURN";
-            }
+            currentPhase = 'ENEMY_TURN';
+            document.getElementById('game-status').innerHTML = "OPPONENT'S TURN";
+            switchScene('ENEMY');
         }, 1500);
+
+    } else {
+        // AI 模式 (原本的邏輯)
+        setGameTimeout(startEnemyTurn, 1500);
     }
+}
 
     function focusInput() { document.getElementById('hidden-input').focus(); }
 
@@ -4543,6 +4564,7 @@ function generateGuestId() {
 </div>
 </body>
 </html>
+
 
 
 
