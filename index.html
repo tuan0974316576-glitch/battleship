@@ -445,83 +445,102 @@ body {
             #control-panel { flex-direction: column; gap: 5px; }
             .vocab-hint { font-size: 28px; letter-spacing: 4px; }
         }
-/* --- 艦隊側邊欄 --- */
-/* --- 艦隊側邊欄 (修改版：雙列佈局) --- */
+
+/* =========================================
+   ★★★ 修正戰艦側邊欄變形 (NO STRETCH FIX) - 整合版 ★★★
+   ========================================= */
+
+/* 1. 側邊欄容器 (電腦版) */
 #fleet-sidebar {
-    /* ★ 改用 Grid 佈局，不再是一條直線 ★ */
     display: grid;
-    grid-template-columns: 1fr 1fr; /* 強制分兩列 (左右並排) */
-    
-    gap: 10px; /* 縮細船與船之間的距離 (原本係 20px) */
+    grid-template-columns: 1fr 1fr; /* 兩列 */
+    gap: 10px;
     
     background: rgba(15, 23, 42, 0.8);
     padding: 15px 10px;
     border-radius: 8px;
     border: 1px solid var(--glass-border);
     
-    /* 確保佢唔會拉到太長 */
     height: fit-content; 
-    align-self: center; /* 令側邊欄在畫面中間垂直置中 */
+    align-self: center;
+    justify-items: center; /* 水平置中 */
     
-    justify-items: center; /* 內容置中 */
+    /* ★ 關鍵修正 1：防止格仔被拉高 (由 stretch 改為 center) ★ */
+    align-items: center; 
 }
+
+/* 2. 手機版修正 */
+@media (max-width: 768px) {
+    #fleet-sidebar {
+        display: flex; 
+        flex-direction: row !important; 
+        
+        /* 確保手機橫排時，唔會將矮嘅船拉高 */
+        align-items: center; 
+        
+        width: 100%; max-width: 380px; 
+        overflow-x: auto; 
+        margin-bottom: 15px; padding: 10px 5px; gap: 8px; 
+        justify-content: center; 
+    }
+}
+
+/* 3. 每一隻船的容器 (Grid 背景) */
 .fleet-unit {
-            position: relative;
-            display: grid; /* 用 Grid 排列背景格仔 */
-            gap: 2px;      /* 格仔之間的空隙 */
-            transition: all 0.3s;
-            padding: 3px;
-            border: 2px solid transparent;
-            border-radius: 4px;
-        }
+    position: relative;
+    display: grid; /* 用 Grid 排列背景格仔 */
+    gap: 2px;      /* 格仔之間的空隙 */
+    transition: all 0.3s;
+    padding: 3px;
+    border: 2px solid transparent;
+    border-radius: 4px;
+}
+
+/* 4. 戰艦圖片 (整合版：確保只有一份設定，防止衝突) */
 .fleet-ship-img {
-            position: absolute;
-            top: 3px;  /* 對應 .fleet-unit 的 padding */
-            left: 3px;
-            width: calc(100% - 6px); /* 扣除 padding */
-            height: calc(100% - 6px);
-            z-index: 2; /* 確保在格仔上面 */
-            pointer-events: none; /* 讓點擊穿透 */
-            filter: drop-shadow(0 0 2px #000);
-        }
+    position: absolute;
+    top: 3px; left: 3px; /* 對應 .fleet-unit 的 padding */
+    width: calc(100% - 6px); /* 扣除 padding */
+    height: calc(100% - 6px);
+    z-index: 2; 
+    pointer-events: none; 
+    filter: drop-shadow(0 0 2px #000);
+    
+    /* ★ 關鍵修正 2：確保圖片永遠保持比例，唔會變肥或變瘦 ★ */
+    object-fit: contain; 
+}
+
+/* 5. 迷你格仔 (背景) */
 .mini-cell {
-            width: 25px;  /* 迷你格大細 */
-            height: 25px;
-            background-color: rgba(255, 255, 255, 0.1); /* 半透明底 */
-            border: 1px solid rgba(255, 255, 255, 0.3); /* 邊框 */
-            border-radius: 2px;
-        }
-        .ship-preview {
-            transition: all 0.3s;
-            border: 2px solid transparent;
-            border-radius: 4px;
-            padding: 2px;
-            background: rgba(255,255,255,0.05);
-        }
+    width: 25px;  /* 迷你格大細 */
+    height: 25px;
+    background-color: rgba(255, 255, 255, 0.1); /* 半透明底 */
+    border: 1px solid rgba(255, 255, 255, 0.3); /* 邊框 */
+    border-radius: 2px;
+}
 
-        /* 狀態 1: 正準備放 (Active) - 發光 + 放大 */
+/* 6. 狀態樣式 */
 .fleet-unit.current {
-            border-color: var(--warning);
-            box-shadow: 0 0 15px var(--warning);
-            background: rgba(245, 158, 11, 0.1);
-            transform: scale(1.1);
-        }
+    border-color: var(--warning);
+    box-shadow: 0 0 15px var(--warning);
+    background: rgba(245, 158, 11, 0.1);
+    transform: scale(1.1);
+}
 .fleet-unit.current .mini-cell {
-            background-color: rgba(245, 158, 11, 0.3); /* 格仔變黃 */
-            border-color: var(--warning);
-        }
-        /* 狀態 2: 未輪到 (Pending) - 實色但暗少少 */
-.fleet-unit.pending {
-            opacity: 0.6;
-            transform: scale(0.95);
-        }
+    background-color: rgba(245, 158, 11, 0.3); /* 格仔變黃 */
+    border-color: var(--warning);
+}
 
-        /* 狀態 3: 已部署 (Deployed) - 剪影/黑白/透明 */
+.fleet-unit.pending {
+    opacity: 0.6;
+    transform: scale(0.95);
+}
+
 .fleet-unit.deployed {
-            opacity: 0.3;
-            filter: grayscale(100%);
-            transform: scale(0.8);
-        }
+    opacity: 0.3;
+    filter: grayscale(100%);
+    transform: scale(0.8);
+}
 
 /* --- 高科技確認視窗樣式 --- */
         .tech-modal-overlay {
@@ -4451,6 +4470,7 @@ function playBgm() {
 </div>
 </body>
 </html>
+
 
 
 
