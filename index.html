@@ -4119,7 +4119,7 @@ window.submitRegistration = function() {
     }).then(() => {
         localStorage.setItem('battleship_username', name);
         // --- 成功儲存後的轉場 ---
-        if(typeof playSound === 'function') playSound('new-commander-sfx'); // 或者是 deploy-sfx
+        if(typeof playSound === 'function') playSound('deploy-sfx');
         
         // 1. 收埋註冊窗
         const modal = document.getElementById('registration-modal');
@@ -4228,7 +4228,7 @@ window.addEventListener('load', () => {
         db = getDatabase(app);
         auth = getAuth(app);
 
-        // ★★★ Firebase 狀態監聽 (決定顯示邊個畫面) ★★★
+// ★★★ Firebase 狀態監聽 (決定顯示邊個畫面) ★★★
         onAuthStateChanged(auth, u => {
             if (u) {
                 // --- 情況 A：已登入 (User Found) ---
@@ -4240,31 +4240,55 @@ window.addEventListener('load', () => {
                 const userRef = ref(db, 'users/' + u.uid);
                 get(userRef).then((snapshot) => {
                     if (snapshot.exists() && snapshot.val().displayName) {
+                        // 1. 舊人 (有記錄)：直接入 Game
                         const realName = snapshot.val().displayName;
                         localStorage.setItem('battleship_username', realName);
                         updateHUD(realName);
                         
-                        // ★ 關鍵：登入成功 -> 顯示主選單 ★
                         switchHudPanel('user-profile-panel');
-                        showMainMenu(); // 確保底部按鈕顯示
+                        showMainMenu(); 
                         
                     } else {
-                        // 新兵 (有登入但無名) -> 顯示改名窗
-                        switchHudPanel('user-profile-panel'); // 暫時顯示 Profile
-                        const regModal = document.getElementById('registration-modal');
-                        if(regModal) regModal.style.display = 'flex';
+                        // 2. 新人 (無名)：分 Guest 定 Google
+                        
+                        if (u.isAnonymous) {
+                            // ★★★ Guest 自動派名邏輯 ★★★
+                            const autoName = generateGuestId(); // 生成 XY123
+                            
+                            // 自動寫入 Database，唔使經註冊窗
+                            update(ref(db, 'users/' + u.uid), { 
+                                displayName: autoName,
+                                lastLogin: Date.now()
+                            }).then(() => {
+                                localStorage.setItem('battleship_username', autoName);
+                                updateHUD(autoName);
+                                
+                                // 直接入 Main Menu，無需等待
+                                switchHudPanel('user-profile-panel');
+                                showMainMenu();
+                                
+                                // 播放一下成功音效
+                                playSound('deploy-sfx'); 
+                                console.log(`GUEST AUTO-LOGIN: ${autoName}`);
+                            });
+
+                        } else {
+                            // ★★★ Google 新人：依然要彈窗改名 ★★★
+                            switchHudPanel('user-profile-panel'); 
+                            const regModal = document.getElementById('registration-modal');
+                            if(regModal) {
+                                regModal.style.display = 'flex';
+                                
+                                // ★ 修正音效時機：一彈窗即刻播 "New Commander" ★
+                                playSound('new-commander-sfx'); 
+                            }
+                        }
                     }
                 });
 
             } else {
                 // --- 情況 B：未登入 (No User) ---
-                // 清除假記錄
-                if (cachedName) {
-                     console.log("⚠️ Auth Invalid. Clearing Cache.");
-                     localStorage.removeItem('battleship_username');
-                }
-                
-                // ★ 關鍵：確認無登入 -> 顯示登入按鈕 ★
+                if (cachedName) localStorage.removeItem('battleship_username');
                 switchHudPanel('login-panel');
             }
         });
@@ -4331,6 +4355,13 @@ function playBgm() {
         playSound('deploy-sfx'); 
     }
 
+function generateGuestId() {
+    const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    const l1 = letters.charAt(Math.floor(Math.random() * letters.length));
+    const l2 = letters.charAt(Math.floor(Math.random() * letters.length));
+    const nums = Math.floor(100 + Math.random() * 900); // 100-999
+    return `${l1}${l2}${nums}`; // 例如: AK479
+}
 </script>
 <div id="registration-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 9999; flex-direction: column; align-items: center; justify-content: center;">
     
@@ -4397,6 +4428,7 @@ function playBgm() {
 </div>
 </body>
 </html>
+
 
 
 
