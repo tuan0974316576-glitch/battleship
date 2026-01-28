@@ -1630,110 +1630,110 @@ body {
 }
 
 /* =========================================
-   ★★★ CAROUSEL MENU (旋轉選單 - 無 Icon 版) ★★★
+   ★★★ CAROUSEL MENU (簡約銀白箭咀版) ★★★
    ========================================= */
 
-/* 1. 外層容器：用來定位左右箭咀 */
+/* 1. 外層容器 */
 .mode-carousel-wrapper {
     display: flex;
     align-items: center;
     justify-content: center;
     width: 100%;
-    max-width: 800px; /* 電腦版最大寬度 */
+    max-width: 800px;
     position: relative;
     margin-top: 20px;
     animation: fadeIn 0.5s;
 }
 
-/* 2. 捲動軌道 (核心) */
+/* 2. 捲動軌道 */
 .carousel-track {
     display: flex;
-    gap: 20px; /* 按鈕之間的距離 */
-    
-    overflow-x: auto; /* 容許橫向捲動 */
-    scroll-snap-type: x mandatory; /* ★ 關鍵：啟動吸附效果 ★ */
-    scroll-behavior: smooth; /* 平滑捲動 */
-    
+    gap: 20px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scroll-behavior: smooth;
     width: 100%;
-    padding: 20px 10px; /* 上下留位俾陰影顯示 */
-    
-    /* 隱藏核突嘅 Scrollbar */
-    scrollbar-width: none; /* Firefox */
-    -ms-overflow-style: none;  /* IE */
+    padding: 20px 10px;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
 }
-.carousel-track::-webkit-scrollbar { display: none; } /* Chrome/Safari */
+.carousel-track::-webkit-scrollbar { display: none; }
 
 /* 3. 按鈕項目 (Card Style) */
 .carousel-item {
-    /* 強制唔准縮細，確保每個掣一樣大 */
-    flex: 0 0 auto; 
-    
-    /* ★ 吸附點：每次停喺中間 ★ */
+    flex: 0 0 auto;
     scroll-snap-align: center;
-    
-    /* 預設大小 (電腦版) */
-    width: 200px; 
-    height: 120px; /* 稍微整矮少少，因為無咗 Icon */
-    
-    /* 內容排版 */
-    display: flex !important; /* Override 舊設定 */
+    /* 因為少咗字，高度可以再矮少少 */
+    width: 200px; height: 100px;
+    display: flex !important;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 8px; /* 標題同描述之間嘅距離 */
+    /* 只有一行字，唔需要 gap */
+    gap: 0; 
 }
 
-/* 按鈕入面嘅 Title, Desc */
+/* 按鈕入面嘅 Title */
 .mode-title { font-size: 20px; font-weight: bold; letter-spacing: 2px; }
-.mode-desc { font-size: 10px; font-family: 'Orbitron'; opacity: 0.7; letter-spacing: 1px; }
+
+/* (已刪除 .mode-desc 樣式) */
 
 
-/* 4. 左右導航箭咀 */
+/* 4. 左右導航箭咀 (銀白色，無圓圈) */
 .nav-arrow {
-    background: rgba(0,0,0,0.5);
-    border: 1px solid var(--primary);
-    color: var(--primary);
-    width: 40px; height: 40px;
-    border-radius: 50%;
-    font-size: 20px;
+    /* 移除背景同邊框 */
+    background: transparent;
+    border: none;
+    /* 銀白色 */
+    color: #e2e8f0;
+    
+    /* 加大少少個箭咀 */
+    font-size: 35px;
+    width: 50px; height: 50px;
+    
     cursor: pointer;
     z-index: 10;
     transition: all 0.2s;
     display: flex; align-items: center; justify-content: center;
-    
-    /* 唔好俾人壓縮 */
-    flex-shrink: 0; 
+    flex-shrink: 0;
+    /* 加入少少陰影令佢立體啲 */
+    text-shadow: 0 2px 5px rgba(0,0,0,0.5);
 }
+
+/* 滑鼠指住 */
 .nav-arrow:hover {
-    background: var(--primary); color: #000;
-    box-shadow: 0 0 15px var(--primary);
+    color: #ffffff; /* 變純白 */
+    transform: scale(1.1); /* 輕微放大 */
 }
-.nav-arrow:active { transform: scale(0.9); }
+
+/* 撳落去發白光 */
+.nav-arrow:active {
+    transform: scale(0.9);
+    /* 強烈白色發光 */
+    text-shadow: 0 0 15px #ffffff, 0 0 30px #ffffff;
+}
 
 
 /* --- ★ 手機/平板 響應式調整 (RESPONSIVE) ★ --- */
 
 @media (max-width: 768px) {
-    /* 平板/手機：箭咀改為「浮」在上面，或者直接收埋靠手指掃 */
     .nav-arrow {
         position: absolute;
         top: 50%; transform: translateY(-50%);
-        background: rgba(0,0,0,0.8);
+        /* 手機版都可以加番少少半透明底色防止撞背景，如果你想完全透明就刪除下面呢行 */
+        /* background: rgba(0,0,0,0.3); */ 
     }
-    .nav-arrow.left { left: 0; }
-    .nav-arrow.right { right: 0; }
+    .nav-arrow.left { left: -10px; } /* 移出一點 */
+    .nav-arrow.right { right: -10px; }
     
     .carousel-track {
-        /* 手機版左右留空，確保第一同最後一個掣可以碌到中間 */
         padding: 20px 15%; 
     }
 
     .carousel-item {
-        /* ★ 關鍵：手機版每個掣佔畫面 60% 闊度 ★ */
-        /* 咁樣你就一定會見到中間嗰個，同埋隔離左右各露出少少 */
         width: 60vw; 
         max-width: 250px;
-        height: 100px; /* 手機版再矮少少 */
+        height: 90px; /* 手機版再矮少少 */
     }
 }
     </style>
@@ -1796,20 +1796,17 @@ body {
         
         <button class="start-btn-large carousel-item" onclick="selectMode('AI')">
             <div class="mode-title">VS A.I.</div>
-            <div class="mode-desc">TRAINING SIM</div>
         </button>
 
         <button class="start-btn-large btn-pvp carousel-item" onclick="selectMode('PVP')">
             <div class="mode-title">VS PLAYER</div>
-            <div class="mode-desc">ONLINE BATTLE</div>
         </button>
 
         <button class="start-btn-large btn-code-list carousel-item" onclick="openVocabScreen()">
             <div class="mode-title">CODE LIST</div>
-            <div class="mode-desc">DATABASE</div>
         </button>
         
-        </div>
+    </div>
 
     <button class="nav-arrow right" onclick="scrollMenu(1)">&#10095;</button>
 </div>
@@ -4279,6 +4276,7 @@ function playBgm() {
 </div>
 </body>
 </html>
+
 
 
 
