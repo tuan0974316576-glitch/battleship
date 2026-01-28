@@ -2974,6 +2974,15 @@ function handlePlayerTimeout() {
     status.innerHTML = `PHASE: <span style="color:var(--danger)">TIMEOUT - TURN LOST</span>`;
     document.getElementById('control-panel').style.borderColor = "var(--danger)";
     
+    const lastLog = battleLog[battleLog.length - 1];
+    if (!lastLog || lastLog.turn !== turnCount) {
+        battleLog.push({
+            turn: turnCount,
+            user: "(TIMEOUT)",    // 顯示超時
+            correct: currentVocab.en, 
+            isCorrect: false
+        });
+    }
     // 2. 邏輯分支
     if (gameMode === 'PVP') {
         // ★★★ PVP 關鍵修復：必須通知 Firebase 對手，我 Timeout 啦 (index: -1) ★★★
@@ -4674,6 +4683,7 @@ function renderReview() {
 </div>
 </body>
 </html>
+
 
 
 
