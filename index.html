@@ -1744,17 +1744,24 @@ body {
    ========================================= */
 #splash-screen {
     position: fixed;
-    top: 0; left: 0; width: 100%; height: 100%;
-    background: #000; /* 全黑背景，遮住後面載入過程 */
-    z-index: 9999; /* 最頂層 */
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    
+    /* ★ 改動 1：刪除 background image，改用半透明黑色 */
+    /* 這樣就可以見到背後 body 嘅流動星空！ */
+    background: rgba(0, 0, 0, 0.3); 
+    
+    /* ★ 改動 2：加少少磨砂玻璃效果 (可選，令文字更清楚) */
+    backdrop-filter: blur(2px);
+
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    cursor: pointer;
-    transition: opacity 0.5s ease-out; /* 淡出動畫 */
-    background-image: url('stars_texture.png'); /* 延續背景風格 */
-    background-size: 500px;
+    z-index: 1000; /* 保持最頂層，但係透明嘅 */
+    transition: opacity 0.5s;
 }
 
 .splash-content {
@@ -1873,21 +1880,24 @@ body {
                 0 0 10px 2px rgba(255, 255, 255, 0.4); 
 }
 
-/* 樣式 B: 十字星芒 (改用 drop-shadow 做光暈) */
+/* --- 優化版：十字星 (更柔和、更似光) --- */
 .star-cross {
+    /* 使用 80% 透明白，唔好用死白，中心會透少少 */
+    background: rgba(255, 255, 255, 0.8);
+    
     /* 十字形狀 */
     clip-path: polygon(50% 0%, 60% 40%, 100% 50%, 60% 60%, 50% 100%, 40% 60%, 0% 50%, 40% 40%);
     
-    /* ★ 關鍵：用 drop-shadow 才能在 clip-path 邊緣產生光暈 */
-    /* 兩層光暈：一層近且光，一層遠且淡 */
-    filter: drop-shadow(0 0 2px rgba(255, 255, 255, 1))
-            drop-shadow(0 0 8px rgba(255, 255, 255, 0.6));
+    /* ★ 加強光暈 (Glow)，令邊緣模糊化 */
+    filter: drop-shadow(0 0 3px rgba(255, 255, 255, 0.9)) 
+            drop-shadow(0 0 8px rgba(255, 255, 255, 0.5));
 }
 
-/* 動畫稍微調暗一點，不要閃到純白刺眼 */
+/* --- 優化版：閃爍動畫 (調低最高亮度) --- */
 @keyframes twinkleAnim {
     0% { opacity: 0; transform: scale(0.3) rotate(0deg); }
-    50% { opacity: 0.9; transform: scale(1); } /* 最高 0.9 透明度，保留一點通透感 */
+    /* ★ 關鍵：最高只去到 0.7，唔好去到 1 (太實色) */
+    50% { opacity: 0.7; transform: scale(1); } 
     100% { opacity: 0; transform: scale(0.3) rotate(45deg); }
 }
     </style>
@@ -4580,6 +4590,7 @@ function createTwinklingStars() {
 </div>
 </body>
 </html>
+
 
 
 
