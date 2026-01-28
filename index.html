@@ -2163,37 +2163,41 @@ let turnCounter = 0; // 回合計數器
     const GRID_SIZE = 10;
 
 const FLEET = [
-        { width: 1, height: 2, img: '1x2.png' },
-        { width: 1, height: 3, img: '1x3.png' },
-        { width: 1, height: 4, img: '1x4.png' },
-        { width: 2, height: 4, img: '2x4.png' },
-        // 新增：1x3+1 戰艦 (T型)
+        // 1. GHOST (1x2) - 保持第 1
         { 
-            width: 2,    // 垂直時的總闊度
-            height: 3,   // 垂直時的總高度
-            img: '1x3+1.png', // 記得將你的圖片改名做這個
-            custom: true, // 標記為特殊形狀
-            // 垂直佈局 (2x3): 左邊3格直條，右邊中間突出一格
-            // 1=有船, 0=透明
-            layoutV: [
-                1, 0,
-                1, 1,
-                1, 0
-            ],
-            // 水平佈局 (3x2): 上面中間突出一格，下面3格橫條
-            // 旋轉90度後的樣子
-            layoutH: [
-                0, 1, 0,
-                1, 1, 1
-            ]
+            width: 1, height: 2, img: '1x2.png', 
+            voiceId: 'ship-voice-0' // 對應 ship_0_ghost.mp3
+        },
+        // 2. STRIKER (1x3) - 保持第 2
+        { 
+            width: 1, height: 3, img: '1x3.png', 
+            voiceId: 'ship-voice-1' // 對應 ship_1_striker.mp3
+        },
+        // 3. SPECTRE (T-Shape) - ★ 由第 5 搬上黎做第 3 ★
+        { 
+            width: 2, height: 3, img: '1x3+1.png', custom: true, 
+            layoutV: [1, 0, 1, 1, 1, 0], 
+            layoutH: [0, 1, 0, 1, 1, 1],
+            voiceId: 'ship-voice-4' // ★ 關鍵：繼續指番去 ship_4 (Spectre) 嘅聲
+        },
+        // 4. DREADNOUGHT (1x4) - ★ 由第 3 搬落黎做第 4 ★
+        { 
+            width: 1, height: 4, img: '1x4.png', 
+            voiceId: 'ship-voice-2' // 對應 ship_2_dreadnought.mp3
+        },
+        // 5. DESTROYER (2x4) - ★ 由第 4 搬落黎做第 5 ★
+        { 
+            width: 2, height: 4, img: '2x4.png', 
+            voiceId: 'ship-voice-3' // 對應 ship_3_destroyer.mp3
         }
     ];
+    
 const DAMAGED_IMAGES = [
-        '1x2_damaged.png', 
-        '1x3_damaged.png', 
-        '1x4_damaged.png', 
-        '2x4_damaged.png',
-        '1x3+1_damaged.png' // 暫時用原圖頂住先，如果你有 1x3+1_damaged.png 就改呢度
+        '1x2_damaged.png',   // 1. Ghost
+        '1x3_damaged.png',   // 2. Striker
+        '1x3+1_damaged.png', // 3. Spectre (T型) ★ 搬上黎
+        '1x4_damaged.png',   // 4. Dreadnought ★ 搬落去
+        '2x4_damaged.png'    // 5. Destroyer ★ 搬落去
     ];
 
    
@@ -2726,10 +2730,13 @@ function handleClick(index) {
     // ★ 鎖定當前嘅 ID (Snapshot)，防止讀錯聲
     const currentSoundIndex = deployIndex; 
 
-    playSound('deploy-sfx'); // 先播機械聲
+playSound('deploy-sfx'); // 先播機械聲
     
+    // ★ 修正：從設定讀取正確的 voiceId，確保Spectre讀番Spectre嘅聲
+    const voiceId = conf.voiceId || `ship-voice-${currentSoundIndex}`;
+
     setTimeout(() => {
-        playSound(`ship-voice-${currentSoundIndex}`); 
+        playSound(voiceId); 
     }, 200);
 
     const justPlaced = document.getElementById(`ship-unit-${deployIndex}`);
@@ -3303,9 +3310,7 @@ function startPlayerTurn() {
     
     playSound('destroy-sfx'); 
 }
-// ★ 新增全局變數 (請確保放在 global 區域，例如 let enemyShots = []; 附近) ★
-// ★ 新增：初始化敵軍狀態欄 ★
-// ★ 新版：初始化敵軍狀態欄 (生成能量方塊) ★
+★
     // ★ 2.0 版：根據戰艦形狀生成方塊 ★
     function initEnemyFleetIndicator() {
         const container = document.getElementById('enemy-fleet-indicator');
@@ -4539,6 +4544,7 @@ function generateGuestId() {
 </div>
 </body>
 </html>
+
 
 
 
