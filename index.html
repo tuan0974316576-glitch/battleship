@@ -1625,14 +1625,15 @@ body {
     scroll-snap-type: x mandatory;
     scroll-behavior: smooth;
     
-    padding: 20px 10px;
+    padding: 50px 30px; 
+    
     scrollbar-width: none;
     -ms-overflow-style: none;
 
-    /* ★ 智能置中核心 ★ */
-    width: fit-content;    /* 內容幾闊，個框就幾闊 */
-    max-width: 100%;       /* 但最大唔好超過螢幕 */
-    margin: 0 auto;        /* 如果個框細過螢幕，就居中 */
+    /* 智能置中核心 */
+    width: fit-content;
+    max-width: 100%;
+    margin: 0 auto;
 }
 .carousel-track::-webkit-scrollbar { display: none; }
 
@@ -4392,5 +4393,6 @@ function playBgm() {
 </div>
 </body>
 </html>
+
 
 
