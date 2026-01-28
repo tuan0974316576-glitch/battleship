@@ -4261,30 +4261,41 @@ function switchHudPanel(panelId) {
     }
 }
 
-// 9. 核心監聽器 (改良版：三階段登入)
+// 9. 核心監聽器 (修正版：修復 Guest Login 同 Logout 卡死問題)
 window.addEventListener('load', () => {
     
-    // 注意：移除這裡自動 playBgm()，改由 startExperience 觸發
+    // ★ 1. 確保隨機名生成器存在 (如果未有，就在這裡定義)
+    if (typeof generateGuestId !== 'function') {
+        window.generateGuestId = function() {
+            const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+            const l1 = letters.charAt(Math.floor(Math.random() * letters.length));
+            const l2 = letters.charAt(Math.floor(Math.random() * letters.length));
+            const nums = Math.floor(100 + Math.random() * 900); 
+            return `${l1}${l2}${nums}`; 
+        };
+    }
 
-    // ★★★ 2. 極速登入 (Local Storage Check) ★★★
+    // 2. 極速登入檢查 (Cache Check)
     const cachedName = localStorage.getItem('battleship_username');
     if (cachedName) {
         console.log("🚀 FAST LOGIN: Found cached user -> " + cachedName);
-        // 如果有緩存，可以直接預備 UI，但為了安全，我們保持 CONNECTING 直到 Firebase 確認
-        // 或者你可以選擇在這裡就切換到 user-profile-panel (更進取的做法)
         updateHUD(cachedName);
     }
 
-    // 3. 延遲啟動 Firebase
+    // 3. 延遲啟動 Firebase (確保模組載入完成)
     setTimeout(() => {
-        const { initializeApp, getDatabase, getAuth, onAuthStateChanged, ref, onValue, get } = window.firebaseModules;
+        // ★★★ 關鍵修正 1：這裡加回 'update'，否則 Guest Login 會死機 ★★★
+        const { initializeApp, getDatabase, getAuth, onAuthStateChanged, ref, onValue, get, update } = window.firebaseModules;
         
         app = initializeApp(firebaseConfig);
         db = getDatabase(app);
         auth = getAuth(app);
 
-// ★★★ Firebase 狀態監聽 (決定顯示邊個畫面) ★★★
+        // ★★★ Firebase 狀態監聽 ★★★
         onAuthStateChanged(auth, u => {
+            // 獲取遮罩元素
+            const overlay = document.getElementById('login-overlay');
+
             if (u) {
                 // --- 情況 A：已登入 (User Found) ---
                 myPlayerId = u.uid;
@@ -4303,14 +4314,17 @@ window.addEventListener('load', () => {
                         switchHudPanel('user-profile-panel');
                         showMainMenu(); 
                         
+                        // ★ 確保遮罩消失 (以防萬一)
+                        if(overlay) overlay.style.display = 'none';
+
                     } else {
                         // 2. 新人 (無名)：分 Guest 定 Google
                         
                         if (u.isAnonymous) {
-                            // ★★★ Guest 自動派名邏輯 ★★★
-                            const autoName = generateGuestId(); // 生成 XY123
+                            // ★★★ Guest 自動派名邏輯 (修正版) ★★★
+                            const autoName = window.generateGuestId(); 
                             
-                            // 自動寫入 Database，唔使經註冊窗
+                            // 這裡現在有 'update' 了，應該可以順利執行！
                             update(ref(db, 'users/' + u.uid), { 
                                 displayName: autoName,
                                 lastLogin: Date.now()
@@ -4318,26 +4332,32 @@ window.addEventListener('load', () => {
                                 localStorage.setItem('battleship_username', autoName);
                                 updateHUD(autoName);
                                 
-                                // 直接入 Main Menu，無需等待
+                                // 直接入 Main Menu
                                 switchHudPanel('user-profile-panel');
                                 showMainMenu();
                                 
-                                // 播放一下成功音效
                                 playSound('deploy-sfx'); 
                                 console.log(`GUEST AUTO-LOGIN: ${autoName}`);
-                            // ★★★ 關鍵修正：必須手動關閉遮罩！ ★★★
-                                const overlay = document.getElementById('login-overlay');
+
+                                // ★★★ 關鍵修正 2：Guest 登入成功後，手動關閉遮罩 ★★★
                                 if(overlay) overlay.style.display = 'none';
+
+                            }).catch(e => {
+                                console.error("Guest Update Error:", e);
+                                alert("Guest Error: " + e.message);
+                                if(overlay) overlay.style.display = 'none'; // 出錯都要閂遮罩
                             });
 
                         } else {
                             // ★★★ Google 新人：依然要彈窗改名 ★★★
                             switchHudPanel('user-profile-panel'); 
+                            
+                            // 先閂咗個 Authenticating 遮罩，因為要彈另一個註冊窗
+                            if(overlay) overlay.style.display = 'none';
+
                             const regModal = document.getElementById('registration-modal');
                             if(regModal) {
                                 regModal.style.display = 'flex';
-                                
-                                // ★ 修正音效時機：一彈窗即刻播 "New Commander" ★
                                 playSound('new-commander-sfx'); 
                             }
                         }
@@ -4347,39 +4367,54 @@ window.addEventListener('load', () => {
             } else {
                 // --- 情況 B：未登入 (No User) ---
                 if (cachedName) localStorage.removeItem('battleship_username');
+                
                 switchHudPanel('login-panel');
+                
+                // ★★★ 關鍵修正 3：登出時，強制關閉 Authenticating 遮罩 ★★★
+                if(overlay) overlay.style.display = 'none';
             }
         });
 
-        // 連線狀態監測 (保持不變)
+        // 連線狀態監測 (保持之前的修正)
         const connectedRef = ref(db, ".info/connected");
         onValue(connectedRef, (snap) => {
             const el = document.getElementById('connection-status');
             if (!el) return; 
             el.style.display = 'block';
+            
             if (snap.val() === true) {
                 el.style.background = "#22c55e"; 
                 el.style.boxShadow = "0 0 5px #22c55e";
             } else {
                 el.style.background = "#ef4444"; 
                 el.style.boxShadow = "0 0 5px #ef4444";
+                
+                // 修正：Splash Screen 顯示時不報錯
+                const splash = document.getElementById('splash-screen');
+                if (splash && splash.style.display !== 'none' && splash.style.opacity !== '0') {
+                    return; 
+                }
+
+                if (typeof showNotification === 'function') {
+                    showNotification("CONNECTION LOST!", "error"); 
+                }
             }
         });
         
-        // 遊戲初始化 (保持不變)
+        // 遊戲初始化
         createGrid('player-grid');
         createGrid('enemy-grid');
         placeEnemyShips(); 
         renderSidebar();
 
-        // 音效監聽 (保持不變)
+        // 音效監聽
         const roomInput = document.getElementById('room-id-input');
         if (roomInput) {
             roomInput.addEventListener('input', (e) => {
                 if (e.inputType === 'deleteContentBackward' || e.inputType === 'deleteContentForward') {
                     playSound('delete-sfx');
                 } else {
-                    playSound('typing-sfx');
+                    playSound('enter-sfx'); // 改回用 enter-sfx
                 }
             });
         }
@@ -4486,6 +4521,7 @@ function generateGuestId() {
 </div>
 </body>
 </html>
+
 
 
 
