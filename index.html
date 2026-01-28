@@ -1571,6 +1571,54 @@ body {
 
 @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 @keyframes pulseText { from { opacity: 0.6; } to { opacity: 1; } }
+/* =========================================
+   新增按鈕樣式修正 (BGM & EXIT)
+   ========================================= */
+
+/* --- BGM 按鈕專用設定 --- */
+#music-btn {
+    /* 確保平時背景透明 */
+    background: transparent !important;
+    /* 使用主題藍色 */
+    color: var(--primary);
+    border-color: var(--primary);
+    transition: all 0.2s ease;
+}
+
+/* BGM 按鈕：滑鼠指住 或 按落去 嘅效果 */
+#music-btn:hover,
+#music-btn:active {
+    /* 重點：背景保持透明，唔好變粉藍色 */
+    background: transparent !important;
+    /* 文字同邊框保持藍色 */
+    color: var(--primary) !important;
+    border-color: var(--primary) !important;
+    /* 加強藍色發光效果 */
+    box-shadow: 0 0 15px var(--primary), inset 0 0 5px var(--primary);
+}
+
+
+/* --- EXIT 按鈕專用設定 --- */
+#game-exit-btn {
+    /* 確保平時背景透明 */
+    background: transparent !important;
+    /* 強制用紅色，確保統一 */
+    color: var(--danger) !important;
+    border-color: var(--danger) !important;
+    transition: all 0.2s ease;
+}
+
+/* EXIT 按鈕：滑鼠指住 或 按落去 嘅效果 */
+#game-exit-btn:hover,
+#game-exit-btn:active {
+    /* 重點：背景保持透明，唔好變色 */
+    background: transparent !important;
+    /* 文字同邊框保持紅色 */
+    color: var(--danger) !important;
+    border-color: var(--danger) !important;
+    /* 加強紅色發光效果 */
+    box-shadow: 0 0 15px var(--danger), inset 0 0 5px var(--danger);
+}
     </style>
 
 </head>
@@ -1705,7 +1753,7 @@ body {
             <div id="connection-status" style="width: 10px; height: 10px; border-radius: 50%; background: grey; display: none; margin-left: 10px;"></div>
             <div id="game-status">PHASE: <span style="color: var(--warning);">DEPLOYMENT</span></div>
             <button id="music-btn" class="btn" onclick="toggleMusic()"> BGM: ON</button>
-<button class="btn" onclick="confirmExit()" style="border-color: var(--danger); color: var(--danger);">EXIT</button>
+<button id="game-exit-btn" class="btn" onclick="confirmExit()" style="border-color: var(--danger); color: var(--danger);">EXIT</button>
             <span id="deploy-controls">
                 <button id="rotate-btn" class="btn" onclick="rotateShip()">ROTATE: VERTICAL</button>
                 <button id="start-btn" class="btn" onclick="startBattle()" disabled>START BATTLE</button>
@@ -4069,6 +4117,7 @@ function playBgm() {
 </div>
 </body>
 </html>
+
 
 
 
