@@ -4095,23 +4095,24 @@ window.loginWithGoogle = function() {
     // 開啟遮罩
     if(overlay) overlay.style.display = 'flex';
     
-    playBgm();
+    // 播放背景音樂 (如果未播)
+    if(typeof playBgm === 'function') playBgm();
     
     signInWithPopup(getAuth(), new GoogleAuthProvider())
     .then((result) => {
         // 登入成功！
-        // 這裡不需要做任何 UI 操作 (例如隱藏遮罩)
-        // 因為 onAuthStateChanged 會偵測到登入，然後自動執行 showMainMenu()
-        // 讓遮罩繼續轉，直到轉場完成，體驗會最順滑
+        // 這裡不需要手動關閉遮罩
+        // 因為 onAuthStateChanged 會偵測到登入，並自動切換畫面
     })
     .catch(e => {
-        // ★★★ 關鍵修復：失敗/取消時，必須即刻移除遮罩 ★★★
+        // ★★★ 關鍵修復 1：無論失敗定係取消，必須即刻移除遮罩！ ★★★
         if(overlay) overlay.style.display = 'none';
         
-        // ★ 特判：如果是用戶自己閂咗個窗 (Popup Closed)，直接 Return，唔好彈 Alert
+        // ★★★ 關鍵修復 2：特判「用戶自己閂窗」的情況 ★★★
+        // 如果係用戶取消，就當無事發生，唔好彈錯誤視窗嚇親人
         if (e.code === 'auth/popup-closed-by-user' || e.code === 'auth/cancelled-popup-request') {
             console.log("User cancelled login.");
-            return; // 當無事發生，還原去 INITIALIZE LINK 畫面
+            return; 
         }
         
         // 其他真正的錯誤才彈 Alert
@@ -4542,6 +4543,7 @@ function generateGuestId() {
 </div>
 </body>
 </html>
+
 
 
 
