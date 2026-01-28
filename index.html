@@ -1891,110 +1891,6 @@ body {
     50% { opacity: 1; transform: scale(1.2); box-shadow: 0 0 15px white; }
     100% { opacity: 0.2; transform: scale(0.5); }
 }
-/* =========================================
-   ★★★ 聽力模式 & 高科技喇叭 CSS ★★★
-   ========================================= */
-
-/* 1. 模式選擇按鈕 */
-.mode-btn {
-    width: 160px; height: 180px;
-    background: rgba(15, 23, 42, 0.8);
-    border: 2px solid var(--primary);
-    color: var(--primary);
-    border-radius: 10px;
-    cursor: pointer;
-    transition: all 0.3s;
-    font-family: 'Orbitron';
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-}
-.mode-btn:hover {
-    background: var(--primary); color: #000;
-    transform: scale(1.1);
-    box-shadow: 0 0 30px var(--primary);
-}
-/* 聽力模式專用色 (紫色 Cyber Purple) */
-.mode-btn:nth-child(2) { border-color: #d946ef; color: #d946ef; }
-.mode-btn:nth-child(2):hover { background: #d946ef; color: #fff; box-shadow: 0 0 30px #d946ef; }
-
-/* 2. 聽力填空題樣式 */
-.sentence-container { 
-    font-family: 'Orbitron', sans-serif; 
-    font-size: 18px; 
-    color: #fff; 
-    line-height: 1.6; 
-    margin-bottom: 20px; 
-}
-.listening-blank {
-    color: var(--primary); font-weight: bold; font-size: 22px;
-    text-shadow: 0 0 10px var(--primary);
-    border-bottom: 2px solid var(--primary);
-    padding: 0 5px; margin: 0 5px; letter-spacing: 3px;
-}
-
-/* 3. ★★★ 高科技喇叭 ICON (Cyber Speaker) ★★★ */
-.cyber-speaker-btn {
-    width: 60px; height: 60px;
-    border: 2px solid #d946ef; /* 紫色框 */
-    border-radius: 50%; /* 圓形 */
-    display: flex; align-items: center; justify-content: center;
-    cursor: pointer;
-    margin: 10px auto; /* 居中 */
-    position: relative;
-    background: rgba(217, 70, 239, 0.1); /* 淡淡紫色底 */
-    box-shadow: 0 0 15px rgba(217, 70, 239, 0.4); /* 呼吸光暈 */
-    transition: all 0.2s;
-}
-
-/* 喇叭本體 (用 CSS 畫) */
-.speaker-shape {
-    position: relative;
-    width: 8px; height: 14px;
-    background: #d946ef;
-    margin-right: 15px; /* 留位俾聲波 */
-}
-/* 喇叭個嘴 (三角形) */
-.speaker-shape::after {
-    content: ''; position: absolute;
-    top: 50%; right: -12px; /* 黐住個本體 */
-    transform: translateY(-50%);
-    width: 0; height: 0;
-    border-left: 12px solid #d946ef; /* 實色三角形 */
-    border-top: 12px solid transparent;
-    border-bottom: 12px solid transparent;
-}
-
-/* 聲波 (圓弧線) */
-.speaker-wave {
-    position: absolute;
-    top: 50%; left: 50%;
-    transform: translate(-50%, -50%);
-    width: 100%; height: 100%;
-    border-radius: 50%;
-}
-/* 用 box-shadow 做聲波擴散動畫 */
-.cyber-speaker-btn:hover .speaker-wave {
-    animation: pulseWave 1.5s infinite;
-}
-
-@keyframes pulseWave {
-    0% { box-shadow: 0 0 0 0 rgba(217, 70, 239, 0.7); }
-    70% { box-shadow: 0 0 0 15px rgba(217, 70, 239, 0); }
-    100% { box-shadow: 0 0 0 0 rgba(217, 70, 239, 0); }
-}
-
-/* ★★★ 互動特效：撳落去發強光！ ★★★ */
-.cyber-speaker-btn:active {
-    background: #fff; /* 變白 */
-    border-color: #fff;
-    transform: scale(0.95); /* 撳扁少少 */
-    box-shadow: 0 0 30px #fff, 0 0 60px #d946ef; /* 強烈爆光 */
-}
-.cyber-speaker-btn:active .speaker-shape,
-.cyber-speaker-btn:active .speaker-shape::after {
-    border-left-color: #fff; /* 喇叭變白 */
-    background: #fff;
-}
-
     </style>
 
 </head>
@@ -2094,25 +1990,7 @@ body {
     
     <div id="system-status-text" style="margin-top: 30px; color: #94a3b8; font-size: 12px; opacity: 0.5; font-family: 'Orbitron';">WAITING FOR AUTHENTICATION...</div>
 </div>
-<div id="mode-screen" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 260; background: rgba(0,0,0,0.9); flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(10px);">
-    <h2 style="font-family: 'Black Ops One'; color: #fff; font-size: 36px; margin-bottom: 40px; text-shadow: 0 0 20px rgba(255,255,255,0.5);">SELECT TRAINING MODE</h2>
-    
-    <div style="display: flex; gap: 30px; flex-wrap: wrap; justify-content: center;">
-        <button class="mode-btn" onclick="startGameWithMode('READING')">
-            <div style="font-size: 40px; margin-bottom: 10px;">👁️</div>
-            <div style="font-size: 20px; font-weight: bold;">READING</div>
-            <div style="font-size: 12px; opacity: 0.7; margin-top: 5px;">TARGET: CHINESE</div>
-        </button>
 
-        <button class="mode-btn" onclick="startGameWithMode('LISTENING')">
-            <div style="font-size: 40px; margin-bottom: 10px;">🎧</div>
-            <div style="font-size: 20px; font-weight: bold;">LISTENING</div>
-            <div style="font-size: 12px; opacity: 0.7; margin-top: 5px;">TARGET: AUDIO + SENTENCE</div>
-        </button>
-    </div>
-
-    <button class="btn" onclick="closeModeScreen()" style="margin-top: 40px; border-color: #64748b; color: #94a3b8;">&lt; BACK</button>
-</div>
 <div id="vocab-screen">
     <div class="tech-header">
         <h2 class="tech-title">CODE LIST</h2> 
@@ -2288,8 +2166,6 @@ body {
 <script src="vocab_data.js"></script>
 
 <script>
-let currentPracticeMode = 'READING'; 
-let selectedLevelTemp = '';
     // ★★★ 新增：自動排序功能 ★★★
     // 這段代碼會走遍所有 Level (L1, L2...), 自動按英文字母 A-Z 排列
     function sortDatabase() {
@@ -2443,23 +2319,25 @@ function selectMode(mode) {
         document.getElementById('level-screen').style.display = 'flex';
     }
 
-// 定義一個全局變數暫存 Level (如果之前未加，請加在 script 最頂)
-let selectedLevelTemp = ''; 
-
 function selectLevel(level) {
-    // 1. 暫存玩家揀咗邊個 Level (例如 'L1')
-    selectedLevelTemp = level; 
-    
-    // 2. 介面切換：收埋 Level 選單，打開 Mode 選單
-    document.getElementById('level-screen').style.display = 'none'; 
-    document.getElementById('mode-screen').style.display = 'flex';
-    
-    // 3. 播放音效 & 預熱語音
-    if(typeof playSound === 'function') playSound('deploy-sfx');
-    
-    // 呼叫預熱函數 (確保你已經加咗 warmUpVoiceEngine 在 helper function 區)
-    if(typeof warmUpVoiceEngine === 'function') warmUpVoiceEngine(); 
-}
+        selectedLevel = level;
+        activeVocabList = VOCAB_DB[level]; // 設定題庫
+        
+        playSound('deploy-sfx');
+        closeLevelScreen(); // 關閉選單
+
+        if (tempGameMode === 'AI') {
+            gameMode = 'AI';
+      
+            enterGameUI();
+        } else {
+            // PVP 模式：來到這裡代表係 Host 剛揀完 Level
+            gameMode = 'PVP';
+            
+            // ★ 修改重點：選完 Level 即刻執行開房 ★
+            createRoom(); 
+        }
+    }
 function enterGameUI() {
     const bgm = document.getElementById('bgm');
     if (bgm) { bgm.volume = 0.5; bgm.play().then(()=>isMusicPlaying=true).catch(e=>{}); }
@@ -4637,80 +4515,6 @@ function createTwinklingStars() {
         container.appendChild(star);
     }
 }
-// =========================================
-// ★★★ LISTENING MODE HELPER FUNCTIONS ★★★
-// =========================================
-
-// 1. 語音預熱 (防止第一次讀無聲)
-function warmUpVoiceEngine() {
-    if ('speechSynthesis' in window) {
-        window.speechSynthesis.cancel();
-        const emptyMsg = new SpeechSynthesisUtterance(" "); 
-        emptyMsg.volume = 0; 
-        window.speechSynthesis.speak(emptyMsg);
-        console.log("🔊 Voice Engine Warmed Up!");
-    }
-}
-
-// 2. 開始遊戲 (帶模式)
-function startGameWithMode(mode) {
-    // 1. 設定剛才選擇的模式
-    currentPracticeMode = mode;
-    console.log("Mode Selected:", currentPracticeMode);
-
-    // 2. 關閉 Mode 畫面
-    document.getElementById('mode-screen').style.display = 'none';
-    
-    // 3. --- ★ 恢復原本 selectLevel 的核心邏輯 ★ ---
-    
-    // 把暫存的 Level 正式寫入 selectedLevel
-    selectedLevel = selectedLevelTemp;
-    
-    // ★ 關鍵：設定題庫 (原本代碼：activeVocabList = VOCAB_DB[level])
-    if (typeof VOCAB_DB !== 'undefined') {
-        activeVocabList = VOCAB_DB[selectedLevel]; 
-    }
-
-    // ★ 關鍵：判斷係 AI 定 PVP (原本的邏輯搬過來這裡)
-    if (tempGameMode === 'AI') {
-        gameMode = 'AI';
-        
-        // AI 模式：直接入介面
-        if(typeof enterGameUI === 'function') enterGameUI(); 
-        
-        // 如果你原本 logic 有 resetGame，可以加埋 (視乎你原本 enterGameUI 做乜)
-        if(typeof resetGame === 'function') resetGame();
-
-    } else {
-        // PVP 模式：Host 剛揀完 Level 同 Mode
-        gameMode = 'PVP';
-        
-        // ★ 修改重點：揀完模式，即刻執行開房 (原本 selectLevel 做緊嘅野)
-        if(typeof createRoom === 'function') createRoom();
-    }
-    
-    // 再預熱多一次語音，保險
-    if(typeof warmUpVoiceEngine === 'function') warmUpVoiceEngine();
-}
-
-// 3. 關閉模式選擇
-function closeModeScreen() {
-    document.getElementById('mode-screen').style.display = 'none';
-    document.getElementById('level-screen').style.display = 'flex'; 
-}
-
-// 4. TTS 發聲函數
-function speak(text) {
-    if ('speechSynthesis' in window) {
-        window.speechSynthesis.cancel(); // 停上一句
-        const msg = new SpeechSynthesisUtterance(text);
-        msg.lang = 'en-US'; 
-        msg.rate = 0.9; // 語速稍微慢一點點
-        window.speechSynthesis.speak(msg);
-    } else {
-        alert("Sorry, your browser does not support Text-to-Speech.");
-    }
-}
 </script>
 <div id="registration-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 9999; flex-direction: column; align-items: center; justify-content: center;">
     
@@ -4777,8 +4581,6 @@ function speak(text) {
 </div>
 </body>
 </html>
-
-
 
 
 
