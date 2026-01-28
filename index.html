@@ -1886,101 +1886,100 @@ body {
 
 </head>
 <body>
-<div id="splash-screen" onclick="startExperience()">
-    <div class="splash-content">
-        <div class="main-title" style="position: relative; z-index: 10000;">VOCAB<br>CONQUEROR</div>
-        
-        <div class="blink-text" style="font-family: 'Orbitron'; color: #0ea5e9; font-size: 18px; letter-spacing: 5px; margin-top: 20px;">
-            >> TAP TO START <<
+    <div id="splash-screen" onclick="startExperience()">
+        <div class="splash-content">
+            <div class="main-title" style="position: relative; z-index: 10000;">VOCAB<br>CONQUEROR</div>
+            
+            <div class="blink-text" style="font-family: 'Orbitron'; color: #0ea5e9; font-size: 18px; letter-spacing: 5px; margin-top: 20px;">
+                >> TAP TO START <<
+            </div>
+            <div style="font-family: 'Orbitron'; color: #64748b; font-size: 10px; margin-top: 10px;">INITIALIZING SYSTEM...</div>
         </div>
-        <div style="font-family: 'Orbitron'; color: #64748b; font-size: 10px; margin-top: 10px;">INITIALIZING SYSTEM...</div>
     </div>
-</div>
 
-<div id="start-screen" class="screen active" style="display: flex; flex-direction: column; justify-content: center; align-items: center;">
-    
-    <div class="main-title">VOCAB<br>CONQUEROR</div>
-
-    <div id="login-hud" class="hud-container">
+    <div id="start-screen" class="screen active" style="display: flex; flex-direction: column; justify-content: center; align-items: center;">
         
-        <div id="connecting-panel" style="text-align: center; padding: 20px;">
-            <div class="login-spinner" style="margin: 0 auto; border-top-color: #f59e0b;"></div>
-            <div style="margin-top: 15px; color: #f59e0b; font-family: 'Orbitron'; letter-spacing: 2px; font-size: 12px; font-weight: bold;">
-                ESTABLISHING LINK...
-            </div>
-        </div>
+        <div class="main-title">VOCAB<br>CONQUEROR</div>
 
-        <div id="login-panel" style="position: relative; overflow: hidden; display: none;"> 
-            <div class="hud-line"></div>
-            <div style="font-size: 10px; color: #ff4444; letter-spacing: 2px; margin-bottom: 15px; font-family: 'Orbitron';">SYSTEM ACCESS: RESTRICTED</div>
+        <div id="login-hud" class="hud-container">
             
-            <button id="google-login-btn" onclick="loginWithGoogle()" style="margin-bottom: 10px;">
-                <span class="icon">G</span> 
-                <span class="text">INITIALIZE LINK</span>
-                <div class="btn-glitch"></div>
-            </button>
-
-            <button class="logout-link" onclick="playAsGuest()" style="color: #64748b; font-size: 10px; margin-top: 5px;">
-               &gt; BYPASS SECURITY (GUEST MODE)
-            </button>
-
-            <div id="login-overlay">
-                <div class="login-spinner"></div>
-                <div class="login-loading-text">AUTHENTICATING...</div>
-            </div>
-        </div>
-
-        <div id="user-profile-panel" style="display: none;">
-            <div class="hud-corner-tl"></div>
-            <div class="hud-corner-br"></div>
-            
-            <div class="profile-grid">
-                <div class="profile-rank">
-                    <div style="font-size: 10px; color: #64748b;">CURRENT RANK</div>
-                    <div id="hud-rank-title" style="color: #fbbf24; font-size: 18px; text-shadow: 0 0 10px #fbbf24; font-family: 'Black Ops One';">CADET</div>
+            <div id="connecting-panel" style="text-align: center; padding: 20px;">
+                <div class="login-spinner" style="margin: 0 auto; border-top-color: #f59e0b;"></div>
+                <div style="margin-top: 15px; color: #f59e0b; font-family: 'Orbitron'; letter-spacing: 2px; font-size: 12px; font-weight: bold;">
+                    ESTABLISHING LINK...
                 </div>
+            </div>
 
-                <div class="profile-name-box">
-                    <div style="font-size: 10px; color: #0ea5e9;">OPERATOR</div>
-                    <div style="display: flex; align-items: center; gap: 10px;">
-                        <div id="hud-player-name" class="scrolling-text">LOADING...</div>
-                        <button class="edit-btn" onclick="changeName()">✏️</button>
+            <div id="login-panel" style="position: relative; overflow: hidden; display: none;"> 
+                <div class="hud-line"></div>
+                <div style="font-size: 10px; color: #ff4444; letter-spacing: 2px; margin-bottom: 15px; font-family: 'Orbitron';">SYSTEM ACCESS: RESTRICTED</div>
+                
+                <button id="google-login-btn" onclick="loginWithGoogle()" style="margin-bottom: 10px;">
+                    <span class="icon">G</span> 
+                    <span class="text">INITIALIZE LINK</span>
+                    <div class="btn-glitch"></div>
+                </button>
+
+                <button class="logout-link" onclick="playAsGuest()" style="color: #64748b; font-size: 10px; margin-top: 5px;">
+                &gt; BYPASS SECURITY (GUEST MODE)
+                </button>
+
+                <div id="login-overlay">
+                    <div class="login-spinner"></div>
+                    <div class="login-loading-text">AUTHENTICATING...</div>
+                </div>
+            </div>
+
+            <div id="user-profile-panel" style="display: none;">
+                <div class="hud-corner-tl"></div>
+                <div class="hud-corner-br"></div>
+                
+                <div class="profile-grid">
+                    <div class="profile-rank">
+                        <div style="font-size: 10px; color: #64748b;">CURRENT RANK</div>
+                        <div id="hud-rank-title" style="color: #fbbf24; font-size: 18px; text-shadow: 0 0 10px #fbbf24; font-family: 'Black Ops One';">CADET</div>
+                    </div>
+
+                    <div class="profile-name-box">
+                        <div style="font-size: 10px; color: #0ea5e9;">OPERATOR</div>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <div id="hud-player-name" class="scrolling-text">LOADING...</div>
+                            <button class="edit-btn" onclick="changeName()">✏️</button>
+                        </div>
                     </div>
                 </div>
+
+                <button class="logout-link" onclick="logout()">TERMINATE SESSION</button>
+            </div>
+        </div>
+
+        <div id="main-menu-carousel" class="mode-carousel-wrapper" style="display: none;">
+            
+            <button class="nav-arrow left" onclick="scrollMenu(-1)">
+                <div class="arrow-shape"></div>
+            </button>
+
+            <div id="game-mode-selection" class="carousel-track">
+                <button class="start-btn-large carousel-item" onclick="selectMode('AI')">
+                    <div class="mode-title">VS A.I.</div>
+                </button>
+
+                <button class="start-btn-large btn-pvp carousel-item" onclick="selectMode('PVP')">
+                    <div class="mode-title">VS PLAYER</div>
+                </button>
+
+                <button class="start-btn-large btn-code-list carousel-item" onclick="openVocabScreen()">
+                    <div class="mode-title">CODE LIST</div>
+                </button>
             </div>
 
-            <button class="logout-link" onclick="logout()">TERMINATE SESSION</button>
+            <button class="nav-arrow right" onclick="scrollMenu(1)">
+                <div class="arrow-shape"></div>
+            </button>
         </div>
-    </div>
-<div id="main-menu-carousel" class="mode-carousel-wrapper" style="display: none;">
-    
-<button class="nav-arrow left" onclick="scrollMenu(-1)">
-    <div class="arrow-shape"></div>
-</button>
-
-    <div id="game-mode-selection" class="carousel-track">
         
-        <button class="start-btn-large carousel-item" onclick="selectMode('AI')">
-            <div class="mode-title">VS A.I.</div>
-        </button>
-
-        <button class="start-btn-large btn-pvp carousel-item" onclick="selectMode('PVP')">
-            <div class="mode-title">VS PLAYER</div>
-        </button>
-
-        <button class="start-btn-large btn-code-list carousel-item" onclick="openVocabScreen()">
-            <div class="mode-title">CODE LIST</div>
-        </button>
-        
+        <div id="system-status-text" style="margin-top: 30px; color: #94a3b8; font-size: 12px; opacity: 0.5; font-family: 'Orbitron';">WAITING FOR AUTHENTICATION...</div>
     </div>
-
-<button class="nav-arrow right" onclick="scrollMenu(1)">
-    <div class="arrow-shape"></div>
-</button>
-</div>
-    
-    <div id="system-status-text" style="margin-top: 30px; color: #94a3b8; font-size: 12px; opacity: 0.5; font-family: 'Orbitron';">WAITING FOR AUTHENTICATION...</div>
-</div>
 
 <div id="vocab-screen">
     <div class="tech-header">
@@ -4479,6 +4478,7 @@ function playBgm() {
 </div>
 </body>
 </html>
+
 
 
 
