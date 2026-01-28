@@ -1765,7 +1765,7 @@ body {
 <button id="game-exit-btn" class="btn" onclick="confirmExit()" style="border-color: var(--danger); color: var(--danger);">EXIT</button>
             <span id="deploy-controls">
                 <button id="rotate-btn" class="btn" onclick="rotateShip()">ROTATE: VERTICAL</button>
-                <button id="start-btn" class="btn" onclick="startBattle()" disabled>START BATTLE</button>
+                <button id="start-btn" class="btn" onclick="startBattle()" style="display: none;">START BATTLE</button>
             </span>
         </div>
 <div id="turn-timer-container" style="width: 100%; max-width: 600px; height: 4px; background: #334155; margin-bottom: 10px; display: none;">
@@ -2429,8 +2429,11 @@ function handleClick(index) {
                 newCurrent.classList.add('current');
             }
 
-            // ★★★ 修改重點 A：拎起隻船，即係未放完，要 Disable 開始掣，並顯示返 Rotate 掣 ★★★
-            document.getElementById('start-btn').disabled = true;
+            // ★★★ 修改重點 A：拎起隻船，即係未放完，要隱藏 START 掣，並顯示返 Rotate 掣 ★★★
+            const sBtn = document.getElementById('start-btn');
+            sBtn.style.display = 'none'; // 隱藏
+            sBtn.disabled = true;        // 鎖定
+            
             document.getElementById('rotate-btn').style.display = 'inline-block'; 
             
             return;
@@ -2453,14 +2456,12 @@ function handleClick(index) {
 
     placeShipImage('player-grid', index, conf, isVertical);
     
-    // ★★★ 關鍵修正：先鎖定當前嘅 ID (Snapshot) ★★★
-    // 這樣就算下面 deployIndex 變咗，這裡記住的 ID 都不會變！
+    // ★ 鎖定當前嘅 ID (Snapshot)，防止讀錯聲
     const currentSoundIndex = deployIndex; 
 
     playSound('deploy-sfx'); // 先播機械聲
     
     setTimeout(() => {
-        // ★ 這裡改用 currentSoundIndex，保證讀番正確嗰隻船！ ★
         playSound(`ship-voice-${currentSoundIndex}`); 
     }, 200);
 
@@ -2470,10 +2471,9 @@ function handleClick(index) {
         justPlaced.classList.add('deployed');
     }
 
-    // 這裡更新 deployIndex 準備下一隻 (現在這行不會影響上面的播聲了)
+    // 這裡更新 deployIndex 準備下一隻
     deployIndex = findNextUnplaced();
 
-    // ... (之後的代碼不用改) ...
     if (deployIndex < FLEET.length) {
         const nextShip = document.getElementById(`ship-unit-${deployIndex}`);
         if (nextShip) {
@@ -2481,8 +2481,12 @@ function handleClick(index) {
             nextShip.classList.add('current');
         }
     } else {
-        document.getElementById('start-btn').disabled = false;
+        // ★★★ 修改重點 B：放齊船啦！隱藏 Rotate，彈出 START 掣！ ★★★
         document.getElementById('rotate-btn').style.display = 'none';
+        
+        const sBtn = document.getElementById('start-btn');
+        sBtn.style.display = 'inline-block'; // 顯示 (Pop Up)
+        sBtn.disabled = false;               // 解鎖
     }
 }
 
@@ -3309,7 +3313,9 @@ function resetGame() {
 
     // 3. 隱藏 UI 元件
     document.getElementById('turn-timer-container').style.display = 'none';
-    // 刪除了 global-back-btn 的控制碼
+    
+    // 之前已經刪除咗 global-back-btn，所以這裡不需要任何 back-btn 代碼
+
     document.getElementById('end-screen').style.display = 'none';
     document.getElementById('game-ui').style.display = 'none';
     document.getElementById('lobby-screen').style.display = 'none'; 
@@ -3318,53 +3324,55 @@ function resetGame() {
     document.getElementById('start-screen').style.display = 'flex';
     document.getElementById('start-screen').style.opacity = '1';
 
-        // 5. 重置變數
-        myGrid.fill(0);
-        enemyGrid.fill(0);
-        
-        enemyShots = [];
-        aiTargetStack = []; // ★ 關鍵修改：重置 AI 追擊記憶，防止下一場亂打 ★
-        
-        deployIndex = 0;
-        currentPhase = 'DEPLOY';
-        myDamage = 0;
-        enemyDamage = 0;
-        lastProcessedTimestamp = 0;
+    // 5. 重置變數
+    myGrid.fill(0);
+    enemyGrid.fill(0);
+    
+    enemyShots = [];
+    aiTargetStack = []; 
+    
+    deployIndex = 0;
+    currentPhase = 'DEPLOY';
+    myDamage = 0;
+    enemyDamage = 0;
+    lastProcessedTimestamp = 0;
 
-        if (typeof turnCounter !== 'undefined') {
-            turnCounter = 0;
-            const turnDisplay = document.getElementById('turn-count');
-            if(turnDisplay) turnDisplay.innerText = "1"; 
-        }
-
-        // 6. 重置 棋盤 & 側邊欄
-        createGrid('player-grid');
-        createGrid('enemy-grid');
-        
-        // ★ 關鍵修復：強制將鏡頭轉回 My Fleet (玩家棋盤) ★
-        document.getElementById('player-board').classList.add('active');
-        document.getElementById('enemy-board').classList.remove('active');
-
-        // 顯示番側邊欄 (Sidebar)
-        const sidebar = document.getElementById('fleet-sidebar');
-        if(sidebar) sidebar.style.display = 'flex'; 
-        document.getElementById('deploy-controls').style.display = 'inline'; 
-        
-        renderSidebar(); 
-        document.getElementById('rotate-btn').style.display = 'inline-block';
-        // 7. 重置文字 & 按鈕
-        document.getElementById('game-status').innerHTML = `PHASE: <span style="color: var(--warning);">DEPLOYMENT</span>`;
-        document.getElementById('control-panel').style.borderColor = "var(--primary)";
-        document.getElementById('start-btn').disabled = true;
-        
-        // 8. 重置艦隊設定
-        FLEET.forEach(ship => {
-            ship.indices = null;
-            ship.revealed = false; 
-        });
-        placeEnemyShips();
+    if (typeof turnCounter !== 'undefined') {
+        turnCounter = 0;
+        const turnDisplay = document.getElementById('turn-count');
+        if(turnDisplay) turnDisplay.innerText = "1"; 
     }
 
+    // 6. 重置 棋盤 & 側邊欄
+    createGrid('player-grid');
+    createGrid('enemy-grid');
+    
+    document.getElementById('player-board').classList.add('active');
+    document.getElementById('enemy-board').classList.remove('active');
+
+    const sidebar = document.getElementById('fleet-sidebar');
+    if(sidebar) sidebar.style.display = 'flex'; 
+    document.getElementById('deploy-controls').style.display = 'inline'; 
+    
+    renderSidebar(); 
+    document.getElementById('rotate-btn').style.display = 'inline-block';
+    
+    // 7. 重置文字 & 按鈕
+    document.getElementById('game-status').innerHTML = `PHASE: <span style="color: var(--warning);">DEPLOYMENT</span>`;
+    document.getElementById('control-panel').style.borderColor = "var(--primary)";
+    
+    // ★★★ 修改重點：重置時，隱藏 START 掣 ★★★
+    const sBtn = document.getElementById('start-btn');
+    sBtn.style.display = 'none'; // 隱藏
+    sBtn.disabled = true;        // 鎖定
+    
+    // 8. 重置艦隊設定
+    FLEET.forEach(ship => {
+        ship.indices = null;
+        ship.revealed = false; 
+    });
+    placeEnemyShips();
+}
 function handleTurnTimeout() {
         document.getElementById('turn-timer-container').style.display = 'none';
         playSound('timeout-sfx');
@@ -3421,41 +3429,45 @@ function startDeploymentTimer() {
         }, 100);
     }
 function handleDeploymentTimeout() {
-        playSound('timeout-sfx');
-        const status = document.getElementById('game-status');
-        status.innerHTML = `TIME'S UP! AUTO-DEPLOYING...`;
-        
-        for (let i = 0; i < FLEET.length; i++) {
-            if (!FLEET[i].indices) {
-                let placed = false;
-                while (!placed) {
-                    let r = Math.floor(Math.random() * 100);
-                    let v = Math.random() > 0.5;
-                    let idxs = getShipIndices(r, FLEET[i], v);
-                    
-                    if (idxs && !idxs.some(x => myGrid[x] === 1)) {
-                        idxs.forEach(x => myGrid[x] = 1);
-                        FLEET[i].indices = idxs;
-                        placeShipImage('player-grid', r, FLEET[i], v);
-                        const unit = document.getElementById(`ship-unit-${i}`);
-                        if (unit) {
-                            unit.classList.remove('pending', 'current');
-                            unit.classList.add('deployed');
-                        }
-                        placed = true;
+    playSound('timeout-sfx');
+    const status = document.getElementById('game-status');
+    status.innerHTML = `TIME'S UP! AUTO-DEPLOYING...`;
+    
+    for (let i = 0; i < FLEET.length; i++) {
+        if (!FLEET[i].indices) {
+            let placed = false;
+            while (!placed) {
+                let r = Math.floor(Math.random() * 100);
+                let v = Math.random() > 0.5;
+                let idxs = getShipIndices(r, FLEET[i], v);
+                
+                if (idxs && !idxs.some(x => myGrid[x] === 1)) {
+                    idxs.forEach(x => myGrid[x] = 1);
+                    FLEET[i].indices = idxs;
+                    placeShipImage('player-grid', r, FLEET[i], v);
+                    const unit = document.getElementById(`ship-unit-${i}`);
+                    if (unit) {
+                        unit.classList.remove('pending', 'current');
+                        unit.classList.add('deployed');
                     }
+                    placed = true;
                 }
             }
         }
-        
-        deployIndex = FLEET.length; 
-        document.getElementById('start-btn').disabled = false;
-        
-        // ★ 改用 setGameTimeout ★
-        setGameTimeout(() => {
-            startBattle();
-        }, 1000);
     }
+    
+    deployIndex = FLEET.length; 
+    
+    // ★★★ 修改重點：時間到自動佈陣後，都要顯示 START 掣 ★★★
+    const sBtn = document.getElementById('start-btn');
+    sBtn.style.display = 'inline-block'; // 顯示
+    sBtn.disabled = false;               // 解鎖
+    
+    // 1秒後自動開始 (這裡維持不變)
+    setGameTimeout(() => {
+        startBattle();
+    }, 1000);
+}
 // 顯示高科技通知框
     function showNotification(text, type = 'success') {
         const box = document.getElementById('tech-notification');
@@ -4126,6 +4138,7 @@ function playBgm() {
 </div>
 </body>
 </html>
+
 
 
 
