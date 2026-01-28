@@ -1748,19 +1748,13 @@ body {
     left: 0;
     width: 100%;
     height: 100%;
-    
-    /* ★ 改動 1：刪除 background image，改用半透明黑色 */
-    /* 這樣就可以見到背後 body 嘅流動星空！ */
-    background: rgba(0, 0, 0, 0.3); 
-    
-    /* ★ 改動 2：加少少磨砂玻璃效果 (可選，令文字更清楚) */
-    backdrop-filter: blur(2px);
-
+    background: transparent; 
+    backdrop-filter: none; 
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    z-index: 1000; /* 保持最頂層，但係透明嘅 */
+    z-index: 1000; 
     transition: opacity 0.5s;
 }
 
@@ -4600,6 +4594,7 @@ function createTwinklingStars() {
 </div>
 </body>
 </html>
+
 
 
 
