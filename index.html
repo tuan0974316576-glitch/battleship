@@ -3051,25 +3051,40 @@ function handlePlayerTimeout() {
         document.getElementById('q-display').innerText = h.trim();
     }
 
+// --- 修正版：檢查答案 (防止重複記錄同一回合) ---
 function checkAnswer() {
     const input = document.getElementById('hidden-input');
     const val = input.value.toUpperCase().trim();
     
-    // ★★★ 新增部分：記錄這一回合的戰況 ★★★
     // 獲取正確答案 (currentVocab 是全局變數)
     const correctAnswer = currentVocab.en; 
+    
+    // 判斷對錯
     const isCorrect = (val === correctAnswer.toUpperCase());
 
-    // 將資料推入 battleLog (你之前已經宣告咗這個變數)
+    // ★★★ 關鍵修正：確保每個 Turn 只記錄最後一次輸入 ★★★
     if (typeof battleLog !== 'undefined') {
-        battleLog.push({
-            turn: (typeof turnCounter !== 'undefined' ? turnCounter : 1), // 記錄這是第幾回合
-            user: input.value,      // 學生輸入的原始文字
-            correct: correctAnswer, // 正確答案
-            isCorrect: isCorrect    // 結果 (true/false)
-        });
+        // 獲取當前 Turn 數
+        const currentTurn = (typeof turnCounter !== 'undefined' ? turnCounter : 1);
+        
+        // 1. 搜尋 battleLog 裡面有無這一回合 (currentTurn) 嘅記錄
+        const existingLogIndex = battleLog.findIndex(log => log.turn === currentTurn);
+
+        if (existingLogIndex !== -1) {
+            // A. 有舊記錄 -> 直接更新 (覆蓋舊答案)
+            battleLog[existingLogIndex].user = input.value;
+            battleLog[existingLogIndex].isCorrect = isCorrect;
+        } else {
+            // B. 無舊記錄 -> 新增一條 (Push)
+            battleLog.push({
+                turn: currentTurn, 
+                user: input.value,      
+                correct: correctAnswer, 
+                isCorrect: isCorrect    
+            });
+        }
     }
-    // ★★★ 新增結束 ★★★
+    // ★★★ 修正結束 ★★★
 
     // 原本的判斷邏輯
     if (isCorrect) { 
@@ -4757,6 +4772,7 @@ function renderReview() {
 </div>
 </body>
 </html>
+
 
 
 
