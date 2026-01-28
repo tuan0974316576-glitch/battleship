@@ -1736,17 +1736,67 @@ body {
         height: 90px; /* 手機版再矮少少 */
     }
 }
+/* =========================================
+   ★★★ SPLASH SCREEN (TAP TO START) ★★★
+   ========================================= */
+#splash-screen {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: #000; /* 全黑背景，遮住後面載入過程 */
+    z-index: 9999; /* 最頂層 */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: opacity 0.5s ease-out; /* 淡出動畫 */
+    background-image: url('stars_texture.png'); /* 延續背景風格 */
+    background-size: 500px;
+}
+
+.splash-content {
+    text-align: center;
+    animation: fadeIn 1s ease-out;
+}
+
+/* 閃爍文字特效 */
+.blink-text {
+    animation: blinker 1.5s linear infinite;
+    text-shadow: 0 0 10px #0ea5e9;
+}
+
+@keyframes blinker {
+    50% { opacity: 0; }
+}
     </style>
 
 </head>
 <body>
+<div id="splash-screen" onclick="startExperience()">
+    <div class="splash-content">
+        <div class="main-title" style="font-size: 60px; animation: none; margin-bottom: 20px;">VOCAB<br>CONQUEROR</div>
+        <div class="blink-text" style="font-family: 'Orbitron'; color: #0ea5e9; font-size: 18px; letter-spacing: 5px; margin-top: 20px;">
+            >> TAP TO START <<
+        </div>
+        <div style="font-family: 'Orbitron'; color: #64748b; font-size: 10px; margin-top: 10px;">INITIALIZING SYSTEM...</div>
+    </div>
+</div>
+
 <div id="start-screen" class="screen active" style="display: flex; flex-direction: column; justify-content: center; align-items: center;">
     
     <div class="main-title">VOCAB<br>CONQUEROR</div>
 
     <div id="login-hud" class="hud-container">
         
-<div id="login-panel" style="position: relative; overflow: hidden;"> <div class="hud-line"></div>
+        <div id="connecting-panel" style="text-align: center; padding: 20px;">
+            <div class="login-spinner" style="margin: 0 auto; border-top-color: #f59e0b;"></div>
+            <div style="margin-top: 15px; color: #f59e0b; font-family: 'Orbitron'; letter-spacing: 2px; font-size: 12px; font-weight: bold;">
+                ESTABLISHING LINK...
+            </div>
+        </div>
+
+        <div id="login-panel" style="position: relative; overflow: hidden; display: none;"> 
+            <div class="hud-line"></div>
             <div style="font-size: 10px; color: #ff4444; letter-spacing: 2px; margin-bottom: 15px; font-family: 'Orbitron';">SYSTEM ACCESS: RESTRICTED</div>
             
             <button id="google-login-btn" onclick="loginWithGoogle()" style="margin-bottom: 10px;">
@@ -1787,7 +1837,6 @@ body {
             <button class="logout-link" onclick="logout()">TERMINATE SESSION</button>
         </div>
     </div>
-
 <div class="mode-carousel-wrapper">
     
     <button class="nav-arrow left" onclick="scrollMenu(-1)">&#10094;</button>
@@ -4077,28 +4126,52 @@ function showMainMenu() {
     playBgm();
 }
 
- // 9. 核心監聽器 (混合極速版：0秒登入)
+// --- 新增：點擊開始遊戲 ---
+function startExperience() {
+    // 1. 播放音樂
+    playBgm();
+    
+    // 2. 播放音效
+    if(typeof playSound === 'function') playSound('deploy-sfx');
+
+    // 3. 淡出 Splash Screen
+    const splash = document.getElementById('splash-screen');
+    splash.style.opacity = '0';
+    setTimeout(() => {
+        splash.style.display = 'none';
+    }, 500);
+}
+
+// 輔助函數：切換 HUD 面板
+function switchHudPanel(panelId) {
+    // 先隱藏所有面板
+    document.getElementById('connecting-panel').style.display = 'none';
+    document.getElementById('login-panel').style.display = 'none';
+    document.getElementById('user-profile-panel').style.display = 'none';
+    
+    // 顯示目標面板
+    const target = document.getElementById(panelId);
+    if(target) {
+        target.style.display = 'block';
+        target.style.animation = 'fadeIn 0.5s'; // 加個過場動畫
+    }
+}
+
+// 9. 核心監聽器 (改良版：三階段登入)
 window.addEventListener('load', () => {
     
-    // 1. 立即嘗試播歌
-    playBgm();
-    document.body.addEventListener('click', playBgm, { once: true });
+    // 注意：移除這裡自動 playBgm()，改由 startExperience 觸發
 
     // ★★★ 2. 極速登入 (Local Storage Check) ★★★
-    // 唔好等 Firebase，即刻睇下本機有無名！
     const cachedName = localStorage.getItem('battleship_username');
     if (cachedName) {
         console.log("🚀 FAST LOGIN: Found cached user -> " + cachedName);
-        // 有名！即刻扮登入成功，顯示主選單
-        const loginPanel = document.getElementById('login-panel');
-        if(loginPanel) loginPanel.style.display = 'none'; // 收埋登入掣
-        
-        // 更新 UI
+        // 如果有緩存，可以直接預備 UI，但為了安全，我們保持 CONNECTING 直到 Firebase 確認
+        // 或者你可以選擇在這裡就切換到 user-profile-panel (更進取的做法)
         updateHUD(cachedName);
-        showMainMenu(); 
     }
 
-    // 3. 延遲啟動 Firebase (當作後台驗證)
+    // 3. 延遲啟動 Firebase
     setTimeout(() => {
         const { initializeApp, getDatabase, getAuth, onAuthStateChanged, ref, onValue, get } = window.firebaseModules;
         
@@ -4106,10 +4179,10 @@ window.addEventListener('load', () => {
         db = getDatabase(app);
         auth = getAuth(app);
 
-        // Firebase 狀態監聽 (這是真的連線)
+        // ★★★ Firebase 狀態監聽 (決定顯示邊個畫面) ★★★
         onAuthStateChanged(auth, u => {
             if (u) {
-                // --- 情況 A：Firebase 連線成功 ---
+                // --- 情況 A：已登入 (User Found) ---
                 myPlayerId = u.uid;
                 const disp = document.getElementById('player-id-display');
                 if(disp) disp.innerText = u.uid.substring(0,6).toUpperCase();
@@ -4119,36 +4192,35 @@ window.addEventListener('load', () => {
                 get(userRef).then((snapshot) => {
                     if (snapshot.exists() && snapshot.val().displayName) {
                         const realName = snapshot.val().displayName;
-                        
-                        // 更新快取 (以防佢用第二部機改咗名)
                         localStorage.setItem('battleship_username', realName);
                         updateHUD(realName);
                         
-                        // 如果剛才 Local Storage 無野，而家先彈主選單
-                        if (!cachedName) showMainMenu();
+                        // ★ 關鍵：登入成功 -> 顯示主選單 ★
+                        switchHudPanel('user-profile-panel');
+                        showMainMenu(); // 確保底部按鈕顯示
                         
                     } else {
-                        // 🟡 雖然 Login 咗，但無改名 (新兵)
-                        // 這時候要強制彈改名窗 (即使 Local Storage 有假野都要彈)
-                        const loginPanel = document.getElementById('login-panel');
-                        if(loginPanel) loginPanel.style.display = 'none';
+                        // 新兵 (有登入但無名) -> 顯示改名窗
+                        switchHudPanel('user-profile-panel'); // 暫時顯示 Profile
                         const regModal = document.getElementById('registration-modal');
                         if(regModal) regModal.style.display = 'flex';
                     }
                 });
 
             } else {
-                // --- 情況 B：Firebase 說未登入 (可能 Logout 咗，或者 Token 過期) ---
-                // 如果之前用 Local Storage 扮登入咗，而家要「踢」佢出嚟！
+                // --- 情況 B：未登入 (No User) ---
+                // 清除假記錄
                 if (cachedName) {
-                     console.log("⚠️ Auth Invalid. Reverting to Login Screen.");
-                     localStorage.removeItem('battleship_username'); // 清除假記錄
-                     location.reload(); // 重新整理，變回藍色畫面
+                     console.log("⚠️ Auth Invalid. Clearing Cache.");
+                     localStorage.removeItem('battleship_username');
                 }
+                
+                // ★ 關鍵：確認無登入 -> 顯示登入按鈕 ★
+                switchHudPanel('login-panel');
             }
         });
 
-        // 連線狀態監測
+        // 連線狀態監測 (保持不變)
         const connectedRef = ref(db, ".info/connected");
         onValue(connectedRef, (snap) => {
             const el = document.getElementById('connection-status');
@@ -4160,17 +4232,16 @@ window.addEventListener('load', () => {
             } else {
                 el.style.background = "#ef4444"; 
                 el.style.boxShadow = "0 0 5px #ef4444";
-                if (typeof showNotification === 'function') showNotification("CONNECTION LOST!", "error"); 
             }
         });
         
-        // 遊戲初始化
+        // 遊戲初始化 (保持不變)
         createGrid('player-grid');
         createGrid('enemy-grid');
         placeEnemyShips(); 
         renderSidebar();
 
-        // 音效監聽
+        // 音效監聽 (保持不變)
         const roomInput = document.getElementById('room-id-input');
         if (roomInput) {
             roomInput.addEventListener('input', (e) => {
@@ -4210,6 +4281,7 @@ function playBgm() {
         
         playSound('deploy-sfx'); 
     }
+
 </script>
 <div id="registration-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 9999; flex-direction: column; align-items: center; justify-content: center;">
     
@@ -4276,6 +4348,7 @@ function playBgm() {
 </div>
 </body>
 </html>
+
 
 
 
