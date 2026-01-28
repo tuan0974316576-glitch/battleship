@@ -4104,13 +4104,26 @@ window.loginWithGoogle = function() {
 
 // 3. 登出
 // 3. 登出
+// 3. 登出 (修正版：唔好 Reload，直接去 Login 畫面)
 window.logout = function() {
     const { getAuth, signOut } = window.firebaseModules;
     if(typeof playSound === 'function') playSound('delete-sfx');
     
+    // 清除本地記錄
     localStorage.removeItem('battleship_username'); 
     
-    signOut(getAuth()).then(() => location.reload());
+    // ★★★ 關鍵修正：唔好用 location.reload() ★★★
+    signOut(getAuth()).then(() => {
+        // 登出成功後，onAuthStateChanged 會自動偵測到 u 係 null
+        // 並且自動執行 switchHudPanel('login-panel')
+        // 所以我哋只需要確保遊戲狀態重置就得
+        
+        // 隱藏主選單同 Carousel
+        document.getElementById('main-menu-carousel').style.display = 'none';
+        document.getElementById('game-mode-selection').style.display = 'none';
+        
+        console.log("LOGOUT SUCCESSFUL -> RETURN TO LOGIN");
+    });
 }
 
 // 4. 改名 (HUD 鉛筆功能)
@@ -4312,6 +4325,9 @@ window.addEventListener('load', () => {
                                 // 播放一下成功音效
                                 playSound('deploy-sfx'); 
                                 console.log(`GUEST AUTO-LOGIN: ${autoName}`);
+                            // ★★★ 關鍵修正：必須手動關閉遮罩！ ★★★
+                                const overlay = document.getElementById('login-overlay');
+                                if(overlay) overlay.style.display = 'none';
                             });
 
                         } else {
@@ -4470,6 +4486,7 @@ function generateGuestId() {
 </div>
 </body>
 </html>
+
 
 
 
