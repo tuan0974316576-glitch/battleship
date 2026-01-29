@@ -3380,28 +3380,87 @@ function handlePlayerTimeout() {
     }
 }
 
-    function focusInput() { document.getElementById('hidden-input').focus(); }
-
-    document.getElementById('hidden-input').addEventListener('input', (e) => {
-        let val = e.target.value.toUpperCase();
-        if (val.length > currentVocab.en.length) { 
-            val = val.substring(0, currentVocab.en.length); 
-            e.target.value = val; 
+// --- 1. Focus Input (手機版優化：防止游標亂跳) ---
+    function focusInput() { 
+        const input = document.getElementById('hidden-input');
+        if(input) {
+            input.focus();
+            // 重新設定 value 可以將游標推到最後
+            const val = input.value; 
+            input.value = ''; 
+            input.value = val; 
         }
-        if (e.inputType === 'deleteContentBackward') playSound('delete-sfx'); 
-        else playSound('enter-sfx');
-        updateDisplay(val);
-    });
-
-    document.getElementById('hidden-input').addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') checkAnswer();
-    });
-
-    function updateDisplay(val) {
-        let h = "";
-        for (let i=0; i<currentVocab.en.length; i++) h += (i<val.length ? val[i] : "_") + " ";
-        document.getElementById('q-display').innerText = h.trim();
     }
+
+    // --- 2. 輸入監聽器 (核心：自動去符號 + 播放音效) ---
+    // 這裡改用 .oninput，確保舊嘅監聽器被覆蓋，唔會撞車
+    document.getElementById('hidden-input').oninput = (e) => {
+        // A. 攞玩家輸入，轉大寫
+        let rawVal = e.target.value.toUpperCase();
+        
+        // B. 即刻清走所有空格、Hyphen 同符號，只留 A-Z 同 0-9
+        // (例如玩家打 "WAKE UP"，這裡會變做 "WAKEUP")
+        let cleanVal = rawVal.replace(/[^A-Z0-9]/g, '');
+
+        // C. 計算正確答案有幾多個「有效字母」
+        // (例如 "wake up" 雖然係7個字，但有效字母係6個)
+        const targetClean = currentVocab.en.replace(/[^a-zA-Z0-9]/g, '');
+
+        // D. 防止打爆格 (如果打得長過有效字母，就截斷)
+        if (cleanVal.length > targetClean.length) {
+            cleanVal = cleanVal.substring(0, targetClean.length);
+        }
+
+        // E. 將處理過嘅乾淨字母塞番入去輸入框
+        e.target.value = cleanVal;
+
+        // F. 音效處理 (完全保留舊有功能)
+        if (e.inputType === 'deleteContentBackward') playSound('delete-sfx');
+        else playSound('enter-sfx');
+
+        // G. 更新畫面 (用下面個智能顯示函數)
+        updateSmartDisplay(cleanVal);
+    };
+
+    // --- 3. Enter 鍵監聽 (完全保留舊有功能) ---
+    document.getElementById('hidden-input').onkeydown = (e) => {
+        if (e.key === 'Enter') checkAnswer();
+    };
+
+    // --- 4. 智能顯示函數 (核心：將 "WAKEUP" 塞番入去 "WAKE UP" 嘅格仔度) ---
+    function updateSmartDisplay(inputVal) {
+        let html = "";
+        let inputIdx = 0; // 用黎記住用到第幾個玩家輸入嘅字母
+
+        // 逐個字檢查題目原本格式 (例如 "WAKE UP")
+        for (let i = 0; i < currentVocab.en.length; i++) {
+            const targetChar = currentVocab.en[i];
+
+            if (targetChar === ' ') {
+                // 遇到空格：顯示空白位 (inputIdx 唔郁)
+                html += `<span style="display:inline-block; width:20px;"></span>`;
+            }
+            else if (targetChar === '-' || targetChar === '\'') {
+                // 遇到符號：顯示橙色符號 (inputIdx 唔郁)
+                html += `<span style="color:var(--warning); font-weight:bold; margin:0 2px; font-size: 24px;">${targetChar}</span>`;
+            }
+            else {
+                // 遇到字母：檢查玩家打咗未
+                if (inputIdx < inputVal.length) {
+                    // 玩家打咗 -> 顯示該字母 (藍色)
+                    html += `<span style="color:var(--primary); font-weight:bold;">${inputVal[inputIdx]}</span> `;
+                    inputIdx++; // 消耗一個玩家字母
+                } else {
+                    // 未打 -> 顯示底線
+                    html += `_ `;
+                }
+            }
+        }
+        document.getElementById('q-display').innerHTML = html;
+    }
+
+    // 為了兼容，將舊名 updateDisplay 指向新函數 updateSmartDisplay
+    window.updateDisplay = updateSmartDisplay;
 
 // --- 修正版：核對答案 (智能無視符號) ---
 function checkAnswer() {
@@ -5279,6 +5338,7 @@ window.onload = function() {
 </div>
 </body>
 </html>
+
 
 
 
