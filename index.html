@@ -3148,13 +3148,13 @@ battleUnsubscribe = onValue(ref(db, 'rooms/' + currentRoomId), (snapshot) => {
         }
     }
 
-// --- 修正版：出題視窗 (完整整合：讀句子 + 智能底線 + 高科技喇叭 + 多模式) ---
+// --- 修正版：出題視窗 (已修復 Focus 問題) ---
 function openLaunchModal(index) {
     // 1. 停止選位倒數
     if (typeof turnTimerInterval !== 'undefined' && turnTimerInterval) clearInterval(turnTimerInterval);
     document.getElementById('turn-timer-container').style.display = 'none';
 
-    // ★ 根據模式顯示不同狀態文字 ★
+    // 狀態文字
     let statusText = "DECRYPTING...";
     if (currentPracticeMode === 'SPEAKING') statusText = "VOICE UPLINK...";
     if (currentPracticeMode === 'LISTENING') statusText = "INCOMING TRANSMISSION...";
@@ -3163,7 +3163,7 @@ function openLaunchModal(index) {
 
     currentTargetIndex = index;
     
-    // 防呆機制：如果該格已經炸過
+    // 防呆機制
     const enemyShip = enemyGrid[index];
     if (enemyShip === 'hit' || enemyShip === 'miss') {
         playSound('wrong-sfx');
@@ -3175,7 +3175,6 @@ function openLaunchModal(index) {
         alert("Vocab List Empty!");
         return;
     }
-    // 隨機抽題
     currentVocab = activeVocabList[Math.floor(Math.random() * activeVocabList.length)];
     
     // 獲取介面元素
@@ -3190,13 +3189,17 @@ function openLaunchModal(index) {
     msgArea.innerText = "";
     input.value = "";
     
-    // 清理舊的 Mic 按鈕 (防止重複)
+    // 清理舊的 Mic 按鈕
     const oldMic = document.getElementById('mic-btn');
     if(oldMic) oldMic.remove();
 
+    // ★★★ 關鍵修復：先顯示視窗，再 Focus！ ★★★
+    // 之前這句在最底，搞到 focus() 無效。而家搬上黎！
+    modal.style.display = "flex";
+
     // ★★★ 核心：根據模式切換介面 ★★★
     if (currentPracticeMode === 'SPEAKING') {
-        // --- A. 口語模式 (Speaking) ---
+        // --- A. 口語模式 ---
         qText.innerText = `READ: ${currentVocab.en}`;
         qText.style.fontSize = "30px";
         qText.style.cursor = "default";
@@ -3214,33 +3217,25 @@ function openLaunchModal(index) {
         micBtn.innerHTML = '🎙️'; 
         micBtn.onclick = startListening;
         
-        // 插入按鈕
         const container = document.getElementById('timer-bar-container');
         qDisplay.parentNode.insertBefore(micBtn, container);
 
     } else if (currentPracticeMode === 'LISTENING') {
-        // --- B. 聽力模式 (Listening) ---
+        // --- B. 聽力模式 ---
         
         let contentHTML = '';
 
-        // 1. 顯示句子填空 (如果有句子)
         if (currentVocab.sent) {
             const regex = new RegExp(`\\b${currentVocab.en}\\b`, 'gi');
-            // 將目標字換成藍色 Dash
             const displayHTML = currentVocab.sent.replace(regex, `<span class="listening-blank">- - -</span>`);
             contentHTML += `<div class="sentence-container">${displayHTML}</div>`;
         } else {
-            // 無句子時顯示簡單提示
             contentHTML += `<div style="font-family:'Orbitron'; font-size:14px; color:#d946ef; margin-bottom:15px; letter-spacing:2px;">// AUDIO INTERCEPTED //</div>`;
         }
 
-        // ★ 關鍵修復：決定讀句子定係讀單字 ★
-        // 如果有句子就讀句子，無就讀單字
         const textToRead = currentVocab.sent ? currentVocab.sent : currentVocab.en;
-        // 處理文字中可能出現的單引號 (例如 don't)，避免 onclick 出錯
         const safeText = textToRead.replace(/'/g, "\\'");
 
-        // 2. 加入高科技喇叭掣 (按下時讀 safeText)
         contentHTML += `
             <div class="cyber-speaker-btn" onclick="speakText('${safeText}')">
                 <div class="speaker-wave"></div>
@@ -3253,49 +3248,44 @@ function openLaunchModal(index) {
         qText.style.cursor = "default"; 
         qText.onclick = null; 
 
-        // 3. 顯示智能底線 (處理 cup of tea / high-quality)
-        // 這裡會調用上面的 helper function
         qDisplay.innerHTML = generateSmartBlanks(currentVocab.en);
         qDisplay.style.color = "var(--primary)";
         
         input.style.display = 'block';
-        input.focus();
+        
+        // ★ 強制 Focus (加個小延遲確保萬無一失) ★
+        setTimeout(() => input.focus(), 10);
 
-        // 4. 自動讀一次 (讀 safeText)
         setTimeout(() => speakText(textToRead), 300);
 
     } else {
-        // --- C. 閱讀模式 (Reading) ---
+        // --- C. 閱讀模式 ---
         qText.innerText = currentVocab.ch;
         qText.style.fontSize = ""; 
         qText.style.cursor = "default";
         qText.onclick = null;
 
-        // 顯示智能底線
         qDisplay.innerHTML = generateSmartBlanks(currentVocab.en);
-        
         qDisplay.style.color = "var(--primary)";
+        
         input.style.display = 'block';
-        input.focus();
+        
+        // ★ 強制 Focus ★
+        setTimeout(() => input.focus(), 10);
     }
 
-    // 顯示視窗
-    modal.style.display = "flex";
-
-    // --- 動畫與倒數 (保留你喜歡的充能效果) ---
+    // --- 動畫與倒數 ---
     timerBar.style.transition = 'none';
     timerBar.style.width = '0%';
-    timerBar.offsetHeight; // 強制渲染
+    timerBar.offsetHeight; 
 
     timerBar.style.transition = 'width 0.5s ease-out';
     timerBar.style.width = '100%';
 
-    // 計算時間
     let timeMultiplier = 0.7;
     let baseTime = 3;
     if (currentPracticeMode === 'SPEAKING') {
-        baseTime = 4; 
-        timeMultiplier = 0.8;
+        baseTime = 4; timeMultiplier = 0.8;
     }
 
     const totalTime = baseTime + (currentVocab.en.length * timeMultiplier);
@@ -3303,7 +3293,6 @@ function openLaunchModal(index) {
     
     if(typeof timerInterval !== 'undefined' && timerInterval) clearInterval(timerInterval);
     
-    // 開始倒數
     setTimeout(() => {
         if(modal.style.display === 'none') return;
 
@@ -5290,6 +5279,7 @@ window.onload = function() {
 </div>
 </body>
 </html>
+
 
 
 
