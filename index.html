@@ -3148,7 +3148,7 @@ battleUnsubscribe = onValue(ref(db, 'rooms/' + currentRoomId), (snapshot) => {
         }
     }
 
-// --- 修正版：出題視窗 (完整功能：智能底線 + 高科技喇叭 + 多模式) ---
+// --- 修正版：出題視窗 (完整整合：讀句子 + 智能底線 + 高科技喇叭 + 多模式) ---
 function openLaunchModal(index) {
     // 1. 停止選位倒數
     if (typeof turnTimerInterval !== 'undefined' && turnTimerInterval) clearInterval(turnTimerInterval);
@@ -3234,9 +3234,15 @@ function openLaunchModal(index) {
             contentHTML += `<div style="font-family:'Orbitron'; font-size:14px; color:#d946ef; margin-bottom:15px; letter-spacing:2px;">// AUDIO INTERCEPTED //</div>`;
         }
 
-        // 2. 加入高科技喇叭掣
+        // ★ 關鍵修復：決定讀句子定係讀單字 ★
+        // 如果有句子就讀句子，無就讀單字
+        const textToRead = currentVocab.sent ? currentVocab.sent : currentVocab.en;
+        // 處理文字中可能出現的單引號 (例如 don't)，避免 onclick 出錯
+        const safeText = textToRead.replace(/'/g, "\\'");
+
+        // 2. 加入高科技喇叭掣 (按下時讀 safeText)
         contentHTML += `
-            <div class="cyber-speaker-btn" onclick="speakText('${currentVocab.en}')">
+            <div class="cyber-speaker-btn" onclick="speakText('${safeText}')">
                 <div class="speaker-wave"></div>
                 <div class="speaker-shape"></div>
             </div>
@@ -3255,8 +3261,8 @@ function openLaunchModal(index) {
         input.style.display = 'block';
         input.focus();
 
-        // 4. 自動讀一次
-        setTimeout(() => speakText(currentVocab.en), 300);
+        // 4. 自動讀一次 (讀 safeText)
+        setTimeout(() => speakText(textToRead), 300);
 
     } else {
         // --- C. 閱讀模式 (Reading) ---
@@ -5284,6 +5290,7 @@ window.onload = function() {
 </div>
 </body>
 </html>
+
 
 
 
