@@ -2030,6 +2030,88 @@ body {
 .mic-btn.recording {
     animation: mic-pulse 1.5s infinite;
 }
+/* =========================================
+   ★★★ 聽力模式 & 高科技喇叭 CSS (修正版) ★★★
+   ========================================= */
+
+/* 1. 聽力句子 (白色、細字、科技感) */
+.sentence-container { 
+    font-family: 'Orbitron', sans-serif; 
+    font-size: 16px; /* 細字啲 */
+    color: #ffffff; /* 白色 */
+    line-height: 1.6; 
+    margin-bottom: 20px; 
+    text-align: center;
+    opacity: 0.9;
+    letter-spacing: 1px;
+}
+
+/* 填空位 (跟番閱讀模式用藍色，唔好用紫色) */
+.listening-blank {
+    color: var(--primary); /* 藍色 #0ea5e9 */
+    font-weight: bold; 
+    font-size: 20px; /* 大粒少少突顯 */
+    text-shadow: 0 0 10px var(--primary);
+    border-bottom: 2px solid var(--primary);
+    padding: 0 5px; margin: 0 5px; letter-spacing: 3px;
+}
+
+/* 2. 高科技喇叭 ICON (保持紫色，代表聽力模式) */
+.cyber-speaker-btn {
+    width: 80px; height: 80px;
+    border: 2px solid #d946ef; /* 紫色框 */
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    margin: 10px auto; 
+    position: relative;
+    background: rgba(217, 70, 239, 0.1);
+    box-shadow: 0 0 15px rgba(217, 70, 239, 0.4);
+    transition: all 0.2s;
+    z-index: 10;
+}
+
+/* 喇叭本體 */
+.speaker-shape {
+    position: relative;
+    width: 10px; height: 18px;
+    background: #d946ef;
+    margin-right: 15px; 
+}
+.speaker-shape::after {
+    content: ''; position: absolute;
+    top: 50%; right: -14px; 
+    transform: translateY(-50%);
+    width: 0; height: 0;
+    border-left: 14px solid #d946ef; 
+    border-top: 14px solid transparent;
+    border-bottom: 14px solid transparent;
+}
+.speaker-wave {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 100%; height: 100%;
+    border-radius: 50%;
+}
+.cyber-speaker-btn:hover .speaker-wave {
+    animation: pulseWave 1.5s infinite;
+}
+@keyframes pulseWave {
+    0% { box-shadow: 0 0 0 0 rgba(217, 70, 239, 0.7); }
+    70% { box-shadow: 0 0 0 20px rgba(217, 70, 239, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(217, 70, 239, 0); }
+}
+/* 按下特效 */
+.cyber-speaker-btn:active {
+    background: #fff; border-color: #fff;
+    transform: scale(0.95); 
+    box-shadow: 0 0 30px #fff, 0 0 60px #d946ef;
+}
+.cyber-speaker-btn:active .speaker-shape,
+.cyber-speaker-btn:active .speaker-shape::after {
+    border-left-color: #fff; background: #fff;
+}
     </style>
 
 </head>
@@ -3040,66 +3122,179 @@ battleUnsubscribe = onValue(ref(db, 'rooms/' + currentRoomId), (snapshot) => {
         }
     }
 
+// --- 修正版：出題視窗 (句子填空 + 藍色 Dash + 高科技喇叭) ---
 function openLaunchModal(index) {
-        // --- 1. 停止選位倒數 ---
-        if (turnTimerInterval) clearInterval(turnTimerInterval);
-        document.getElementById('turn-timer-container').style.display = 'none';
-        document.getElementById('game-status').innerHTML = `PHASE: <span style="color:var(--warning)">DECRYPTING...</span>`;
+    // 1. 停止選位倒數
+    if (typeof turnTimerInterval !== 'undefined' && turnTimerInterval) clearInterval(turnTimerInterval);
+    document.getElementById('turn-timer-container').style.display = 'none';
 
-        currentTargetIndex = index;
-        const modal = document.getElementById('launch-modal');
-        const input = document.getElementById('hidden-input');
-        const timerBar = document.getElementById('timer-bar');
-        
-// --- 2. 準備題目 ---
-        // ★ 修改：從 activeVocabList 抽題目，而唔係 vocabList ★
-        currentVocab = activeVocabList[Math.floor(Math.random() * activeVocabList.length)];
-        document.getElementById('q-text').innerText = currentVocab.ch;
-        document.getElementById('msg-area').innerText = "";
-        input.value = "";
-        updateDisplay(""); 
-        
-        modal.style.display = "flex";
-        input.focus();
+    // 狀態文字
+    let statusText = "DECRYPTING...";
+    if (currentPracticeMode === 'SPEAKING') statusText = "VOICE UPLINK...";
+    if (currentPracticeMode === 'LISTENING') statusText = "INCOMING TRANSMISSION...";
+    
+    document.getElementById('game-status').innerHTML = `PHASE: <span style="color:var(--warning)">${statusText}</span>`;
 
-        // --- 3. ★ 階段一：充能動畫 (Fill Up) ★ ---
-        // 先重置為 0，無動畫
-        timerBar.style.transition = 'none';
-        timerBar.style.width = '0%';
-        timerBar.offsetHeight; // 強制瀏覽器渲染
-
-        // 設定 0.5秒 的充能動畫，然後加滿到 100%
-        timerBar.style.transition = 'width 0.5s ease-out';
-        timerBar.style.width = '100%';
-
-        // --- 4. 計算動態時間 ---
-        const totalTime = 3 + (currentVocab.en.length * 0.7);
-        let timeLeft = totalTime;
-        
-        if(timerInterval) clearInterval(timerInterval);
-        
-        // --- 5. ★ 階段二：等待充能完畢，然後開始倒數 ★ ---
-        // 延遲 0.5秒 (等上面個動畫播完)
-        setTimeout(() => {
-            // 切換為線性動畫 (Linear)，令倒數過程順滑
-            timerBar.style.transition = 'width 0.1s linear';
-            
-            // 開始倒數迴圈
-            timerInterval = setInterval(() => {
-                timeLeft -= 0.1; 
-                
-                // 計算百分比 (根據總時間長短，扣減速度會自動不同)
-                const percentage = (timeLeft / totalTime) * 100;
-                timerBar.style.width = percentage + "%";
-                
-                if (timeLeft <= 0) {
-                    clearInterval(timerInterval);
-                    handlePlayerTimeout();
-                }
-            }, 100); 
-        }, 500); // 這裡的 500ms 對應上面的 transition 0.5s
+    currentTargetIndex = index;
+    
+    // 防呆機制
+    const enemyShip = enemyGrid[index];
+    if (enemyShip === 'hit' || enemyShip === 'miss') {
+        playSound('wrong-sfx');
+        return;
     }
 
+    // 準備題目
+    if (activeVocabList.length === 0) {
+        alert("Vocab List Empty!");
+        return;
+    }
+    currentVocab = activeVocabList[Math.floor(Math.random() * activeVocabList.length)];
+    
+    // 介面元素
+    const modal = document.getElementById('launch-modal');
+    const qText = document.getElementById('q-text');
+    const qDisplay = document.getElementById('q-display');
+    const input = document.getElementById('hidden-input');
+    const msgArea = document.getElementById('msg-area');
+    const timerBar = document.getElementById('timer-bar');
+    
+    // 重置
+    msgArea.innerText = "";
+    input.value = "";
+    const oldMic = document.getElementById('mic-btn');
+    if(oldMic) oldMic.remove();
+
+    // ★★★ 核心介面切換 ★★★
+    if (currentPracticeMode === 'SPEAKING') {
+        // --- 口語模式 ---
+        qText.innerText = `READ: ${currentVocab.en}`;
+        qText.style.fontSize = "30px";
+        qText.style.cursor = "default";
+        qText.onclick = null;
+
+        qDisplay.innerText = "(Tap Mic & Read)";
+        qDisplay.style.color = "#94a3b8"; 
+        input.style.display = 'none'; 
+
+        const micBtn = document.createElement('div');
+        micBtn.id = 'mic-btn';
+        micBtn.className = 'mic-btn'; 
+        micBtn.innerHTML = '🎙️'; 
+        micBtn.onclick = startListening;
+        
+        const container = document.getElementById('timer-bar-container');
+        qDisplay.parentNode.insertBefore(micBtn, container);
+
+    } else if (currentPracticeMode === 'LISTENING') {
+        // --- 聽力模式 (句子填空版) ---
+        
+        let contentHTML = '';
+
+        // ★★★ 關鍵：如果有例句，顯示句子並隱藏目標字 ★★★
+        if (currentVocab.sent) {
+            // 用 Regex 將目標字 (Case insensitive) 換成藍色空行
+            const regex = new RegExp(`\\b${currentVocab.en}\\b`, 'gi');
+            
+            // 這裡生成的 class="listening-blank" 會用上面的 CSS 變藍色
+            const displayHTML = currentVocab.sent.replace(regex, `<span class="listening-blank">- - -</span>`);
+            contentHTML += `<div class="sentence-container">${displayHTML}</div>`;
+        } else {
+            // 無例句時的 Fallback
+            contentHTML += `<div style="font-family:'Orbitron'; font-size:14px; color:#d946ef; margin-bottom:15px; letter-spacing:2px;">// AUDIO INTERCEPTED //</div>`;
+        }
+
+        // 加入喇叭掣
+        contentHTML += `
+            <div class="cyber-speaker-btn" onclick="speakText('${currentVocab.en}')">
+                <div class="speaker-wave"></div>
+                <div class="speaker-shape"></div>
+            </div>
+            <div style="font-size:10px; color:#d946ef; margin-top:5px; opacity:0.8; font-family:'Orbitron';">TAP TO REPLAY</div>
+        `;
+        
+        qText.innerHTML = contentHTML; 
+        qText.style.cursor = "default"; 
+        qText.onclick = null; 
+
+        // 顯示底線 (藍色)
+        if (typeof updateDisplay === 'function') {
+            updateDisplay(""); 
+        } else {
+             qDisplay.innerText = "_ ".repeat(currentVocab.en.length);
+        }
+        qDisplay.style.color = "var(--primary)";
+        
+        input.style.display = 'block';
+        input.focus();
+
+        // 自動讀一次
+        setTimeout(() => speakText(currentVocab.en), 300);
+
+    } else {
+        // --- 閱讀模式 ---
+        qText.innerText = currentVocab.ch;
+        qText.style.fontSize = ""; 
+        qText.style.cursor = "default";
+        qText.onclick = null;
+
+        if (typeof updateDisplay === 'function') {
+            updateDisplay("");
+        } else {
+            qDisplay.innerHTML = "";
+            for(let i=0; i<currentVocab.en.length; i++) qDisplay.innerHTML += "_ ";
+        }
+        qDisplay.style.color = "var(--primary)";
+        input.style.display = 'block';
+        input.focus();
+    }
+
+    modal.style.display = "flex";
+
+    // --- 動畫與倒數 (保留不變) ---
+    timerBar.style.transition = 'none';
+    timerBar.style.width = '0%';
+    timerBar.offsetHeight; 
+
+    timerBar.style.transition = 'width 0.5s ease-out';
+    timerBar.style.width = '100%';
+
+    let timeMultiplier = 0.7;
+    let baseTime = 3;
+    if (currentPracticeMode === 'SPEAKING') {
+        baseTime = 4; timeMultiplier = 0.8;
+    }
+
+    const totalTime = baseTime + (currentVocab.en.length * timeMultiplier);
+    let timeLeft = totalTime;
+    
+    if(typeof timerInterval !== 'undefined' && timerInterval) clearInterval(timerInterval);
+    
+    setTimeout(() => {
+        if(modal.style.display === 'none') return;
+        timerBar.style.transition = 'width 0.1s linear';
+        timerInterval = setInterval(() => {
+            timeLeft -= 0.1; 
+            const percentage = (timeLeft / totalTime) * 100;
+            timerBar.style.width = percentage + "%";
+            if (timeLeft <= 0) {
+                clearInterval(timerInterval);
+                handlePlayerTimeout();
+            }
+        }, 100); 
+    }, 500); 
+}
+// --- 0. 語音預熱系統 (解決延遲) ---
+function warmUpVoiceEngine() {
+    if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+        // 播一段無聲嘅空白音，純粹為咗喚醒個 Engine
+        const emptyMsg = new SpeechSynthesisUtterance(" "); 
+        emptyMsg.volume = 0; 
+        window.speechSynthesis.speak(emptyMsg);
+        console.log("🔊 Voice Engine Warmed Up!");
+    }
+}
 // --- 修正版：處理輸入超時 (完整邏輯 + 鎖死操作) ---
 function handlePlayerTimeout() {
     // 1. 介面清理
@@ -4841,19 +5036,109 @@ function renderReview() {
 
 // 選擇技能 (Reading / Listening / Speaking)
 function selectSkill(skill) {
-    currentPracticeMode = skill; // 記低玩家揀咗乜
+    currentPracticeMode = skill; 
     playSound('deploy-sfx');
-    
-    // 關閉 Skill 畫面
-    document.getElementById('skill-screen').style.display = 'none';
 
-    // 根據剛才揀的 VS AI 定 PVP，決定去邊度
+    // ★★★ 新增：如果揀聽力，即刻預熱！ ★★★
+    if (skill === 'LISTENING') {
+        warmUpVoiceEngine();
+    }
+
+    // ... (原本嘅跳轉代碼) ...
+    document.getElementById('skill-screen').style.display = 'none';
     if (tempGameMode === 'AI') {
-        // AI 模式 -> 去揀 Level (L1-L5)
         document.getElementById('level-screen').style.display = 'flex';
     } else {
-        // PVP 模式 -> 去大廳 (Lobby)
         document.getElementById('lobby-screen').style.display = 'flex';
+    }
+}
+// ============================================
+// ★★★ PHASE 2: VOICE CORE (語音核心) ★★★
+// ============================================
+
+// --- 1. 電腦說話 (Text-to-Speech) - 用於 Listening Mode ---
+function speakText(text) {
+    if ('speechSynthesis' in window) {
+        // 停止舊嘅語音，防止疊聲
+        window.speechSynthesis.cancel(); 
+
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'en-US'; // 設定美式英文
+        utterance.rate = 0.9;     // 語速稍慢，適合教學
+        utterance.pitch = 1;
+        
+        window.speechSynthesis.speak(utterance);
+    } else {
+        alert("Audio not supported on this device.");
+    }
+}
+
+// --- 2. 玩家說話 (Speech-to-Text) - 用於 Speaking Mode ---
+function startListening() {
+    // 檢查瀏覽器支唔支援
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+        alert("Microphone API not supported (Try Chrome/Safari).");
+        return;
+    }
+
+    if (!recognition) {
+        recognition = new SpeechRecognition();
+        recognition.lang = 'en-US';
+        recognition.interimResults = false; // 只取最終結果
+        recognition.maxAlternatives = 1;
+
+        recognition.onstart = () => {
+            document.getElementById('mic-btn').classList.add('recording');
+            document.getElementById('msg-area').innerText = "LISTENING... SPEAK NOW";
+            document.getElementById('msg-area').style.color = "#d946ef";
+        };
+
+        recognition.onend = () => {
+            const micBtn = document.getElementById('mic-btn');
+            if(micBtn) micBtn.classList.remove('recording');
+        };
+
+        recognition.onresult = (event) => {
+            const transcript = event.results[0][0].transcript;
+            console.log("User said:", transcript);
+            checkSpeakingResult(transcript);
+        };
+        
+        recognition.onerror = (event) => {
+             document.getElementById('msg-area').innerText = "ERROR: " + event.error;
+        };
+    }
+    
+    // 開始錄音
+    recognition.start();
+}
+
+// --- 3. 檢查口語結果 (Speaking Score) ---
+function checkSpeakingResult(spokenText) {
+    const targetText = currentVocab.en; // 目標單字
+    
+    // 顯示玩家讀咗乜
+    document.getElementById('q-display').innerText = `"${spokenText}"`;
+    document.getElementById('q-display').style.fontSize = "24px";
+
+    // 簡單比對：完全一樣 或者 包含目標字 (寬容少少)
+    const cleanSpoken = spokenText.toLowerCase().replace(/[^a-z0-9]/g, '');
+    const cleanTarget = targetText.toLowerCase().replace(/[^a-z0-9]/g, '');
+
+    if (cleanSpoken.includes(cleanTarget) || cleanTarget.includes(cleanSpoken)) {
+        // 讀啱！
+        document.getElementById('msg-area').innerText = "VOICE MATCH CONFIRMED!";
+        document.getElementById('msg-area').style.color = "var(--success)";
+        playSound('laser-sfx'); 
+        
+        // 延遲 1 秒發射
+        setTimeout(() => playerFire(true), 1000);
+    } else {
+        // 讀錯
+        document.getElementById('msg-area').innerText = "MISMATCH - TRY AGAIN";
+        document.getElementById('msg-area').style.color = "var(--danger)";
+        playSound('wrong-sfx');
     }
 }
 
@@ -4953,6 +5238,7 @@ window.onload = function() {
 </div>
 </body>
 </html>
+
 
 
 
