@@ -1937,6 +1937,67 @@ body {
     background: #334155;
     border-radius: 3px;
 }
+/* --- 系統通知框 (優化版：置中 + 低調) --- */
+#tech-notification {
+    display: none; /* 預設隱藏 */
+    position: fixed;
+    bottom: 30px; /* 距離底部 30px */
+    left: 50%;
+    transform: translateX(-50%); /* ★ 關鍵：水平置中 */
+    
+    z-index: 9999; /* 最頂層 */
+    
+    /* 低調風格 */
+    background: rgba(0, 0, 0, 0.7); /* 70% 透明黑底 */
+    border: 1px solid var(--primary); /* 幼身藍邊 (唔好太粗) */
+    border-radius: 4px;
+    padding: 8px 20px;
+    
+    text-align: center;
+    backdrop-filter: blur(3px); /* 輕微磨砂 */
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.5); /* 柔和陰影 */
+    pointer-events: none; /* 唔會阻住你撳後面啲野 */
+}
+
+/* 顯示時的狀態 */
+#tech-notification.active {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    animation: slideUpFade 0.3s ease-out;
+}
+
+/* 標題 (SYSTEM MESSAGE) */
+#notif-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 10px; /* 細字 */
+    color: var(--primary);
+    letter-spacing: 2px;
+    margin-bottom: 2px;
+    opacity: 0.8;
+}
+
+/* 內容 (CONNECTION LOST...) */
+#notif-content {
+    font-family: 'Roboto Mono', monospace; /* 用等寬字體更有科技感 */
+    font-size: 12px;
+    color: #fff;
+    font-weight: bold;
+}
+
+/* 裝飾掃描線 (可選，令佢型啲) */
+.scan-line {
+    width: 100%; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--primary), transparent);
+    margin-top: 5px;
+    opacity: 0.5;
+}
+
+/* 進場動畫 */
+@keyframes slideUpFade {
+    from { transform: translate(-50%, 20px); opacity: 0; }
+    to { transform: translate(-50%, 0); opacity: 1; }
+}
     </style>
 
 </head>
@@ -4772,6 +4833,7 @@ function renderReview() {
 </div>
 </body>
 </html>
+
 
 
 
