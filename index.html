@@ -2072,13 +2072,11 @@ body {
     letter-spacing: 1px;
 }
 
-/* 填空位 (跟番閱讀模式用藍色，唔好用紫色) */
 .listening-blank {
-    color: var(--primary); /* 藍色 #0ea5e9 */
+    color: var(--primary); /* 藍色 */
     font-weight: bold; 
-    font-size: 20px; /* 大粒少少突顯 */
-    text-shadow: 0 0 10px var(--primary);
-    border-bottom: 2px solid var(--primary);
+    font-size: 20px;
+    text-shadow: 0 0 10px var(--primary); 
     padding: 0 5px; margin: 0 5px; letter-spacing: 3px;
 }
 
@@ -3148,7 +3146,7 @@ battleUnsubscribe = onValue(ref(db, 'rooms/' + currentRoomId), (snapshot) => {
         }
     }
 
-// --- 修正版：出題視窗 (已修復 Focus 問題) ---
+// --- 修正版：出題視窗 (已修復 Listening 底線長度 & 輸入框 Focus) ---
 function openLaunchModal(index) {
     // 1. 停止選位倒數
     if (typeof turnTimerInterval !== 'undefined' && turnTimerInterval) clearInterval(turnTimerInterval);
@@ -3193,8 +3191,7 @@ function openLaunchModal(index) {
     const oldMic = document.getElementById('mic-btn');
     if(oldMic) oldMic.remove();
 
-    // ★★★ 關鍵修復：先顯示視窗，再 Focus！ ★★★
-    // 之前這句在最底，搞到 focus() 無效。而家搬上黎！
+    // 先顯示視窗
     modal.style.display = "flex";
 
     // ★★★ 核心：根據模式切換介面 ★★★
@@ -3208,9 +3205,8 @@ function openLaunchModal(index) {
         qDisplay.innerText = "(Tap Mic & Read)";
         qDisplay.style.color = "#94a3b8"; 
         
-        input.style.display = 'none'; // 隱藏鍵盤
+        input.style.display = 'none'; 
 
-        // 動態加入 Mic 按鈕
         const micBtn = document.createElement('div');
         micBtn.id = 'mic-btn';
         micBtn.className = 'mic-btn'; 
@@ -3221,13 +3217,18 @@ function openLaunchModal(index) {
         qDisplay.parentNode.insertBefore(micBtn, container);
 
     } else if (currentPracticeMode === 'LISTENING') {
-        // --- B. 聽力模式 ---
+        // --- B. 聽力模式 (已修正底線) ---
         
         let contentHTML = '';
 
         if (currentVocab.sent) {
             const regex = new RegExp(`\\b${currentVocab.en}\\b`, 'gi');
-            const displayHTML = currentVocab.sent.replace(regex, `<span class="listening-blank">- - -</span>`);
+            
+            // ★★★ 關鍵修正：用 generateSmartBlanks 生成動態底線 ★★★
+            // 這樣 "wake up" 就會顯示為 "_ _ _ _   _ _"，而唔係 "- - -"
+            const dynamicBlanks = generateSmartBlanks(currentVocab.en);
+            
+            const displayHTML = currentVocab.sent.replace(regex, `<span class="listening-blank">${dynamicBlanks}</span>`);
             contentHTML += `<div class="sentence-container">${displayHTML}</div>`;
         } else {
             contentHTML += `<div style="font-family:'Orbitron'; font-size:14px; color:#d946ef; margin-bottom:15px; letter-spacing:2px;">// AUDIO INTERCEPTED //</div>`;
@@ -3248,14 +3249,12 @@ function openLaunchModal(index) {
         qText.style.cursor = "default"; 
         qText.onclick = null; 
 
+        // 下面輸入框的顯示
         qDisplay.innerHTML = generateSmartBlanks(currentVocab.en);
         qDisplay.style.color = "var(--primary)";
         
         input.style.display = 'block';
-        
-        // ★ 強制 Focus (加個小延遲確保萬無一失) ★
         setTimeout(() => input.focus(), 10);
-
         setTimeout(() => speakText(textToRead), 300);
 
     } else {
@@ -3269,8 +3268,6 @@ function openLaunchModal(index) {
         qDisplay.style.color = "var(--primary)";
         
         input.style.display = 'block';
-        
-        // ★ 強制 Focus ★
         setTimeout(() => input.focus(), 10);
     }
 
@@ -5338,6 +5335,7 @@ window.onload = function() {
 </div>
 </body>
 </html>
+
 
 
 
