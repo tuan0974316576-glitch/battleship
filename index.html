@@ -914,31 +914,57 @@ body {
         max-width: 400px; /* 稍微縮窄一點，讓按鈕看起來更緊湊 */
     }
 
-    .level-btn {
-        background: rgba(15, 23, 42, 0.8);
-        border: 2px solid var(--primary);
-        color: #fff;
-        padding: 15px; /* 調整高度 */
-        font-family: 'Orbitron', sans-serif;
-        font-size: 18px;
-        font-weight: bold;
-        cursor: pointer;
-        transition: all 0.2s;
-        text-shadow: 0 0 5px var(--primary);
-        box-shadow: 0 0 10px rgba(14, 165, 233, 0.2);
-        
-        /* 確保文字置中 */
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
+/* --- 等級/技能按鈕樣式 (只修改外觀，不影響排版) --- */
+.level-btn {
+    background: transparent !important; /* ★ 關鍵：透明底 */
+    border: 2px solid var(--primary);
+    color: #fff;
+    padding: 15px; 
+    font-family: 'Orbitron', sans-serif;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-shadow: 0 0 5px var(--primary);
+    box-shadow: 0 0 10px rgba(14, 165, 233, 0.2);
+    
+    /* 確保文字置中 */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
 
-    .level-btn:hover {
-        background: var(--primary);
-        color: #000;
-        transform: scale(1.05);
-        box-shadow: 0 0 20px var(--primary);
-    }
+/* 確保 Hover 唔會變實心色 (重要！) */
+.level-btn:hover {
+    background: transparent !important; 
+    transform: scale(1.1); /* 輕微放大 */
+}
+
+/* --- 個別顏色光暈 --- */
+
+/* 1. READING (藍色光) */
+#skill-screen .level-btn:nth-child(1):hover {
+    border-color: #0ea5e9;
+    color: #0ea5e9;
+    box-shadow: 0 0 20px #0ea5e9, inset 0 0 10px rgba(14, 165, 233, 0.3);
+    text-shadow: 0 0 10px #0ea5e9;
+}
+
+/* 2. LISTENING (綠色光) */
+#skill-screen .level-btn:nth-child(2):hover {
+    border-color: #22c55e;
+    color: #22c55e;
+    box-shadow: 0 0 20px #22c55e, inset 0 0 10px rgba(34, 197, 94, 0.3);
+    text-shadow: 0 0 10px #22c55e;
+}
+
+/* 3. SPEAKING (紫色光) */
+#skill-screen .level-btn:nth-child(3):hover {
+    border-color: #d946ef;
+    color: #d946ef;
+    box-shadow: 0 0 20px #d946ef, inset 0 0 10px rgba(217, 70, 239, 0.3);
+    text-shadow: 0 0 10px #d946ef;
+}
     .start-btn-large[onclick*="PVP"] {
         animation: pvpReadyPulse 1.5s infinite alternate;
     }
@@ -5258,6 +5284,7 @@ window.onload = function() {
 </div>
 </body>
 </html>
+
 
 
 
