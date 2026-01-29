@@ -3122,13 +3122,13 @@ battleUnsubscribe = onValue(ref(db, 'rooms/' + currentRoomId), (snapshot) => {
         }
     }
 
-// --- 修正版：出題視窗 (句子填空 + 藍色 Dash + 高科技喇叭) ---
+// --- 修正版：出題視窗 (完整功能：智能底線 + 高科技喇叭 + 多模式) ---
 function openLaunchModal(index) {
     // 1. 停止選位倒數
     if (typeof turnTimerInterval !== 'undefined' && turnTimerInterval) clearInterval(turnTimerInterval);
     document.getElementById('turn-timer-container').style.display = 'none';
 
-    // 狀態文字
+    // ★ 根據模式顯示不同狀態文字 ★
     let statusText = "DECRYPTING...";
     if (currentPracticeMode === 'SPEAKING') statusText = "VOICE UPLINK...";
     if (currentPracticeMode === 'LISTENING') statusText = "INCOMING TRANSMISSION...";
@@ -3137,7 +3137,7 @@ function openLaunchModal(index) {
 
     currentTargetIndex = index;
     
-    // 防呆機制
+    // 防呆機制：如果該格已經炸過
     const enemyShip = enemyGrid[index];
     if (enemyShip === 'hit' || enemyShip === 'miss') {
         playSound('wrong-sfx');
@@ -3149,9 +3149,10 @@ function openLaunchModal(index) {
         alert("Vocab List Empty!");
         return;
     }
+    // 隨機抽題
     currentVocab = activeVocabList[Math.floor(Math.random() * activeVocabList.length)];
     
-    // 介面元素
+    // 獲取介面元素
     const modal = document.getElementById('launch-modal');
     const qText = document.getElementById('q-text');
     const qDisplay = document.getElementById('q-display');
@@ -3159,15 +3160,17 @@ function openLaunchModal(index) {
     const msgArea = document.getElementById('msg-area');
     const timerBar = document.getElementById('timer-bar');
     
-    // 重置
+    // 重置基本狀態
     msgArea.innerText = "";
     input.value = "";
+    
+    // 清理舊的 Mic 按鈕 (防止重複)
     const oldMic = document.getElementById('mic-btn');
     if(oldMic) oldMic.remove();
 
-    // ★★★ 核心介面切換 ★★★
+    // ★★★ 核心：根據模式切換介面 ★★★
     if (currentPracticeMode === 'SPEAKING') {
-        // --- 口語模式 ---
+        // --- A. 口語模式 (Speaking) ---
         qText.innerText = `READ: ${currentVocab.en}`;
         qText.style.fontSize = "30px";
         qText.style.cursor = "default";
@@ -3175,36 +3178,37 @@ function openLaunchModal(index) {
 
         qDisplay.innerText = "(Tap Mic & Read)";
         qDisplay.style.color = "#94a3b8"; 
-        input.style.display = 'none'; 
+        
+        input.style.display = 'none'; // 隱藏鍵盤
 
+        // 動態加入 Mic 按鈕
         const micBtn = document.createElement('div');
         micBtn.id = 'mic-btn';
         micBtn.className = 'mic-btn'; 
         micBtn.innerHTML = '🎙️'; 
         micBtn.onclick = startListening;
         
+        // 插入按鈕
         const container = document.getElementById('timer-bar-container');
         qDisplay.parentNode.insertBefore(micBtn, container);
 
     } else if (currentPracticeMode === 'LISTENING') {
-        // --- 聽力模式 (句子填空版) ---
+        // --- B. 聽力模式 (Listening) ---
         
         let contentHTML = '';
 
-        // ★★★ 關鍵：如果有例句，顯示句子並隱藏目標字 ★★★
+        // 1. 顯示句子填空 (如果有句子)
         if (currentVocab.sent) {
-            // 用 Regex 將目標字 (Case insensitive) 換成藍色空行
             const regex = new RegExp(`\\b${currentVocab.en}\\b`, 'gi');
-            
-            // 這裡生成的 class="listening-blank" 會用上面的 CSS 變藍色
+            // 將目標字換成藍色 Dash
             const displayHTML = currentVocab.sent.replace(regex, `<span class="listening-blank">- - -</span>`);
             contentHTML += `<div class="sentence-container">${displayHTML}</div>`;
         } else {
-            // 無例句時的 Fallback
+            // 無句子時顯示簡單提示
             contentHTML += `<div style="font-family:'Orbitron'; font-size:14px; color:#d946ef; margin-bottom:15px; letter-spacing:2px;">// AUDIO INTERCEPTED //</div>`;
         }
 
-        // 加入喇叭掣
+        // 2. 加入高科技喇叭掣
         contentHTML += `
             <div class="cyber-speaker-btn" onclick="speakText('${currentVocab.en}')">
                 <div class="speaker-wave"></div>
@@ -3217,52 +3221,49 @@ function openLaunchModal(index) {
         qText.style.cursor = "default"; 
         qText.onclick = null; 
 
-        // 顯示底線 (藍色)
-        if (typeof updateDisplay === 'function') {
-            updateDisplay(""); 
-        } else {
-             qDisplay.innerText = "_ ".repeat(currentVocab.en.length);
-        }
+        // 3. 顯示智能底線 (處理 cup of tea / high-quality)
+        // 這裡會調用上面的 helper function
+        qDisplay.innerHTML = generateSmartBlanks(currentVocab.en);
         qDisplay.style.color = "var(--primary)";
         
         input.style.display = 'block';
         input.focus();
 
-        // 自動讀一次
+        // 4. 自動讀一次
         setTimeout(() => speakText(currentVocab.en), 300);
 
     } else {
-        // --- 閱讀模式 ---
+        // --- C. 閱讀模式 (Reading) ---
         qText.innerText = currentVocab.ch;
         qText.style.fontSize = ""; 
         qText.style.cursor = "default";
         qText.onclick = null;
 
-        if (typeof updateDisplay === 'function') {
-            updateDisplay("");
-        } else {
-            qDisplay.innerHTML = "";
-            for(let i=0; i<currentVocab.en.length; i++) qDisplay.innerHTML += "_ ";
-        }
+        // 顯示智能底線
+        qDisplay.innerHTML = generateSmartBlanks(currentVocab.en);
+        
         qDisplay.style.color = "var(--primary)";
         input.style.display = 'block';
         input.focus();
     }
 
+    // 顯示視窗
     modal.style.display = "flex";
 
-    // --- 動畫與倒數 (保留不變) ---
+    // --- 動畫與倒數 (保留你喜歡的充能效果) ---
     timerBar.style.transition = 'none';
     timerBar.style.width = '0%';
-    timerBar.offsetHeight; 
+    timerBar.offsetHeight; // 強制渲染
 
     timerBar.style.transition = 'width 0.5s ease-out';
     timerBar.style.width = '100%';
 
+    // 計算時間
     let timeMultiplier = 0.7;
     let baseTime = 3;
     if (currentPracticeMode === 'SPEAKING') {
-        baseTime = 4; timeMultiplier = 0.8;
+        baseTime = 4; 
+        timeMultiplier = 0.8;
     }
 
     const totalTime = baseTime + (currentVocab.en.length * timeMultiplier);
@@ -3270,13 +3271,17 @@ function openLaunchModal(index) {
     
     if(typeof timerInterval !== 'undefined' && timerInterval) clearInterval(timerInterval);
     
+    // 開始倒數
     setTimeout(() => {
         if(modal.style.display === 'none') return;
+
         timerBar.style.transition = 'width 0.1s linear';
+        
         timerInterval = setInterval(() => {
             timeLeft -= 0.1; 
             const percentage = (timeLeft / totalTime) * 100;
             timerBar.style.width = percentage + "%";
+            
             if (timeLeft <= 0) {
                 clearInterval(timerInterval);
                 handlePlayerTimeout();
@@ -3377,42 +3382,39 @@ function handlePlayerTimeout() {
         document.getElementById('q-display').innerText = h.trim();
     }
 
-// --- 修正版：檢查答案 (防止重複記錄同一回合) ---
+// --- 修正版：核對答案 (智能無視符號) ---
 function checkAnswer() {
     const input = document.getElementById('hidden-input');
-    const val = input.value.toUpperCase().trim();
     
-    // 獲取正確答案 (currentVocab 是全局變數)
-    const correctAnswer = currentVocab.en; 
+    // 1. 玩家輸入：轉大寫 + 移除所有空格同標點 (只留 A-Z 同 0-9)
+    // 例如輸入 "cup of tea" 或 "cupoftea" 都會變做 "CUPOFTEA"
+    const cleanInput = input.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
     
-    // 判斷對錯
-    const isCorrect = (val === correctAnswer.toUpperCase());
+    // 2. 正確答案：同樣處理
+    // 例如 "high-quality" 會變做 "HIGHQUALITY"
+    const cleanTarget = currentVocab.en.toUpperCase().replace(/[^A-Z0-9]/g, '');
+    
+    const isCorrect = (cleanInput === cleanTarget);
 
-    // ★★★ 關鍵修正：確保每個 Turn 只記錄最後一次輸入 ★★★
+    // ★★★ 記錄 Log 邏輯 (保持不變) ★★★
     if (typeof battleLog !== 'undefined') {
-        // 獲取當前 Turn 數
         const currentTurn = (typeof turnCounter !== 'undefined' ? turnCounter : 1);
-        
-        // 1. 搜尋 battleLog 裡面有無這一回合 (currentTurn) 嘅記錄
         const existingLogIndex = battleLog.findIndex(log => log.turn === currentTurn);
 
         if (existingLogIndex !== -1) {
-            // A. 有舊記錄 -> 直接更新 (覆蓋舊答案)
             battleLog[existingLogIndex].user = input.value;
             battleLog[existingLogIndex].isCorrect = isCorrect;
         } else {
-            // B. 無舊記錄 -> 新增一條 (Push)
             battleLog.push({
                 turn: currentTurn, 
                 user: input.value,      
-                correct: correctAnswer, 
+                correct: currentVocab.en, 
                 isCorrect: isCorrect    
             });
         }
     }
-    // ★★★ 修正結束 ★★★
 
-    // 原本的判斷邏輯
+    // 結果處理
     if (isCorrect) { 
         playerFire(true);
     } else {
@@ -5032,6 +5034,24 @@ function renderReview() {
         list.appendChild(item);
     });
 }
+// ★★★ 新增：智能底線生成器 (處理空格、Hyphen、撇號) ★★★
+function generateSmartBlanks(text) {
+    let html = '';
+    // 逐個字檢查
+    for (let char of text) {
+        if (char === ' ') {
+            // 空格：顯示寬一點的空白，唔好畫底線
+            html += `<span style="display:inline-block; width:20px;"></span>`;
+        } else if (char === '-' || char === '\'') {
+            // Hyphen 或撇號：顯示橙色符號
+            html += `<span style="color:var(--warning); font-weight:bold; margin:0 2px; font-size: 24px;">${char}</span>`;
+        } else {
+            // 字母：顯示正常底線
+            html += `_ `;
+        }
+    }
+    return html;
+}
 // --- 6. 技能選擇與導航 ---
 
 // 選擇技能 (Reading / Listening / Speaking)
@@ -5238,6 +5258,7 @@ window.onload = function() {
 </div>
 </body>
 </html>
+
 
 
 
