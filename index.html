@@ -2349,6 +2349,8 @@ body {
 <script src="vocab_data.js"></script>
 
 <script>
+let currentPracticeMode = 'READING'; // 預設模式
+let recognition = null; // 語音識別物件
 let battleLog = [];
     // ★★★ 新增：自動排序功能 ★★★
     // 這段代碼會走遍所有 Level (L1, L2...), 自動按英文字母 A-Z 排列
@@ -2483,12 +2485,19 @@ function selectMode(mode) {
     tempGameMode = mode; 
     playSound('deploy-sfx');
     
-    if (mode === 'AI') {
-        document.getElementById('level-screen').style.display = 'flex';
+    // 隱藏主選單
+    document.getElementById('main-menu-carousel').style.display = 'none';
+    document.getElementById('game-mode-selection').style.display = 'none';
+    
+    // 顯示 Skill 選擇畫面
+    document.getElementById('skill-screen').style.display = 'flex';
+    
+    // 如果係 PVP，暫時隱藏 Speaking Mode (因為暫時未支援 PVP 語音)
+    const speakBtn = document.getElementById('btn-skill-speaking');
+    if (mode === 'PVP') {
+        speakBtn.style.display = 'none';
     } else {
-        document.getElementById('start-screen').style.display = 'none';
-        document.getElementById('lobby-screen').style.display = 'flex';
-        // 刪除了 global-back-btn 的控制碼
+        speakBtn.style.display = 'flex'; 
     }
 }
     
@@ -4828,6 +4837,56 @@ function renderReview() {
         list.appendChild(item);
     });
 }
+// --- 6. 技能選擇與導航 ---
+
+// 選擇技能 (Reading / Listening / Speaking)
+function selectSkill(skill) {
+    currentPracticeMode = skill; // 記低玩家揀咗乜
+    playSound('deploy-sfx');
+    
+    // 關閉 Skill 畫面
+    document.getElementById('skill-screen').style.display = 'none';
+
+    // 根據剛才揀的 VS AI 定 PVP，決定去邊度
+    if (tempGameMode === 'AI') {
+        // AI 模式 -> 去揀 Level (L1-L5)
+        document.getElementById('level-screen').style.display = 'flex';
+    } else {
+        // PVP 模式 -> 去大廳 (Lobby)
+        document.getElementById('lobby-screen').style.display = 'flex';
+    }
+}
+
+// 返回主選單 (Back 掣)
+function backToMainMenu() {
+    playSound('delete-sfx');
+    document.getElementById('skill-screen').style.display = 'none';
+    
+    // 顯示回主選單
+    document.getElementById('main-menu-carousel').style.display = 'flex';
+    
+    // 如果你有 game-mode-selection (視乎你版本)，也要顯示
+    // document.getElementById('game-mode-selection').style.display = 'flex'; 
+}
+window.onload = function() {
+    console.log("System Initializing...");
+
+    // 1. 自動排序數據庫 (L1, L2... A-Z)
+    if(typeof sortDatabase === 'function') {
+        sortDatabase();
+    }
+
+    // 2. 生成背景特效 (十字星)
+    // 這裡確保了 body 已經存在，星星一定出到黎
+    if(typeof createTwinklingStars === 'function') {
+        createTwinklingStars();
+    }
+
+    // 3. 進入主選單
+    if(typeof showMainMenu === 'function') {
+        showMainMenu();
+    }
+};
 </script>
 <div id="registration-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 9999; flex-direction: column; align-items: center; justify-content: center;">
     
@@ -4894,6 +4953,7 @@ function renderReview() {
 </div>
 </body>
 </html>
+
 
 
 
