@@ -1998,6 +1998,38 @@ body {
     from { transform: translate(-50%, 20px); opacity: 0; }
     to { transform: translate(-50%, 0); opacity: 1; }
 }
+/* --- Speaking Mode 專用樣式 --- */
+.mic-btn {
+    width: 80px; height: 80px;
+    border-radius: 50%;
+    background: rgba(0,0,0,0.5);
+    border: 2px solid #d946ef;
+    color: #d946ef;
+    font-size: 30px;
+    cursor: pointer;
+    box-shadow: 0 0 15px #d946ef;
+    transition: all 0.2s;
+    display: flex; align-items: center; justify-content: center;
+    margin: 20px auto;
+}
+
+.mic-btn:active, .mic-btn.recording {
+    background: #d946ef;
+    color: #fff;
+    transform: scale(1.1);
+    box-shadow: 0 0 30px #d946ef, inset 0 0 10px #fff;
+}
+
+/* 錄音時的波紋動畫 */
+@keyframes mic-pulse {
+    0% { box-shadow: 0 0 0 0 rgba(217, 70, 239, 0.7); }
+    70% { box-shadow: 0 0 0 20px rgba(217, 70, 239, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(217, 70, 239, 0); }
+}
+
+.mic-btn.recording {
+    animation: mic-pulse 1.5s infinite;
+}
     </style>
 
 </head>
@@ -2128,6 +2160,35 @@ body {
     </div>
 
     <button class="btn" onclick="closeVocabScreen()" style="margin-top: 20px; width: 150px;">&lt; BACK</button>
+</div>
+<div id="skill-screen" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 250; background: rgba(0,0,0,0.9); flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(5px);">
+    <h2 style="font-family: 'Black Ops One'; color: var(--primary); font-size: 40px; margin-bottom: 30px; text-shadow: 0 0 20px var(--primary);">SELECT TRAINING MODULE</h2>
+    
+    <div style="display: flex; flex-direction: column; gap: 20px; align-items: center;">
+        
+        <button class="level-btn" onclick="selectSkill('READING')" style="border-color: #0ea5e9; color: #0ea5e9; width: 300px; height: 80px;">
+            <div style="display:flex; flex-direction:column; align-items:center;">
+                <span style="font-size:24px;">READING</span>
+                <span style="font-size:10px; opacity:0.7;">DECRYPT CODE</span>
+            </div>
+        </button>
+
+        <button class="level-btn" onclick="selectSkill('LISTENING')" style="border-color: #22c55e; color: #22c55e; width: 300px; height: 80px;">
+            <div style="display:flex; flex-direction:column; align-items:center;">
+                <span style="font-size:24px;">LISTENING</span>
+                <span style="font-size:10px; opacity:0.7;">AUDIO INTEL</span>
+            </div>
+        </button>
+
+        <button id="btn-skill-speaking" class="level-btn" onclick="selectSkill('SPEAKING')" style="border-color: #d946ef; color: #d946ef; width: 300px; height: 80px;">
+            <div style="display:flex; flex-direction:column; align-items:center;">
+                <span style="font-size:24px;">SPEAKING</span>
+                <span style="font-size:10px; opacity:0.7;">VOICE COMMAND</span>
+            </div>
+        </button>
+    </div>
+
+    <button class="btn" onclick="playSound('delete-sfx'); backToMainMenu()" style="margin-top: 30px; border-color: #64748b; color: #94a3b8;">&lt; BACK</button>
 </div>
 <div id="level-screen" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 250; background: rgba(0,0,0,0.9); flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(5px);">
         <h2 style="font-family: 'Black Ops One'; color: var(--primary); font-size: 40px; margin-bottom: 30px; text-shadow: 0 0 20px var(--primary);">SELECT DIFFICULTY</h2>
@@ -4833,6 +4894,7 @@ function renderReview() {
 </div>
 </body>
 </html>
+
 
 
 
