@@ -5254,8 +5254,10 @@ function checkSpeakingResult(spokenText) {
         document.getElementById('msg-area').innerText = `ACCURACY: ${scorePercent}% // MATCH CONFIRMED!`;
         document.getElementById('msg-area').style.color = "var(--success)";
         
-        // ★★★ 修正重點：這裡原本是 playSound('laser-sfx') ★★★
-        // 改成 enter-sfx (輕微確認聲)，或者直接刪除這行
+        // ★★★ 修正重點：這裡原本有 playSound('laser-sfx') ★★★
+        // 1. 如果你想要「嘟」一聲確認收到，可以用 enter-sfx
+        // 2. 如果想完全靜音等發射，就成行刪除
+        // 建議：用 'enter-sfx' 做確認聲，區分「收到指令」同「發射」
         playSound('enter-sfx'); 
         
         // 延遲 1 秒發射 (真正的攻擊聲會由 playerFire 播放)
@@ -5452,6 +5454,7 @@ function fadeBgm(targetVol, duration = 800) {
 </div>
 </body>
 </html>
+
 
 
 
