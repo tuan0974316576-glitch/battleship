@@ -2121,37 +2121,6 @@ body {
     margin: 0 5px; 
     letter-spacing: 2px;
 }
-/* --- 箭咀動態暗示 (Visual Cue) --- */
-
-/* 定義左邊箭咀的動畫：向左彈下彈下 */
-@keyframes arrow-bounce-left {
-    0%, 100% { transform: translateX(0) scale(1); }
-    50% { transform: translateX(-8px) scale(1.1); text-shadow: 0 0 15px var(--primary); }
-}
-
-/* 定義右邊箭咀的動畫：向右彈下彈下 */
-@keyframes arrow-bounce-right {
-    0%, 100% { transform: translateX(0) scale(1); }
-    50% { transform: translateX(8px) scale(1.1); text-shadow: 0 0 15px var(--primary); }
-}
-
-/* 套用到你的箭咀按鈕 ID (假設你原本 ID 係 prev-mode-btn 同 next-mode-btn) */
-#prev-mode-btn {
-    animation: arrow-bounce-left 1.2s infinite ease-in-out;
-    color: var(--primary); /* 確保箭咀係光亮顏色 */
-}
-
-#next-mode-btn {
-    animation: arrow-bounce-right 1.2s infinite ease-in-out;
-    color: var(--primary);
-}
-
-/* 當滑鼠指住時，暫停動畫費事眼花 */
-#prev-mode-btn:hover, #next-mode-btn:hover {
-    animation: none;
-    transform: scale(1.2);
-    cursor: pointer;
-}
     </style>
 
 </head>
@@ -5492,8 +5461,6 @@ function fadeBgm(targetVol, duration = 800) {
 </div>
 </body>
 </html>
-
-
 
 
 
