@@ -2289,7 +2289,7 @@ body {
             <button class="level-btn" onclick="selectLevel('L5_STAR')">LEVEL 5*</button>
         </div>
 
-<button class="btn" onclick="playSound('delete-sfx'); closeLevelScreen()" style="margin-top: 30px; border-color: #64748b; color: #94a3b8;">&lt; BACK</button>
+<button class="btn" onclick="playSound('delete-sfx'); handleLevelBack()" style="margin-top: 30px; border-color: #64748b; color: #94a3b8;">&lt; BACK</button>
     </div>
 <div id="lobby-screen" style="display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index: 150; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(5px);">
     <h2 style="font-family: 'Black Ops One'; color: var(--primary); font-size: 40px;">MULTIPLAYER LOBBY</h2>
@@ -5249,6 +5249,19 @@ window.onload = function() {
         showMainMenu();
     }
 };
+    // --- 新增：處理 Level Screen 的返回邏輯 ---
+function handleLevelBack() {
+    // 1. 先關閉 Level 選單
+    closeLevelScreen();
+
+    // 2. 判斷要彈返去邊度
+    if (tempGameMode === 'AI') {
+        // 如果係單人 AI 模式，應該返去「技能選擇 (Skill Screen)」
+        document.getElementById('skill-screen').style.display = 'flex';
+    } 
+    // 如果係 PVP 模式，因為 Level Screen 係 Overlay 在 Lobby 上面，
+    // 所以只要關閉 Level Screen，就會自然見返原本個 Lobby，唔使特別處理。
+}
 </script>
 <div id="registration-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 9999; flex-direction: column; align-items: center; justify-content: center;">
     
@@ -5315,6 +5328,7 @@ window.onload = function() {
 </div>
 </body>
 </html>
+
 
 
 
