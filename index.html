@@ -2624,21 +2624,22 @@ function selectLevel(level) {
     
     playSound('deploy-sfx');
     
-    // 關閉 Level 選單
-    if (typeof closeLevelScreen === 'function') {
-        closeLevelScreen();
-    } else {
-        document.getElementById('level-screen').style.display = 'none';
-    }
+    // ★★★ 關鍵修正：直接隱藏 Level 畫面，千萬不要呼叫 closeLevelScreen() ★★★
+    // closeLevelScreen() 係俾「返回鍵」用的，它會錯誤地帶你返去上一頁 (Skill Screen)
+    document.getElementById('level-screen').style.display = 'none';
 
     if (tempGameMode === 'AI') {
-        // AI: Level -> Start Game
+        // --- AI 模式：Level -> Start Game ---
         gameMode = 'AI';
+        
+        // 確保 Skill Screen 也是隱藏的 (雙重保險)
+        document.getElementById('skill-screen').style.display = 'none';
+        
         enterGameUI();
     } else {
-        // ★ PVP 新流程：Level -> Skill (選模式) ★
-        const skillScreen = document.getElementById('skill-screen');
-        skillScreen.style.display = 'flex';
+        // --- PVP 模式：Level -> Skill -> Lobby ---
+        // 顯示 Skill 選擇
+        document.getElementById('skill-screen').style.display = 'flex';
         
         // PVP 暫時隱藏 Speaking Mode (如需要)
         const speakBtn = document.getElementById('btn-skill-speaking');
@@ -5408,6 +5409,7 @@ function editDistance(s1, s2) {
 </div>
 </body>
 </html>
+
 
 
 
