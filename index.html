@@ -2597,10 +2597,19 @@ function selectMode(mode) {
     }
 }
     
-    // 新增：關閉等級選單
-    function closeLevelScreen() {
-        document.getElementById('level-screen').style.display = 'none';
+function closeLevelScreen() {
+    playSound('delete-sfx');
+    document.getElementById('level-screen').style.display = 'none';
+
+    // 邏輯判斷：如果是 AI 模式，按 Back 應該返回上一頁 (Skill 選擇)
+    // 如果你想直接回主頁，也可以改 call showMainMenu()
+    if (tempGameMode === 'AI') {
+        document.getElementById('skill-screen').style.display = 'flex';
+    } else {
+        // 如果是 PVP 建房時按 Back，也返回 Skill 或是主選單
+        document.getElementById('skill-screen').style.display = 'flex';
     }
+}
 
     function prepareCreateRoom() {
         playSound('deploy-sfx');
@@ -4776,7 +4785,6 @@ function updateHUD(name) {
 }
 
 // 8. 顯示主選單 (隱藏 Login Panel)
-// 8. 顯示主選單 (隱藏 Login Panel)
 function showMainMenu() {
     // 切換去 Profile 面板
     switchHudPanel('user-profile-panel');
@@ -5245,11 +5253,7 @@ function backToMainMenu() {
     playSound('delete-sfx');
     document.getElementById('skill-screen').style.display = 'none';
     
-    // 顯示回主選單
-    document.getElementById('main-menu-carousel').style.display = 'flex';
-    
-    // 如果你有 game-mode-selection (視乎你版本)，也要顯示
-    // document.getElementById('game-mode-selection').style.display = 'flex'; 
+    showMainMenu();
 }
 window.onload = function() {
     console.log("System Initializing...");
@@ -5348,6 +5352,7 @@ function handleSkillBack() {
 </div>
 </body>
 </html>
+
 
 
 
