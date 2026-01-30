@@ -3234,7 +3234,7 @@ if (currentPracticeMode === 'SPEAKING') {
 
     } else if (currentPracticeMode === 'LISTENING') {
         // --- B. 聽力模式 (Listening) ---
-        
+        fadeBgm(0.1, 800);
         let contentHTML = '';
 
         // 1. 顯示句子填空 (如果有句子)
@@ -3334,6 +3334,7 @@ function warmUpVoiceEngine() {
 }
 // --- 修正版：處理輸入超時 (完整邏輯 + 鎖死操作) ---
 function handlePlayerTimeout() {
+    fadeBgm(0.5, 1000);
     // 1. 介面清理
     if (typeof timerInterval !== 'undefined') clearInterval(timerInterval);
     document.getElementById('launch-modal').style.display = "none";
@@ -3519,6 +3520,7 @@ function checkAnswer() {
 
     // --- 10. 攻擊執行 ---
 function playerFire(success) {
+    fadeBgm(0.5, 1000);
     // 1. 基本清理：停計時器、關閉彈窗
     clearInterval(timerInterval);
     document.getElementById('launch-modal').style.display = "none";
@@ -5345,7 +5347,44 @@ function editDistance(s1, s2) {
     }
     return costs[s2.length];
 }
+// ★★★ BGM 漸變控制系統 (Audio Ducking) ★★★
+let bgmFadeInterval = null;
 
+// targetVol: 目標音量 (0.0 至 1.0)
+// duration: 用幾多毫秒變過去 (預設 800ms)
+function fadeBgm(targetVol, duration = 800) {
+    const bgm = document.getElementById('bgm');
+    
+    // 如果 BGM 根本無開，或者 Pause 緊，就唔好搞佢
+    if (!bgm || bgm.paused) return; 
+
+    // 清除舊的漸變 (防止有人狂撳導致衝突)
+    if (bgmFadeInterval) clearInterval(bgmFadeInterval);
+
+    const startVol = bgm.volume;
+    const stepTime = 50; // 每 50ms 更新一次
+    const steps = duration / stepTime; // 總共要行幾多步
+    const volStep = (targetVol - startVol) / steps; // 每步加/減幾多
+
+    let currentStep = 0;
+
+    bgmFadeInterval = setInterval(() => {
+        currentStep++;
+        let newVol = startVol + (volStep * currentStep);
+
+        // 安全鎖：確保唔會爆出 0-1 範圍
+        if (newVol < 0) newVol = 0;
+        if (newVol > 1) newVol = 1;
+
+        bgm.volume = newVol;
+
+        // 完成漸變
+        if (currentStep >= steps) {
+            clearInterval(bgmFadeInterval);
+            bgm.volume = targetVol; // 確保最後數值準確
+        }
+    }, stepTime);
+}
     
 </script>
 <div id="registration-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 9999; flex-direction: column; align-items: center; justify-content: center;">
@@ -5413,6 +5452,7 @@ function editDistance(s1, s2) {
 </div>
 </body>
 </html>
+
 
 
 
