@@ -3332,15 +3332,17 @@ function warmUpVoiceEngine() {
         console.log("🔊 Voice Engine Warmed Up!");
     }
 }
-// --- 修正版：處理輸入超時 (完整邏輯 + 鎖死操作) ---
+    
+// --- 修正版：處理輸入超時 ---
 function handlePlayerTimeout() {
-    fadeBgm(0.5, 1000);
+    // 升番 BGM
+    if(typeof fadeBgm === 'function') fadeBgm(0.5, 1000);
+
     // 1. 介面清理
     if (typeof timerInterval !== 'undefined') clearInterval(timerInterval);
     document.getElementById('launch-modal').style.display = "none";
     playSound('timeout-sfx');
     
-    // ★★★ 關鍵修正：即刻鎖死狀態，防止玩家在轉場前再撳棋盤 ★★★
     currentPhase = 'PHASE_SWITCH'; 
 
     const status = document.getElementById('game-status');
@@ -3348,44 +3350,42 @@ function handlePlayerTimeout() {
     document.getElementById('control-panel').style.borderColor = "var(--danger)";
     
     // 2. 記錄入戰後報告 (Battle Log)
-    // 確保 battleLog 存在且未記錄過這一回合
     if (typeof battleLog !== 'undefined' && typeof currentVocab !== 'undefined') {
         const lastLog = battleLog[battleLog.length - 1];
-        // 修正變數名：用 turnCounter 而唔係 turnCount
         const currentTurn = (typeof turnCounter !== 'undefined' ? turnCounter : 1);
         
+        // --- ★★★ 關鍵修正：Timeout 時都要分清楚係單字定句子 ★★★ ---
+        // 如果係 Speaking Mode，正確答案應該顯示句子
+        let correctContent = currentVocab.en; 
+        if (currentPracticeMode === 'SPEAKING' && currentVocab.sent) {
+            correctContent = currentVocab.sent;
+        }
+
+        // 避免重複記錄
         if (!lastLog || lastLog.turn !== currentTurn) {
             battleLog.push({
                 turn: currentTurn,
-                user: "(TIMEOUT)",    // 顯示超時
-                correct: currentVocab.en, 
+                user: "(TIMEOUT)",    
+                correct: correctContent, // 這裡會顯示正確句子
                 isCorrect: false
             });
         }
     }
 
-    // 3. 邏輯分支 (保留你原本既正確邏輯)
+    // 3. 邏輯分支 (保持不變)
     if (gameMode === 'PVP') {
         const { ref, update } = window.firebaseModules;
-        
-        // 計算下一位係邊個
         const nextTurn = (playerRole === 'host') ? 'guest' : 'host';
-
-        // 更新 Database：發送 Miss Turn 訊號 (index: -1 代表無打中任何野，即係無白點)
         update(ref(db, 'rooms/' + currentRoomId), {
             lastMove: { attacker: playerRole, index: -1, timestamp: Date.now() },
             turn: nextTurn 
         });
-
-        // 本地轉場
         setGameTimeout(() => {
             currentPhase = 'ENEMY_TURN';
             document.getElementById('game-status').innerHTML = "OPPONENT'S TURN";
             switchScene('ENEMY');
         }, 1500);
-
     } else {
-        // AI 模式：直接交更，唔好 Call playerFire(false)
         setGameTimeout(() => {
             startEnemyTurn(); 
         }, 1500);
@@ -5232,7 +5232,7 @@ function startListening() {
 
 // --- 3. 檢查口語結果 (Speaking Score - 句子版) ---
 function checkSpeakingResult(spokenText) {
-    // 目標改成句子 (如果無句子先用單字)
+    // 獲取目標句子 (如果無句子先用單字)
     const targetText = currentVocab.sent ? currentVocab.sent : currentVocab.en;
     
     // 顯示玩家讀咗乜
@@ -5246,21 +5246,28 @@ function checkSpeakingResult(spokenText) {
     // 計算相似度
     const similarity = calculateSimilarity(cleanSpoken, cleanTarget);
     
-    console.log(`Target: ${cleanTarget} / Spoken: ${cleanSpoken} / Sim: ${similarity}`);
-
     if (similarity >= 0.8) {
-        // --- 讀啱！ ---
+        // --- ★★★ 關鍵修正 1：即刻停止倒數，防止誤判 Timeout ★★★ ---
+        if (typeof timerInterval !== 'undefined') clearInterval(timerInterval);
+
+        // --- ★★★ 關鍵修正 2：寫入戰報 (Battle Log) ★★★ ---
+        if (typeof battleLog !== 'undefined') {
+            battleLog.push({
+                turn: (typeof turnCounter !== 'undefined' ? turnCounter : 1),
+                user: spokenText,       // 記錄你讀的句子
+                correct: targetText,    // 記錄正確的句子
+                isCorrect: true
+            });
+        }
+
+        // UI 顯示
         const scorePercent = Math.floor(similarity * 100);
         document.getElementById('msg-area').innerText = `ACCURACY: ${scorePercent}% // MATCH CONFIRMED!`;
         document.getElementById('msg-area').style.color = "var(--success)";
         
-        // ★★★ 修正重點：這裡原本有 playSound('laser-sfx') ★★★
-        // 1. 如果你想要「嘟」一聲確認收到，可以用 enter-sfx
-        // 2. 如果想完全靜音等發射，就成行刪除
-        // 建議：用 'enter-sfx' 做確認聲，區分「收到指令」同「發射」
         playSound('enter-sfx'); 
         
-        // 延遲 1 秒發射 (真正的攻擊聲會由 playerFire 播放)
+        // 延遲 1 秒發射
         setTimeout(() => playerFire(true), 1000);
 
     } else {
@@ -5454,6 +5461,7 @@ function fadeBgm(targetVol, duration = 800) {
 </div>
 </body>
 </html>
+
 
 
 
