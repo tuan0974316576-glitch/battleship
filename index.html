@@ -1799,14 +1799,16 @@ body {
     50% { opacity: 0; }
 }
 /* =========================================
-   ★★★ 強制修復 LOBBY & LEVEL 畫面置中 ★★★
+   ★★★ 強制修復 LOBBY & LEVEL & SKILL 畫面置中 ★★★
    ========================================= */
 
-/* 1. 強制確保這兩個畫面開啟時，一定是 Flex 模式 (修正 JS 寫錯 Block 的問題) */
+/* 1. 強制確保這三個畫面開啟時，一定是 Flex 模式 (修正 JS 寫錯 Block 的問題) */
 #level-screen[style*="display: block"],
 #lobby-screen[style*="display: block"],
+#skill-screen[style*="display: block"], /* ★ 加入了 SKILL SCREEN */
 #level-screen[style*="display: flex"],
-#lobby-screen[style*="display: flex"] {
+#lobby-screen[style*="display: flex"],
+#skill-screen[style*="display: flex"] { /* ★ 加入了 SKILL SCREEN */
     display: flex !important;
     flex-direction: column !important;
     align-items: center !important;
@@ -1815,13 +1817,15 @@ body {
 
 /* 2. 確保畫面內的文字同標題都置中 */
 #level-screen, 
-#lobby-screen {
+#lobby-screen,
+#skill-screen { /* ★ 加入了 SKILL SCREEN */
     text-align: center !important;
 }
 
 /* 3. 確保標題 H2 自己置中 */
 #level-screen h2, 
-#lobby-screen h2 {
+#lobby-screen h2,
+#skill-screen h2 { /* ★ 加入了 SKILL SCREEN */
     width: 100%;
     text-align: center !important;
     margin-left: auto !important;
@@ -1830,8 +1834,8 @@ body {
 
 /* 4. 確保 Level 按鈕容器置中 */
 .level-grid {
-    display: grid; /* 確保 Grid 佈局生效 */
-    margin: 0 auto !important; /* 水平置中 */
+    display: grid; 
+    margin: 0 auto !important; 
     justify-content: center !important;
 }
 /* =========================================
@@ -5409,6 +5413,7 @@ function editDistance(s1, s2) {
 </div>
 </body>
 </html>
+
 
 
 
