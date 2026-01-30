@@ -2565,57 +2565,14 @@ function startEnemyTurn() {
     let myDamage = 0;    // 我被打中幾多格 (我輸的進度)
     let enemyDamage = 0; // 敵人被打中幾多格 (我贏的進度)
     let unsubscribeRoom = null; // 用來儲存 Firebase 監聽器
-
-// --- 修正版：選擇遊戲模式 (統一流程入口) ---
-function selectMode(mode) {
-    tempGameMode = mode; 
-    playSound('deploy-sfx');
-    
-    // 隱藏主選單按鈕
-    document.getElementById('main-menu-carousel').style.display = 'none';
-    document.getElementById('game-mode-selection').style.display = 'none';
-
-    if (mode === 'PVP') {
-        // PVP: 隱藏標題，進入大廳 (Lobby)
-        document.getElementById('start-screen').style.display = 'none';
-        document.getElementById('lobby-screen').style.display = 'flex';
-    } else {
-        // AI: 保留標題，直接進入 Level 選擇 (新流程)
-        document.getElementById('level-screen').style.display = 'flex';
-    }
-}
     
     // 新增：關閉等級選單
     function closeLevelScreen() {
         document.getElementById('level-screen').style.display = 'none';
     }
 
-    function prepareCreateRoom() {
-        playSound('deploy-sfx');
-        // 彈出 Level 選單畀場主揀
-        document.getElementById('level-screen').style.display = 'flex';
-    }
 
-// --- 修正版：選擇等級 (統一去選 Skill) ---
-function selectLevel(level) {
-    selectedLevel = level;
-    activeVocabList = VOCAB_DB[level]; 
-    
-    playSound('deploy-sfx');
-    
-    // 隱藏 Level 選單
-    document.getElementById('level-screen').style.display = 'none';
 
-    // 顯示 Skill 選單 (AI 同 PVP 都係去呢度)
-    const skillScreen = document.getElementById('skill-screen');
-    skillScreen.style.display = 'flex';
-    
-    // PVP 暫時隱藏 Speaking Mode (因為未同步)
-    const speakBtn = document.getElementById('btn-skill-speaking');
-    if (speakBtn) {
-        speakBtn.style.display = (tempGameMode === 'PVP') ? 'none' : 'flex';
-    }
-}
 function enterGameUI() {
     const bgm = document.getElementById('bgm');
     if (bgm) { bgm.volume = 0.5; bgm.play().then(()=>isMusicPlaying=true).catch(e=>{}); }
@@ -5108,28 +5065,7 @@ function generateSmartBlanks(text) {
     return html;
 }
 
-// --- 修正版：選擇技能 (最終分流) ---
-function selectSkill(skill) {
-    currentPracticeMode = skill; 
-    playSound('deploy-sfx');
 
-    if (skill === 'LISTENING') {
-        if (typeof warmUpVoiceEngine === 'function') warmUpVoiceEngine();
-    }
-
-    // 隱藏 Skill 選單
-    document.getElementById('skill-screen').style.display = 'none';
-
-    if (tempGameMode === 'AI') {
-        // AI: 開始遊戲
-        gameMode = 'AI';
-        enterGameUI();
-    } else {
-        // PVP: 建立房間
-        gameMode = 'PVP';
-        createRoom();
-    }
-}
 // ============================================
 // ★★★ PHASE 2: VOICE CORE (語音核心) ★★★
 // ============================================
@@ -5251,24 +5187,119 @@ window.onload = function() {
     }
 };
     
-// AI -> 主選單, PVP -> Lobby
+// ============================================================
+// ★★★ 核心導航系統 (Unified Navigation System) ★★★
+// ============================================================
+
+// 1. 選擇模式 (入口分流)
+function selectMode(mode) {
+    tempGameMode = mode; 
+    playSound('deploy-sfx');
+    
+    // 隱藏主選單按鈕
+    const menuCarousel = document.getElementById('main-menu-carousel');
+    const modeSelection = document.getElementById('game-mode-selection');
+    if (menuCarousel) menuCarousel.style.display = 'none';
+    if (modeSelection) modeSelection.style.display = 'none';
+
+    if (mode === 'PVP') {
+        // --- PVP 流程 ---
+        // 隱藏整個標題畫面 (Start Screen)
+        document.getElementById('start-screen').style.display = 'none';
+        
+        // 顯示大廳 (Lobby)
+        const lobby = document.getElementById('lobby-screen');
+        if (lobby) {
+            lobby.style.display = 'flex';
+        } else {
+            console.error("找不到 lobby-screen, 請檢查 HTML ID");
+            alert("Error: Lobby Screen Not Found!");
+        }
+    } else {
+        // --- AI 流程 ---
+        // 標題畫面保持顯示 (只係隱藏咗按鈕)
+        // 直接進入 Level 選擇
+        document.getElementById('level-screen').style.display = 'flex';
+    }
+}
+
+// 2. 選擇等級 (統一去選 Skill)
+function selectLevel(level) {
+    selectedLevel = level;
+    if (typeof VOCAB_DB !== 'undefined') {
+        activeVocabList = VOCAB_DB[level];
+    }
+    
+    playSound('deploy-sfx');
+    
+    // 關閉 Level 選單
+    // (如果原本係 Overlay 形式，可以只隱藏自己)
+    document.getElementById('level-screen').style.display = 'none';
+
+    // 顯示 Skill 選單 (AI 同 PVP 都係去呢度)
+    const skillScreen = document.getElementById('skill-screen');
+    skillScreen.style.display = 'flex';
+    
+    // PVP 暫時隱藏 Speaking Mode (因為未同步)
+    const speakBtn = document.getElementById('btn-skill-speaking');
+    if (speakBtn) {
+        speakBtn.style.display = (tempGameMode === 'PVP') ? 'none' : 'flex';
+    }
+}
+
+// 3. 選擇技能 (最終分流：開房 vs 開波)
+function selectSkill(skill) {
+    currentPracticeMode = skill; 
+    playSound('deploy-sfx');
+
+    if (skill === 'LISTENING') {
+        if (typeof warmUpVoiceEngine === 'function') warmUpVoiceEngine();
+    }
+
+    // 隱藏 Skill 選單
+    document.getElementById('skill-screen').style.display = 'none';
+
+    if (tempGameMode === 'AI') {
+        // AI: 開始遊戲
+        gameMode = 'AI';
+        if (typeof enterGameUI === 'function') enterGameUI();
+    } else {
+        // PVP: 建立房間
+        gameMode = 'PVP';
+        if (typeof createRoom === 'function') createRoom();
+    }
+}
+
+// 4. Level Screen 的 Back 邏輯
 function handleLevelBack() {
     playSound('delete-sfx');
     document.getElementById('level-screen').style.display = 'none';
 
     if (tempGameMode === 'AI') {
-        showMainMenu(); // AI 返去主選單
-    } 
-    // PVP 唔使做野，因為 Level 關咗就見到 Lobby
+        // AI: 返去主選單 (顯示番啲按鈕)
+        if (typeof showMainMenu === 'function') showMainMenu();
+    } else {
+        // PVP: 甚麼都不用做，因為 Level 只是覆蓋在 Lobby 上
+        // 關閉 Level 後，原本底下的 Lobby 自然會露出來
+        // (保險起見，強制顯示 Lobby)
+        const lobby = document.getElementById('lobby-screen');
+        if (lobby) lobby.style.display = 'flex';
+    }
 }
 
-// --- 2. Skill Screen 的 Back 邏輯 (新版) ---
-// 統統返去 Level Screen
+// 5. Skill Screen 的 Back 邏輯
 function handleSkillBack() {
     playSound('delete-sfx');
     document.getElementById('skill-screen').style.display = 'none';
     
-    // 無論 AI 定 PVP，上一頁都係 Level Screen
+    // 無論 AI 定 PVP，上一頁一定係 Level Screen
+    document.getElementById('level-screen').style.display = 'flex';
+}
+
+// 6. Lobby 的 Create Room 按鈕 (PVP 流程起點)
+function prepareCreateRoom() {
+    playSound('deploy-sfx');
+    // PVP 玩家在 Lobby 點擊 Create Room -> 彈出 Level 選擇
     document.getElementById('level-screen').style.display = 'flex';
 }
 
@@ -5338,6 +5369,7 @@ function handleSkillBack() {
 </div>
 </body>
 </html>
+
 
 
 
