@@ -1689,7 +1689,12 @@ body {
 .mode-title { font-size: 20px; font-weight: bold; letter-spacing: 2px; }
 
 
-/* 4. Cyberpunk 箭咀設定 (已修正手機發光卡住問題) */
+/* =========================================
+   ★★★ CAROUSEL ARROWS (完整修復版) ★★★
+   解決：箭嘴唔消失(配合JS)、唔發光、動畫太細、手機卡住
+   ========================================= */
+
+/* 1. 箭嘴容器 */
 .nav-arrow {
     background: transparent;
     border: none;
@@ -1699,81 +1704,117 @@ body {
     position: absolute; 
     top: 0;
     display: flex; align-items: center; justify-content: center;
-    transition: all 0.3s ease;
-    text-shadow: none; box-shadow: none; opacity: 0.6;
+    transition: opacity 0.3s ease, visibility 0.3s; /* 加入 visibility 過渡 */
+    text-shadow: none; box-shadow: none; 
+    
+    /* 預設透明度 */
+    opacity: 0.6;
 }
 .nav-arrow.left { left: -60px; }
 .nav-arrow.right { right: -60px; }
 
-/* 箭咀形狀 */
+/* 2. 箭嘴圖案 (幾何形狀) */
 .arrow-shape {
     width: 20px; height: 20px;
-    border-top: 2px solid #e2e8f0; 
-    border-right: 2px solid #e2e8f0; 
-    box-shadow: 2px -2px 10px rgba(255, 255, 255, 0.5); 
+    border-top: 3px solid #e2e8f0;    /* 加粗少少 */
+    border-right: 3px solid #e2e8f0;  /* 加粗少少 */
+    
+    /* 預設微微發光 */
+    filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.5));
+    
     transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
+
 /* 預設旋轉角度 */
 .nav-arrow.left .arrow-shape { transform: rotate(-135deg); }
 .nav-arrow.right .arrow-shape { transform: rotate(45deg); }
 
-/* ★ Hover 發光特效 (只在電腦/有滑鼠時生效，手機唔會卡住) ★ */
+/* 3. ★ 呼吸發光動畫 (解決唔發光 + 不明顯問題) ★ */
+@keyframes arrowPulseLeft {
+    0%, 100% { 
+        transform: rotate(-135deg) translate(0, 0);
+        filter: drop-shadow(0 0 2px rgba(255,255,255,0.3)); /* 暗 */
+    }
+    50% { 
+        transform: rotate(-135deg) translate(5px, -5px); /* 移動幅度加大 */
+        filter: drop-shadow(0 0 8px #00f0ff); /* ★ 發藍光！ ★ */
+        border-color: #fff;
+    }
+}
+@keyframes arrowPulseRight {
+    0%, 100% { 
+        transform: rotate(45deg) translate(0, 0);
+        filter: drop-shadow(0 0 2px rgba(255,255,255,0.3)); /* 暗 */
+    }
+    50% { 
+        transform: rotate(45deg) translate(5px, -5px); /* 移動幅度加大 */
+        filter: drop-shadow(0 0 8px #00f0ff); /* ★ 發藍光！ ★ */
+        border-color: #fff;
+    }
+}
+
+/* 套用動畫 */
+.nav-arrow.left .arrow-shape { animation: arrowPulseLeft 2s infinite ease-in-out; }
+.nav-arrow.right .arrow-shape { animation: arrowPulseRight 2s infinite ease-in-out; }
+
+
+/* 4. ★ Hover 互動特效 (只在電腦版生效，防止手機卡死) ★ */
 @media (hover: hover) {
-    .nav-arrow:hover { opacity: 1; }
+    .nav-arrow:hover { 
+        opacity: 1; 
+    }
     
+    /* Hover 時暫停呼吸，直接變最光最亮 */
     .nav-arrow.left:hover .arrow-shape {
         border-color: #00f0ff; 
-        box-shadow: 4px -4px 15px #00f0ff; 
-        transform: rotate(-135deg) translate(5px, -5px); 
+        box-shadow: none; /* 讓 filter 做發光就夠 */
+        filter: drop-shadow(0 0 15px #00f0ff); /* 強力藍光 */
+        transform: rotate(-135deg) translate(5px, -5px) scale(1.1);
+        animation: none; /* 暫停動畫 */
     }
 
     .nav-arrow.right:hover .arrow-shape {
         border-color: #00f0ff; 
-        box-shadow: 4px -4px 15px #00f0ff;
-        transform: rotate(45deg) translate(5px, -5px);
+        box-shadow: none;
+        filter: drop-shadow(0 0 15px #00f0ff); /* 強力藍光 */
+        transform: rotate(45deg) translate(5px, -5px) scale(1.1);
+        animation: none; /* 暫停動畫 */
     }
 }
 
-/* ★ Active 點擊特效 (手機電腦通用，按下去縮小) ★ */
+/* 5. Active 點擊特效 (按下去縮小) */
 .nav-arrow:active .arrow-shape {
     border-color: #fff; 
+    filter: drop-shadow(0 0 5px #fff);
     transition: 0.1s;
 }
-/* 分開寫左右旋轉角度，防止按下去時角度亂跳 */
 .nav-arrow.left:active .arrow-shape { transform: scale(0.9) rotate(-135deg); }
 .nav-arrow.right:active .arrow-shape { transform: scale(0.9) rotate(45deg); }
 
-/* 呼吸動畫 */
-@keyframes arrowFloatLeft {
-    0%, 100% { transform: rotate(-135deg) translate(0, 0); }
-    50% { transform: rotate(-135deg) translate(3px, -3px); } 
-}
-@keyframes arrowFloatRight {
-    0%, 100% { transform: rotate(45deg) translate(0, 0); }
-    50% { transform: rotate(45deg) translate(3px, -3px); } 
-}
-.nav-arrow.left .arrow-shape { animation: arrowFloatLeft 2s infinite ease-in-out; }
-.nav-arrow.right .arrow-shape { animation: arrowFloatRight 2s infinite ease-in-out; }
 
-
-/* 5. 手機版響應式調整 */
+/* 6. 手機版響應式調整 */
 @media (max-width: 768px) {
     .nav-arrow {
-        width: 40px; position: absolute; top: 50%; transform: translateY(-50%); opacity: 0.8;
+        width: 40px; 
+        opacity: 0.8; /* 手機版預設光少少 */
     }
+    /* 修正位置：確保在中間 */
     .nav-arrow.left { left: 0; }
     .nav-arrow.right { right: 0; }
+    
     .arrow-shape { width: 15px; height: 15px; border-width: 3px; }
-    .nav-arrow.left .arrow-shape, .nav-arrow.right .arrow-shape { animation: none; }
+    
+    /* 手機版可以保留動畫，因為這動畫現在有發光效果，比較吸睛 */
+    /* 如果覺得太花，可以取消下面註解來關閉動畫 */
+    /* .nav-arrow.left .arrow-shape, .nav-arrow.right .arrow-shape { animation: none; } */
 
-    /* ★ 手機版 Track 設定 (靠左 + 100%闊) ★ */
+    /* Track 設定 */
     .carousel-track {
         padding: 20px 15%; 
-        justify-content: flex-start; /* 手機維持靠左 */
+        justify-content: flex-start;
         width: 100%; 
         max-width: none;
     }
-
     .carousel-item {
         width: 60vw; max-width: 250px; height: 90px; 
     }
@@ -4830,6 +4871,7 @@ function showMainMenu() {
     }
 
     playBgm();
+    initCarouselControl();
 }
 
 // --- 新增：點擊開始遊戲 ---
@@ -5050,12 +5092,14 @@ function playBgm() {
 }
 // --- 修改後的 Carousel 控制邏輯 ---
 
-// 1. 捲動函數 (保持不變，但加強了邊界檢查)
+// --- ★★★ CAROUSEL 箭嘴智能隱藏系統 (最終整合版) ★★★ ---
+
+// 1. 捲動函數 (已加入檢查邏輯)
 function scrollMenu(direction) {
     const track = document.getElementById('game-mode-selection');
     if (!track) return;
     
-    // 搵出卡片闊度 (包含 Gap)
+    // 搵出卡片闊度
     const item = track.querySelector('.carousel-item');
     if (!item) return;
     
@@ -5069,55 +5113,55 @@ function scrollMenu(direction) {
     });
     
     playSound('deploy-sfx'); 
+    
+    // ★ 關鍵升級：捲動後稍微延遲 0.3秒 才檢查，確保動畫完成後狀態準確 ★
+    setTimeout(checkArrows, 300);
 }
 
-// 2. ★ 新增：檢查箭嘴顯示狀態的核心函數 ★
-function updateArrowVisibility() {
+// 2. 檢查箭嘴是否需要隱藏 (核心邏輯)
+function checkArrows() {
     const track = document.getElementById('game-mode-selection');
     const leftArrow = document.querySelector('.nav-arrow.left');
     const rightArrow = document.querySelector('.nav-arrow.right');
 
     if (!track || !leftArrow || !rightArrow) return;
 
-    // 容錯值 (Pixel)，費事差 1px 就唔隱藏
-    const tolerance = 5;
-
-    // A. 檢查左邊 (是否已經貼左邊？)
-    if (track.scrollLeft <= tolerance) {
-        // 隱藏左箭嘴
+    // A. 檢查左邊 (ScrollLeft 是否接近 0)
+    // 使用 10px 容錯，防止小數點誤差
+    if (track.scrollLeft <= 10) {
         leftArrow.style.opacity = '0';
-        leftArrow.style.pointerEvents = 'none'; // 確保隱藏後撳唔到
+        leftArrow.style.visibility = 'hidden'; // 確保隱藏後按不到
+        leftArrow.style.pointerEvents = 'none';
     } else {
-        // 顯示左箭嘴
-        leftArrow.style.opacity = '1'; // 或你原本 CSS 設定的透明度
+        leftArrow.style.opacity = '1';
+        leftArrow.style.visibility = 'visible';
         leftArrow.style.pointerEvents = 'auto';
     }
 
-    // B. 檢查右邊 (是否已經貼右邊？)
-    // 邏輯：ScrollLeft + 視窗闊度 >= 總內容長度
-    if (track.scrollLeft + track.clientWidth >= track.scrollWidth - tolerance) {
-        // 隱藏右箭嘴
+    // B. 檢查右邊 (ScrollLeft + clientWidth 是否接近 scrollWidth)
+    // 邏輯：目前捲動位置 + 視窗闊度 >= 總內容長度 - 容錯值
+    if (track.scrollLeft + track.clientWidth >= track.scrollWidth - 10) {
         rightArrow.style.opacity = '0';
+        rightArrow.style.visibility = 'hidden';
         rightArrow.style.pointerEvents = 'none';
     } else {
-        // 顯示右箭嘴
         rightArrow.style.opacity = '1';
+        rightArrow.style.visibility = 'visible';
         rightArrow.style.pointerEvents = 'auto';
     }
 }
 
-// 3. ★ 新增：啟動監聽器 ★
-// 請在 window.onload 或者 showMainMenu() 裡面呼叫這個 setup
-function setupCarouselObserver() {
+// 3. 啟動監聽器 (必須呼叫此函數！)
+function initCarouselControl() {
     const track = document.getElementById('game-mode-selection');
     if (track) {
-        // 當個表捲動時，即刻檢查箭嘴
-        track.addEventListener('scroll', updateArrowVisibility);
-        
-        // 一開始都要檢查一次 (因為預設係最左，要隱藏左箭嘴)
-        updateArrowVisibility();
+        // 當使用者自己用手指滑動時，都要檢查
+        track.addEventListener('scroll', checkArrows);
+        // 初始化檢查一次
+        checkArrows();
     }
 }
+
 
 // ★ 最後記得：在 showMainMenu() 函數最尾加一句：
 // setupCarouselObserver();
@@ -5530,6 +5574,7 @@ function fadeBgm(targetVol, duration = 800) {
 </div>
 </body>
 </html>
+
 
 
 
