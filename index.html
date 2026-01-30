@@ -5188,7 +5188,7 @@ window.onload = function() {
 };
     
 // ============================================================
-// ★★★ 核心導航系統 (Unified Navigation System) ★★★
+// ★★★ 核心導航系統 (Unified Navigation System) - 最終修復版 ★★★
 // ============================================================
 
 // 1. 選擇模式 (入口分流)
@@ -5204,22 +5204,25 @@ function selectMode(mode) {
 
     if (mode === 'PVP') {
         // --- PVP 流程 ---
-        // 隱藏整個標題畫面 (Start Screen)
-        document.getElementById('start-screen').style.display = 'none';
+        // ★ 關鍵修復：隱藏整個標題畫面 (包括背景)，讓 Lobby 顯示
+        const startScreen = document.getElementById('start-screen');
+        if (startScreen) startScreen.style.display = 'none';
         
-        // 顯示大廳 (Lobby)
+        // 強制顯示大廳
         const lobby = document.getElementById('lobby-screen');
         if (lobby) {
             lobby.style.display = 'flex';
+            lobby.style.opacity = '1';
+            lobby.style.zIndex = '200'; // 確保在最上層
         } else {
-            console.error("找不到 lobby-screen, 請檢查 HTML ID");
-            alert("Error: Lobby Screen Not Found!");
+            console.error("Critical Error: element #lobby-screen not found!");
         }
     } else {
         // --- AI 流程 ---
-        // 標題畫面保持顯示 (只係隱藏咗按鈕)
+        // 標題畫面保持顯示 (保留星空背景)
         // 直接進入 Level 選擇
-        document.getElementById('level-screen').style.display = 'flex';
+        const levelScreen = document.getElementById('level-screen');
+        if (levelScreen) levelScreen.style.display = 'flex';
     }
 }
 
@@ -5233,14 +5236,13 @@ function selectLevel(level) {
     playSound('deploy-sfx');
     
     // 關閉 Level 選單
-    // (如果原本係 Overlay 形式，可以只隱藏自己)
     document.getElementById('level-screen').style.display = 'none';
 
     // 顯示 Skill 選單 (AI 同 PVP 都係去呢度)
     const skillScreen = document.getElementById('skill-screen');
     skillScreen.style.display = 'flex';
     
-    // PVP 暫時隱藏 Speaking Mode (因為未同步)
+    // PVP 暫時隱藏 Speaking Mode
     const speakBtn = document.getElementById('btn-skill-speaking');
     if (speakBtn) {
         speakBtn.style.display = (tempGameMode === 'PVP') ? 'none' : 'flex';
@@ -5260,11 +5262,11 @@ function selectSkill(skill) {
     document.getElementById('skill-screen').style.display = 'none';
 
     if (tempGameMode === 'AI') {
-        // AI: 開始遊戲
+        // AI: 直接開始遊戲介面
         gameMode = 'AI';
         if (typeof enterGameUI === 'function') enterGameUI();
     } else {
-        // PVP: 建立房間
+        // PVP: 執行建立房間邏輯
         gameMode = 'PVP';
         if (typeof createRoom === 'function') createRoom();
     }
@@ -5276,12 +5278,10 @@ function handleLevelBack() {
     document.getElementById('level-screen').style.display = 'none';
 
     if (tempGameMode === 'AI') {
-        // AI: 返去主選單 (顯示番啲按鈕)
+        // AI: 返去主選單 (重新顯示 Menu 按鈕)
         if (typeof showMainMenu === 'function') showMainMenu();
     } else {
-        // PVP: 甚麼都不用做，因為 Level 只是覆蓋在 Lobby 上
-        // 關閉 Level 後，原本底下的 Lobby 自然會露出來
-        // (保險起見，強制顯示 Lobby)
+        // PVP: 關閉 Level 後，強制顯示 Lobby
         const lobby = document.getElementById('lobby-screen');
         if (lobby) lobby.style.display = 'flex';
     }
@@ -5369,6 +5369,7 @@ function prepareCreateRoom() {
 </div>
 </body>
 </html>
+
 
 
 
