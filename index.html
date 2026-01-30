@@ -3203,14 +3203,17 @@ function openLaunchModal(index) {
     modal.style.display = "flex";
 
     // ★★★ 核心：根據模式切換介面 ★★★
-    if (currentPracticeMode === 'SPEAKING') {
-        // --- A. 口語模式 (Speaking) ---
-        qText.innerText = `READ: ${currentVocab.en}`;
-        qText.style.fontSize = "30px";
-        qText.style.cursor = "default";
-        qText.onclick = null;
+if (currentPracticeMode === 'SPEAKING') {
+    const textToRead = currentVocab.sent ? currentVocab.sent : currentVocab.en;
+    qText.innerText = `READ: ${textToRead}`;
+    
+    // 字體縮細少少，因為句子比較長
+    qText.style.fontSize = "22px"; 
+    qText.style.lineHeight = "1.4"; // 增加行距，比較好讀
+    qText.style.cursor = "default";
+    qText.onclick = null;
 
-        qDisplay.innerText = "(Tap Mic & Read)";
+    qDisplay.innerText = "(Tap Mic & Read Sentence)";
         qDisplay.style.color = "#94a3b8"; 
         
         input.style.display = 'none'; 
@@ -5220,21 +5223,32 @@ function startListening() {
     recognition.start();
 }
 
-// --- 3. 檢查口語結果 (Speaking Score) ---
+// --- 3. 檢查口語結果 (Speaking Score - 句子版) ---
 function checkSpeakingResult(spokenText) {
-    const targetText = currentVocab.en; // 目標單字
+    // ★ 修改 2：目標改成句子 (如果無句子先用單字)
+    const targetText = currentVocab.sent ? currentVocab.sent : currentVocab.en;
     
     // 顯示玩家讀咗乜
     document.getElementById('q-display').innerText = `"${spokenText}"`;
-    document.getElementById('q-display').style.fontSize = "24px";
+    document.getElementById('q-display').style.fontSize = "18px"; // 字細啲費事爆框
 
-    // 簡單比對：完全一樣 或者 包含目標字 (寬容少少)
-    const cleanSpoken = spokenText.toLowerCase().replace(/[^a-z0-9]/g, '');
-    const cleanTarget = targetText.toLowerCase().replace(/[^a-z0-9]/g, '');
+    // --- 智能比對邏輯 ---
+    // 1. 清理雜質：轉細楷，只保留英文同數字，移除標點符號
+    const cleanSpoken = spokenText.toLowerCase().replace(/[^a-z0-9\s]/g, '').trim();
+    const cleanTarget = targetText.toLowerCase().replace(/[^a-z0-9\s]/g, '').trim();
 
-    if (cleanSpoken.includes(cleanTarget) || cleanTarget.includes(cleanSpoken)) {
+    // 2. 計算相似度 (0.0 至 1.0)
+    const similarity = calculateSimilarity(cleanSpoken, cleanTarget);
+    
+    console.log(`Target: ${cleanTarget}`);
+    console.log(`Spoken: ${cleanSpoken}`);
+    console.log(`Similarity: ${(similarity * 100).toFixed(1)}%`);
+
+    // ★ 修改 3：設定門檻為 80% (0.8)
+    if (similarity >= 0.8) {
         // 讀啱！
-        document.getElementById('msg-area').innerText = "VOICE MATCH CONFIRMED!";
+        const scorePercent = Math.floor(similarity * 100);
+        document.getElementById('msg-area').innerText = `ACCURACY: ${scorePercent}% // MATCH CONFIRMED!`;
         document.getElementById('msg-area').style.color = "var(--success)";
         playSound('laser-sfx'); 
         
@@ -5242,7 +5256,8 @@ function checkSpeakingResult(spokenText) {
         setTimeout(() => playerFire(true), 1000);
     } else {
         // 讀錯
-        document.getElementById('msg-area').innerText = "MISMATCH - TRY AGAIN";
+        const scorePercent = Math.floor(similarity * 100);
+        document.getElementById('msg-area').innerText = `ACCURACY: ${scorePercent}% // TOO LOW - TRY AGAIN`;
         document.getElementById('msg-area').style.color = "var(--danger)";
         playSound('wrong-sfx');
     }
@@ -5286,6 +5301,47 @@ function handleSkillBack() {
         document.getElementById('level-screen').style.display = 'flex';
     }
 }
+// ★★★ 新增：計算兩個字串的相似度 (0.0 - 1.0) ★★★
+function calculateSimilarity(s1, s2) {
+    let longer = s1;
+    let shorter = s2;
+    if (s1.length < s2.length) {
+        longer = s2;
+        shorter = s1;
+    }
+    const longerLength = longer.length;
+    if (longerLength === 0) {
+        return 1.0;
+    }
+    return (longerLength - editDistance(longer, shorter)) / parseFloat(longerLength);
+}
+
+function editDistance(s1, s2) {
+    s1 = s1.toLowerCase();
+    s2 = s2.toLowerCase();
+    const costs = new Array();
+    for (let i = 0; i <= s1.length; i++) {
+        let lastValue = i;
+        for (let j = 0; j <= s2.length; j++) {
+            if (i == 0)
+                costs[j] = j;
+            else {
+                if (j > 0) {
+                    let newValue = costs[j - 1];
+                    if (s1.charAt(i - 1) != s2.charAt(j - 1))
+                        newValue = Math.min(Math.min(newValue, lastValue), costs[j]) + 1;
+                    costs[j - 1] = lastValue;
+                    lastValue = newValue;
+                }
+            }
+        }
+        if (i > 0)
+            costs[s2.length] = lastValue;
+    }
+    return costs[s2.length];
+}
+
+    
 </script>
 <div id="registration-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 9999; flex-direction: column; align-items: center; justify-content: center;">
     
@@ -5352,3 +5408,43 @@ function handleSkillBack() {
 </div>
 </body>
 </html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
