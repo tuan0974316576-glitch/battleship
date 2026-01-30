@@ -5232,37 +5232,37 @@ function startListening() {
 
 // --- 3. 檢查口語結果 (Speaking Score - 句子版) ---
 function checkSpeakingResult(spokenText) {
-    // ★ 修改 2：目標改成句子 (如果無句子先用單字)
+    // 目標改成句子 (如果無句子先用單字)
     const targetText = currentVocab.sent ? currentVocab.sent : currentVocab.en;
     
     // 顯示玩家讀咗乜
     document.getElementById('q-display').innerText = `"${spokenText}"`;
-    document.getElementById('q-display').style.fontSize = "18px"; // 字細啲費事爆框
+    document.getElementById('q-display').style.fontSize = "18px"; 
 
     // --- 智能比對邏輯 ---
-    // 1. 清理雜質：轉細楷，只保留英文同數字，移除標點符號
     const cleanSpoken = spokenText.toLowerCase().replace(/[^a-z0-9\s]/g, '').trim();
     const cleanTarget = targetText.toLowerCase().replace(/[^a-z0-9\s]/g, '').trim();
 
-    // 2. 計算相似度 (0.0 至 1.0)
+    // 計算相似度
     const similarity = calculateSimilarity(cleanSpoken, cleanTarget);
     
-    console.log(`Target: ${cleanTarget}`);
-    console.log(`Spoken: ${cleanSpoken}`);
-    console.log(`Similarity: ${(similarity * 100).toFixed(1)}%`);
+    console.log(`Target: ${cleanTarget} / Spoken: ${cleanSpoken} / Sim: ${similarity}`);
 
-    // ★ 修改 3：設定門檻為 80% (0.8)
     if (similarity >= 0.8) {
-        // 讀啱！
+        // --- 讀啱！ ---
         const scorePercent = Math.floor(similarity * 100);
         document.getElementById('msg-area').innerText = `ACCURACY: ${scorePercent}% // MATCH CONFIRMED!`;
         document.getElementById('msg-area').style.color = "var(--success)";
-        playSound('laser-sfx'); 
         
-        // 延遲 1 秒發射
+        // ★★★ 修正重點：這裡原本是 playSound('laser-sfx') ★★★
+        // 改成 enter-sfx (輕微確認聲)，或者直接刪除這行
+        playSound('enter-sfx'); 
+        
+        // 延遲 1 秒發射 (真正的攻擊聲會由 playerFire 播放)
         setTimeout(() => playerFire(true), 1000);
+
     } else {
-        // 讀錯
+        // --- 讀錯 ---
         const scorePercent = Math.floor(similarity * 100);
         document.getElementById('msg-area').innerText = `ACCURACY: ${scorePercent}% // TOO LOW - TRY AGAIN`;
         document.getElementById('msg-area').style.color = "var(--danger)";
@@ -5452,6 +5452,7 @@ function fadeBgm(targetVol, duration = 800) {
 </div>
 </body>
 </html>
+
 
 
 
