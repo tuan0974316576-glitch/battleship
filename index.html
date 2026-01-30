@@ -5035,23 +5035,79 @@ function playBgm() {
         bgm.play().catch(e => console.log("BGM waiting for interaction"));
     }
 }
-// --- Carousel 左右捲動控制 ---
-    function scrollMenu(direction) {
-        const track = document.getElementById('game-mode-selection');
-        // 搵出第一個卡片嘅闊度 (動態計算，無論電腦定手機都準)
-        const itemWidth = track.querySelector('.carousel-item').offsetWidth;
-        const gap = 20; // 對應 CSS 嘅 gap
-        
-        // 計算每次捲動距離 (一個卡片 + 一個空隙)
-        const scrollAmount = itemWidth + gap;
-        
-        track.scrollBy({
-            left: direction * scrollAmount,
-            behavior: 'smooth'
-        });
-        
-        playSound('deploy-sfx'); 
+// --- 修改後的 Carousel 控制邏輯 ---
+
+// 1. 捲動函數 (保持不變，但加強了邊界檢查)
+function scrollMenu(direction) {
+    const track = document.getElementById('game-mode-selection');
+    if (!track) return;
+    
+    // 搵出卡片闊度 (包含 Gap)
+    const item = track.querySelector('.carousel-item');
+    if (!item) return;
+    
+    const itemWidth = item.offsetWidth;
+    const gap = 20; 
+    const scrollAmount = itemWidth + gap;
+    
+    track.scrollBy({
+        left: direction * scrollAmount,
+        behavior: 'smooth'
+    });
+    
+    playSound('deploy-sfx'); 
+}
+
+// 2. ★ 新增：檢查箭嘴顯示狀態的核心函數 ★
+function updateArrowVisibility() {
+    const track = document.getElementById('game-mode-selection');
+    const leftArrow = document.querySelector('.nav-arrow.left');
+    const rightArrow = document.querySelector('.nav-arrow.right');
+
+    if (!track || !leftArrow || !rightArrow) return;
+
+    // 容錯值 (Pixel)，費事差 1px 就唔隱藏
+    const tolerance = 5;
+
+    // A. 檢查左邊 (是否已經貼左邊？)
+    if (track.scrollLeft <= tolerance) {
+        // 隱藏左箭嘴
+        leftArrow.style.opacity = '0';
+        leftArrow.style.pointerEvents = 'none'; // 確保隱藏後撳唔到
+    } else {
+        // 顯示左箭嘴
+        leftArrow.style.opacity = '1'; // 或你原本 CSS 設定的透明度
+        leftArrow.style.pointerEvents = 'auto';
     }
+
+    // B. 檢查右邊 (是否已經貼右邊？)
+    // 邏輯：ScrollLeft + 視窗闊度 >= 總內容長度
+    if (track.scrollLeft + track.clientWidth >= track.scrollWidth - tolerance) {
+        // 隱藏右箭嘴
+        rightArrow.style.opacity = '0';
+        rightArrow.style.pointerEvents = 'none';
+    } else {
+        // 顯示右箭嘴
+        rightArrow.style.opacity = '1';
+        rightArrow.style.pointerEvents = 'auto';
+    }
+}
+
+// 3. ★ 新增：啟動監聽器 ★
+// 請在 window.onload 或者 showMainMenu() 裡面呼叫這個 setup
+function setupCarouselObserver() {
+    const track = document.getElementById('game-mode-selection');
+    if (track) {
+        // 當個表捲動時，即刻檢查箭嘴
+        track.addEventListener('scroll', updateArrowVisibility);
+        
+        // 一開始都要檢查一次 (因為預設係最左，要隱藏左箭嘴)
+        updateArrowVisibility();
+    }
+}
+
+// ★ 最後記得：在 showMainMenu() 函數最尾加一句：
+// setupCarouselObserver();
 
 function generateGuestId() {
     const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -5461,6 +5517,7 @@ function fadeBgm(targetVol, duration = 800) {
 </div>
 </body>
 </html>
+
 
 
 
