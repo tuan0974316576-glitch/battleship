@@ -2025,35 +2025,40 @@ body {
     to { transform: translate(-50%, 0); opacity: 1; }
 }
 /* =========================================
-   ★★★ 技能圖示 (圖片版) ★★★
+   ★★★ 技能圖示 (PNG 圖片最終整合版) ★★★
    ========================================= */
 
-/* 1. 通用圓形外框 */
+/* 1. 通用樣式 (Mic & Speaker 共用設定) */
 .mic-btn, .cyber-speaker-btn {
     width: 80px; 
     height: 80px;
     border-radius: 50%;
-    /* 淡淡的底色，增加層次感 */
+    
+    /* 底色與邊框 */
     background-color: rgba(217, 70, 239, 0.05); 
-    border: 1px solid rgba(217, 70, 239, 0.3);
-    cursor: pointer;
+    border: 1px solid rgba(217, 70, 239, 0.4);
+    
+    /* 排版 */
     display: flex; 
     align-items: center; 
     justify-content: center;
-    margin: 20px auto;
+    margin: 15px auto; /* 上下留位 */
+    cursor: pointer;
     transition: all 0.2s ease;
     
-    /* 圖片設定：置中、不重複、自動縮放 */
+    /* ★ 核心：圖片設定 ★ */
     background-repeat: no-repeat;
     background-position: center;
-    background-size: 65%; /* 視乎你張圖嘅留白，可以改為 70% 或 80% */
+    background-size: 65%; /* 控制圖片大細，唔好逼爆個圈 */
 
-    /* 平時：微弱紫色光 (圍繞你畫的線條) */
-    filter: drop-shadow(0 0 5px rgba(217, 70, 239, 0.6));
+    /* ★ 核心：發光效果 (針對圖片線條) ★ */
+    filter: drop-shadow(0 0 5px rgba(217, 70, 239, 0.8));
+    
     z-index: 10;
+    position: relative;
 }
 
-/* 2. 套用你畫的 PNG */
+/* 2. 分別指定圖片路徑 */
 .mic-btn {
     background-image: url('mic_icon.png');
 }
@@ -2062,41 +2067,39 @@ body {
     background-image: url('speaker_icon.png');
 }
 
-/* 3. 撳落去：爆發強烈白光 + 紫光 */
+/* 3. Hover 效果 (滑鼠指埋去) */
+.mic-btn:hover, .cyber-speaker-btn:hover {
+    background-color: rgba(217, 70, 239, 0.15);
+    border-color: #d946ef;
+    transform: scale(1.05); /* 輕微放大 */
+    box-shadow: 0 0 15px rgba(217, 70, 239, 0.3); /* 外圈加少少光 */
+}
+
+/* 4. Active / Recording 效果 (撳落去 / 錄音中) */
 .mic-btn:active, .cyber-speaker-btn:active, .mic-btn.recording {
-    transform: scale(0.95);
+    transform: scale(0.95); /* 縮細少少扮撳掣 */
     background-color: rgba(255, 255, 255, 0.1);
     border-color: #ffffff;
     
-    /* 雙層發光：底層紫光 + 頂層白光，令線條好似通咗電咁 */
-    filter: drop-shadow(0 0 10px #ffffff) drop-shadow(0 0 20px #d946ef);
+    /* 強烈發光：白光 + 紫光疊加 */
+    filter: drop-shadow(0 0 8px #ffffff) drop-shadow(0 0 20px #d946ef);
 }
 
-/* 錄音中嘅「呼吸燈」動畫 - 專為 PNG 線條而設 */
+/* 5. 呼吸燈動畫 (錄音專用) */
 @keyframes mic-glow-pulse {
-    from { 
-        filter: drop-shadow(0 0 8px #d946ef); 
-    }
-    to { 
-        filter: drop-shadow(0 0 25px #d946ef) drop-shadow(0 0 5px #ffffff); 
-    }
+    from { filter: drop-shadow(0 0 5px #d946ef); }
+    to { filter: drop-shadow(0 0 20px #d946ef) drop-shadow(0 0 5px #ffffff); }
 }
 
-/* 套用落去 recording 狀態 */
 .mic-btn.recording {
     animation: mic-glow-pulse 1s infinite alternate ease-in-out;
-    border-color: #ffffff;
-    background-color: rgba(217, 70, 239, 0.15);
 }
-/* =========================================
-   ★★★ 聽力模式 & 高科技喇叭 CSS (修正版) ★★★
-   ========================================= */
 
-/* 1. 聽力句子 (白色、細字、科技感) */
+/* 6. 句子與填空位 (Listening Mode) */
 .sentence-container { 
     font-family: 'Orbitron', sans-serif; 
-    font-size: 16px; /* 細字啲 */
-    color: #ffffff; /* 白色 */
+    font-size: 16px; 
+    color: #ffffff; 
     line-height: 1.6; 
     margin-bottom: 20px; 
     text-align: center;
@@ -2104,69 +2107,15 @@ body {
     letter-spacing: 1px;
 }
 
+/* 填空位：只留顏色字，唔要底線框，因為 generateSmartBlanks 會做 */
 .listening-blank {
-    color: var(--primary); /* 藍色 */
+    color: var(--primary); 
     font-weight: bold; 
     font-size: 20px;
     text-shadow: 0 0 10px var(--primary); 
-    padding: 0 5px; margin: 0 5px; letter-spacing: 3px;
-}
-
-/* 2. 高科技喇叭 ICON (保持紫色，代表聽力模式) */
-.cyber-speaker-btn {
-    width: 80px; height: 80px;
-    border: 2px solid #d946ef; /* 紫色框 */
-    border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    cursor: pointer;
-    margin: 10px auto; 
-    position: relative;
-    background: rgba(217, 70, 239, 0.1);
-    box-shadow: 0 0 15px rgba(217, 70, 239, 0.4);
-    transition: all 0.2s;
-    z-index: 10;
-}
-
-/* 喇叭本體 */
-.speaker-shape {
-    position: relative;
-    width: 10px; height: 18px;
-    background: #d946ef;
-    margin-right: 15px; 
-}
-.speaker-shape::after {
-    content: ''; position: absolute;
-    top: 50%; right: -14px; 
-    transform: translateY(-50%);
-    width: 0; height: 0;
-    border-left: 14px solid #d946ef; 
-    border-top: 14px solid transparent;
-    border-bottom: 14px solid transparent;
-}
-.speaker-wave {
-    position: absolute;
-    top: 50%; left: 50%;
-    transform: translate(-50%, -50%);
-    width: 100%; height: 100%;
-    border-radius: 50%;
-}
-.cyber-speaker-btn:hover .speaker-wave {
-    animation: pulseWave 1.5s infinite;
-}
-@keyframes pulseWave {
-    0% { box-shadow: 0 0 0 0 rgba(217, 70, 239, 0.7); }
-    70% { box-shadow: 0 0 0 20px rgba(217, 70, 239, 0); }
-    100% { box-shadow: 0 0 0 0 rgba(217, 70, 239, 0); }
-}
-/* 按下特效 */
-.cyber-speaker-btn:active {
-    background: #fff; border-color: #fff;
-    transform: scale(0.95); 
-    box-shadow: 0 0 30px #fff, 0 0 60px #d946ef;
-}
-.cyber-speaker-btn:active .speaker-shape,
-.cyber-speaker-btn:active .speaker-shape::after {
-    border-left-color: #fff; background: #fff;
+    padding: 0 5px; 
+    margin: 0 5px; 
+    letter-spacing: 2px;
 }
     </style>
 
@@ -5365,6 +5314,7 @@ window.onload = function() {
 </div>
 </body>
 </html>
+
 
 
 
