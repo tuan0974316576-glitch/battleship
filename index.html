@@ -1782,12 +1782,21 @@ body {
     }
 }
 
-/* 5. Active 點擊特效 (按下去縮小) */
+/* 5. Active 點擊特效 (修復：暫停動畫 + 強勁藍光) */
 .nav-arrow:active .arrow-shape {
-    border-color: #fff; 
-    filter: drop-shadow(0 0 5px #fff);
+    /* 變回 Cyberpunk 藍色 */
+    border-color: #00f0ff; 
+    
+    /* 強力發光，確保就算手指遮住都睇到光暈 */
+    filter: drop-shadow(0 0 20px #00f0ff); 
+    
     transition: 0.1s;
+    
+    /* ★★★ 關鍵修正：必須暫停呼吸動畫，否則 Active 發光會無效 ★★★ */
+    animation: none; 
 }
+
+/* 保持原本的方向與縮小設定 (無需更改) */
 .nav-arrow.left:active .arrow-shape { transform: scale(0.9) rotate(-135deg); }
 .nav-arrow.right:active .arrow-shape { transform: scale(0.9) rotate(45deg); }
 
@@ -5574,6 +5583,7 @@ function fadeBgm(targetVol, duration = 800) {
 </div>
 </body>
 </html>
+
 
 
 
