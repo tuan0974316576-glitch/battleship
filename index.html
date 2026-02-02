@@ -2135,11 +2135,11 @@ body {
     position: relative; 
 
     /* ★ 動畫：彈出 + 持續干擾 Loop ★ */
-    animation: 
+animation: 
         heavy-glitch-open 1.2s cubic-bezier(0.1, 0.9, 0.2, 1) forwards,
         stable-glitch-loop 5s infinite 1.2s;
         
-    will-change: transform, filter;
+    will-change: transform, filter, clip-path;
 }
 
 /* --- 3. 內部掃描線特效 (Overlay) --- */
@@ -2216,9 +2216,85 @@ body {
 /* --- 動畫 Keyframes 定義 (必須保留) --- */
 @keyframes fadeInBg { from { background: rgba(0,0,0,0); backdrop-filter: blur(0); } to { background: rgba(0,0,0,0.3); backdrop-filter: blur(2px); } }
 @keyframes scanline-scroll { 0% { background-position: 0 0; } 100% { background-position: 0 -100%; } }
-/* (請確保 heavy-glitch-open 和 stable-glitch-loop 已在其他地方定義，如果沒有，請告訴我，我補給你) */
 
+/* =========================================
+   ★★★ 補回：重型訊號干擾動畫 (1.2s) ★★★
+   ========================================= */
 
+/* 1. 視窗彈出 + 撕裂扭曲 */
+@keyframes heavy-glitch-open {
+    0% { opacity: 0; transform: scale(0.1) skew(50deg) translateY(100px); filter: blur(20px) contrast(200%); }
+    10% { opacity: 1; transform: scale(0.6) skew(-20deg) translateY(0); text-shadow: -10px 0 red, 10px 0 blue; filter: blur(5px); }
+    20% { transform: scale(1.1) skew(10deg); text-shadow: 5px 0 blue, -5px 0 red; clip-path: inset(10% 0 80% 0); }
+    30% { transform: scale(0.9) skew(-10deg); clip-path: inset(80% 0 5% 0); filter: brightness(2) contrast(150%); }
+    40% { transform: scale(1.05) skew(5deg); clip-path: inset(0 0 0 0); text-shadow: 3px 0 red, -3px 0 green; }
+    50% { transform: scale(0.98) skew(-2deg); filter: blur(2px); }
+    60% { transform: scale(1.02) skew(1deg); text-shadow: -2px 0 blue, 2px 0 yellow; }
+    70% { transform: scale(1) skew(0deg); filter: blur(0); }
+    85% { transform: translate(2px, 0); text-shadow: 1px 0 rgba(255,0,0,0.5); }
+    100% { transform: translate(0, 0); text-shadow: none; filter: none; opacity: 1; }
+}
+
+/* 2. 背景雜訊風暴 */
+@keyframes noise-storm {
+    0% { opacity: 0; background-position: 0 0; }
+    10% { opacity: 0.8; background-position: 50px 50px; background-size: 150% 150%; }
+    20% { opacity: 0.4; background-position: -50px -50px; filter: invert(1); }
+    40% { opacity: 0.6; background-size: 100% 2px; }
+    100% { opacity: 0; }
+}
+
+/* =========================================
+   ★★★ 步驟 3：背景雜訊層 (請獨立貼上) ★★★
+   ========================================= */
+
+/* 這一段是利用 ::before 在視窗背後加一層「雜訊濾鏡」 */
+#launch-modal::before {
+    content: "";
+    position: absolute;
+    /* 放大到 200% 以便涵蓋整個震動範圍 */
+    top: -50%; left: -50%; width: 200%; height: 200%;
+    
+    pointer-events: none; /* 唔好阻住滑鼠點擊 */
+    z-index: -1; /* 放在視窗 (modal-content) 的後面 */
+    
+    /* 製作 Cyberpunk 風格的雜點同橫紋 */
+    background-image: repeating-linear-gradient(
+        0deg, 
+        transparent, 
+        transparent 2px, 
+        rgba(14, 165, 233, 0.3) 3px, 
+        rgba(14, 165, 233, 0.3) 3px
+    ), radial-gradient(white, rgba(255,255,255,0.1) 2px, transparent 3px);
+    
+    background-size: 100% 4px, 10px 10px;
+    
+    opacity: 0;
+    /* 套用 noise-storm 動畫：每次打開都會閃 1.5秒 */
+    animation: noise-storm 1.5s ease-out forwards;
+}
+/* =========================================
+   ★★★ 補漏：持續干擾動畫 (令視窗 Keep 住閃) ★★★
+   ========================================= */
+@keyframes stable-glitch-loop {
+    0%, 92% { 
+        transform: scale(1) skew(0deg) translate(0,0); 
+        filter: none; 
+    }
+    93% { 
+        /* 突然變光 + 輕微位移 */
+        transform: translate(2px, -2px) skew(2deg); 
+        filter: brightness(1.5) contrast(1.2); 
+    }
+    95% { 
+        /* 反向扭曲 + 色差 */
+        transform: translate(-2px, 2px); 
+        filter: hue-rotate(90deg);
+    }
+    96% { transform: scale(1); filter: none; }
+    98% { transform: scale(1.01); filter: brightness(1.2); }
+    100% { transform: scale(1); filter: none; }
+}
     </style>
 
 </head>
@@ -5703,6 +5779,7 @@ function playUnderAttackAlert() {
 </div>
 </body>
 </html>
+
 
 
 
