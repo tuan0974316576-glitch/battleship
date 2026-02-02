@@ -2090,32 +2090,62 @@ body {
 }
 
 /* ============================================================
-   ★★★ 終極電影級：全屏震盪 + 順滑視窗 (完全整合版) ★★★
+   ★★★ 終極電影級 V4：激進衝擊波 + 順滑展開 (High Impact Smooth) ★★★
    ============================================================ */
 
-/* --- 1. 定義動畫 Keyframes (確保每一個括號都正確) --- */
+/* --- 1. 定義動畫 Keyframes --- */
 
-/* 背景層震動 */
+/* (A) 全屏現實震盪 (背景層) - 加強了扭曲感 */
 @keyframes reality-shock {
-    0% { backdrop-filter: blur(0px); transform: scale(1); }
-    15% { backdrop-filter: blur(12px) brightness(1.6) hue-rotate(10deg); transform: scale(1.03); }
-    100% { backdrop-filter: blur(2px) brightness(1); transform: scale(1); }
+    0% { 
+        backdrop-filter: blur(0px) hue-rotate(0deg); 
+        transform: scale(1);
+        filter: contrast(1);
+    }
+    15% { 
+        /* ★ 激進爆發點 ★ */
+        /* 強烈模糊 + 色相旋轉 + 畫面放大 + 對比度爆升 */
+        backdrop-filter: blur(20px) hue-rotate(90deg) brightness(1.5); 
+        transform: scale(1.05); /* 畫面拉近 */
+        filter: contrast(2); /* 顏色變激 */
+    }
+    100% { 
+        backdrop-filter: blur(4px) hue-rotate(0deg) brightness(1); 
+        transform: scale(1);
+        filter: contrast(1);
+    }
 }
 
-/* 視窗進場：由線條扭曲展開 (0.7s) */
+/* (B) 視窗進場：由「極幼光線」扭曲展開 (數值推大) */
 @keyframes smooth-entry {
     0% {
         opacity: 0;
-        transform: scale(0.2) scaleY(0.01) skew(45deg) translateY(30px);
-        filter: blur(20px) brightness(2);
+        /* 階段1：比之前更幼 (0.002)，更闊 (1.5)，更歪 (60deg) */
+        transform: scaleX(1.5) scaleY(0.002) skew(60deg) translateY(100px);
+        filter: blur(20px) brightness(5); /* 爆光 */
+        box-shadow: 0 0 100px rgba(14, 165, 233, 1);
     }
-    50% {
+    30% {
+        opacity: 0.8;
+        /* 階段2：線條急速拉高，依然歪 */
+        transform: scaleX(0.8) scaleY(0.8) skew(30deg);
+        filter: blur(5px) brightness(2);
+    }
+    60% {
         opacity: 1;
-        transform: scale(1.05) skew(-10deg);
+        /* 階段3：過度展開 (Overshoot)，反向歪 */
+        transform: scaleX(1.05) scaleY(1.05) skew(-15deg);
         filter: blur(0) brightness(1.2);
-        text-shadow: 4px 0 rgba(255,0,0,0.5), -4px 0 rgba(0,0,255,0.5);
+        /* 強烈 RGB 色差 */
+        text-shadow: 6px 0 rgba(255,0,0,0.8), -6px 0 rgba(0,0,255,0.8);
+    }
+    85% {
+        /* 階段4：回彈 */
+        transform: scale(0.98) skew(3deg);
+        text-shadow: -2px 0 red, 2px 0 blue;
     }
     100% {
+        /* 階段5：定格 */
         transform: scale(1) skew(0deg);
         filter: none;
         text-shadow: none;
@@ -2123,66 +2153,70 @@ body {
     }
 }
 
-/* 視窗待機：流暢漂移 (4s) */
+/* (C) 待機流動 (保持順滑) */
 @keyframes fluid-float {
     0%, 100% { transform: translate(0, 0) skew(0deg); }
-    33% { transform: translate(-3px, -2px) skew(1deg); }
-    66% { transform: translate(3px, 2px) skew(-1deg); }
+    33% { transform: translate(-4px, -3px) skew(2deg); } /* 加大少少幅度 */
+    66% { transform: translate(4px, 3px) skew(-2deg); }
 }
 
-/* 雜訊閃爍 (1.5s) */
+/* (D) 雜訊閃爍 (加強版) */
 @keyframes noise-flash {
     0% { opacity: 0; }
-    15% { opacity: 0.6; background-position: 50px 50px; filter: invert(1); }
+    10% { opacity: 0.8; filter: invert(1) contrast(2); } /* 反白閃爍 */
+    20% { opacity: 0.4; filter: none; }
     100% { opacity: 0; }
 }
 
-/* 掃描線滾動 (3s) */
-@keyframes scanline-move { 
-    0% { background-position: 0 0; } 
-    100% { background-position: 0 100%; } 
-}
+/* (E) 掃描線 */
+@keyframes scanline-move { 0% { background-position: 0 0; } 100% { background-position: 0 100%; } }
+
 
 /* --- 2. 視窗遮罩層 (#launch-modal) --- */
 #launch-modal { 
     display: none; 
     position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
     z-index: 100;
-    background: rgba(0, 0, 0, 0.3);
     
-    /* 刪除 flex，由 JS 控制，但保留置中屬性 */
+    /* 基本底色 */
+    background: rgba(0, 0, 0, 0.4); 
+    
     justify-content: center; align-items: center; padding-top: 0; 
     
-    /* 打開時背景震動與雜訊啟動 */
-    animation: reality-shock 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+    /* 全屏震盪動畫：0.8s */
+    animation: reality-shock 0.8s cubic-bezier(0.1, 0.9, 0.2, 1) forwards;
 }
 
-/* 背景雜訊濾鏡 (::before) */
+/* 背景雜訊 (::before) */
 #launch-modal::before {
     content: ""; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
     pointer-events: none; z-index: -1;
-    background-image: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(14,165,233,0.2) 3px, rgba(14,165,233,0.2) 3px),
-                      radial-gradient(white, rgba(255,255,255,0.1) 2px, transparent 3px);
+    
+    /* 雜點紋理 */
+    background-image: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(14,165,233,0.3) 3px, rgba(14,165,233,0.3) 3px),
+                      radial-gradient(white, rgba(255,255,255,0.2) 2px, transparent 3px);
     background-size: 100% 4px, 10px 10px;
-    animation: noise-flash 1.5s ease-out forwards;
-    opacity: 0.5;
+    
+    /* 雜訊動畫 */
+    animation: noise-flash 1s ease-out forwards;
+    opacity: 0.6;
 }
 
 /* --- 3. 視窗本體 (.modal-content) --- */
 #launch-modal .modal-content {
-    background: rgba(15, 23, 42, 0.75); 
+    background: rgba(15, 23, 42, 0.85); /* 深色少少，突出光效 */
     backdrop-filter: blur(12px); 
-    border: 1px solid rgba(14, 165, 233, 0.6);
-    box-shadow: 0 0 50px rgba(14, 165, 233, 0.4), inset 0 0 30px rgba(14, 165, 233, 0.2);
+    border: 1px solid rgba(14, 165, 233, 0.8);
+    box-shadow: 0 0 60px rgba(14, 165, 233, 0.6), inset 0 0 40px rgba(14, 165, 233, 0.3);
     
     width: 90%; max-width: 450px; padding: 30px; border-radius: 10px;
     text-align: center; color: #fff;
     overflow: hidden; position: relative; 
 
-    /* 進場 + 循環動畫 */
+    /* 進場 (0.8s) + 待機 Loop */
     animation: 
-        smooth-entry 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) forwards,
-        fluid-float 4s ease-in-out infinite 0.7s;
+        smooth-entry 0.8s cubic-bezier(0.1, 0.9, 0.2, 1) forwards,
+        fluid-float 4s ease-in-out infinite 0.8s;
         
     will-change: transform, filter, text-shadow;
 }
@@ -2191,15 +2225,16 @@ body {
 #launch-modal .modal-content::after {
     content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 200%;
     pointer-events: none; z-index: 1;
-    background: linear-gradient(to bottom, transparent 50%, rgba(14, 165, 233, 0.1) 50%, transparent 51%);
+    background: linear-gradient(to bottom, transparent 50%, rgba(14, 165, 233, 0.15) 50%, transparent 51%);
     background-size: 100% 4px;
-    animation: scanline-move 3s linear infinite;
+    animation: scanline-move 2s linear infinite; /* 加快少少 */
 }
 
 /* 確保文字在頂層 */
 #launch-modal .modal-content > * { position: relative; z-index: 2; }
 
-/* --- 4. 響應式適配 (手機與平板) --- */
+
+/* --- 4. 響應式適配 --- */
 @media (max-width: 600px) {
     #launch-modal { align-items: flex-start !important; padding-top: 5vh !important; overflow-y: scroll; }
     #launch-modal .modal-content { width: 85%; max-width: 350px; padding: 15px 20px; margin-bottom: 50vh; }
