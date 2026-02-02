@@ -3337,7 +3337,7 @@ if (currentPracticeMode === 'SPEAKING') {
         qDisplay.style.color = "var(--primary)";
         
         input.style.display = 'block';
-        setTimeout(() => input.focus(), 10); // 小延遲確保 focus 成功
+        input.focus(); // 小延遲確保 focus 成功
 
         // 自動讀出整句句子
         setTimeout(() => speakText(textToRead), 300);
@@ -3353,7 +3353,7 @@ if (currentPracticeMode === 'SPEAKING') {
         qDisplay.style.color = "var(--primary)";
         
         input.style.display = 'block';
-        setTimeout(() => input.focus(), 10);
+        input.focus();
     }
 
     // --- 動畫與倒數 ---
@@ -5649,6 +5649,7 @@ function playUnderAttackAlert() {
 </div>
 </body>
 </html>
+
 
 
 
