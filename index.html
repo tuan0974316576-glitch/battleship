@@ -2184,6 +2184,108 @@ body {
     margin: 0 5px; 
     letter-spacing: 2px;
 }
+/* =========================================
+   ★★★ 終極特效：全息投影 + 訊號干擾 ★★★
+   ========================================= */
+
+/* 1. 定義動畫：視窗彈出 + 電流震動 (RGB Split) */
+@keyframes holo-glitch-pop {
+    0% {
+        opacity: 0;
+        transform: scale(0.8) translateY(20px);
+        /* 嚴重的紅藍色差 + 模糊 */
+        text-shadow: 5px 0 rgba(255,0,0,0.8), -5px 0 rgba(0,0,255,0.8);
+        filter: blur(10px) brightness(2);
+    }
+    40% {
+        /* 衝過頭 + 輕微色差 */
+        transform: scale(1.05);
+        text-shadow: 2px 0 red, -2px 0 blue;
+        filter: blur(0) brightness(1.2);
+    }
+    60% {
+        /* 反向震動 */
+        transform: scale(0.98) translate(-2px, 2px);
+        text-shadow: -1px 0 red, 1px 0 blue;
+    }
+    80% {
+        transform: scale(1.01);
+        text-shadow: none; /* 消除色差 */
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1);
+        filter: blur(0);
+    }
+}
+
+/* 2. 定義動畫：全屏掃描線干擾 (Scanline Flash) */
+@keyframes scanline-flash {
+    0% {
+        opacity: 0;
+        background-size: 100% 100%;
+    }
+    10% {
+        opacity: 0.5; /* 掃描線出現 */
+        background-size: 100% 2px; /* 變成密密麻麻嘅線 */
+    }
+    30% {
+        opacity: 0.2;
+        background-position: 0 50px; /* 線條向下移動 */
+    }
+    100% {
+        opacity: 0; /* 消失 */
+    }
+}
+
+/* 3. 套用落去視窗內容框 (.modal-content) */
+#launch-modal .modal-content {
+    /* 使用新的 Glitch Pop 動畫 */
+    animation: holo-glitch-pop 0.35s cubic-bezier(0.2, 0.9, 0.3, 1.5) forwards;
+    
+    /* 保持原有的發光邊框 */
+    box-shadow: 
+        0 0 30px rgba(14, 165, 233, 0.6), 
+        inset 0 0 20px rgba(14, 165, 233, 0.2);
+    border: 1px solid rgba(14, 165, 233, 0.8);
+    backdrop-filter: blur(10px);
+    
+    /* 確保震動時唔會爛圖 */
+    will-change: transform, text-shadow;
+}
+
+/* 4. ★★★ 新增：背景電流掃描線 ★★★ */
+/* 利用 ::before 偽元素製造全屏干擾效果 */
+#launch-modal::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    pointer-events: none; /* 唔好阻住點擊 */
+    z-index: -1; /* 喺內容後面 */
+    
+    /* 畫掃描線 (透明間條) */
+    background: linear-gradient(
+        to bottom,
+        rgba(255, 255, 255, 0),
+        rgba(255, 255, 255, 0) 50%,
+        rgba(14, 165, 233, 0.2) 50%, /* 藍色雜訊線 */
+        rgba(14, 165, 233, 0.2)
+    );
+    background-size: 100% 4px; /* 線條粗幼 */
+    
+    opacity: 0;
+    /* 每次打開視窗都會閃一下 */
+    animation: scanline-flash 0.5s ease-out forwards;
+}
+
+/* 5. 背景遮罩動畫 */
+#launch-modal {
+    animation: fadeInBg 0.2s ease-out;
+}
+@keyframes fadeInBg {
+    from { background: rgba(0,0,0,0); backdrop-filter: blur(0); }
+    to { background: rgba(0,0,0,0.85); backdrop-filter: blur(5px); }
+}
     </style>
 
 </head>
@@ -5668,4 +5770,5 @@ function playUnderAttackAlert() {
 </div>
 </body>
 </html>
+
 
