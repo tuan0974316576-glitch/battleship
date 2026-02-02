@@ -2095,26 +2095,22 @@ body {
 
 /* --- 1. 視窗大背景 (遮罩層) --- */
 #launch-modal { 
-    display: none; 
+    display: none; /* 只保留呢個，預設隱藏 */
     position: fixed; 
     top: 0; left: 0; 
     width: 100%; height: 100%; 
     
-    /* 半透明黑 (0.3)，清楚透出後面戰場 */
     background: rgba(0, 0, 0, 0.3); 
-    
-    /* 輕微模糊背景 (2px)，保留細節 */
     backdrop-filter: blur(2px); 
-    
     z-index: 100; 
     
-    /* 電腦版預設：置中 */
-    display: flex; /* 確保可以用 flex 排版 */
+    /* 刪除了 display: flex */
+    
+    /* 保持置中設定 (當 JS 打開佢時會自動用 Flex) */
     justify-content: center; 
     align-items: center; 
     padding-top: 0; 
     
-    /* 進場動畫 */
     animation: fadeInBg 0.3s ease-out forwards;
 }
 
@@ -5707,6 +5703,7 @@ function playUnderAttackAlert() {
 </div>
 </body>
 </html>
+
 
 
 
