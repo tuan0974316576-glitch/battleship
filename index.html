@@ -3164,7 +3164,7 @@ initEnemyFleetIndicator();
                 shipId: index, // 重要：告訴對手這是第幾號船
                 indices: s.indices,
                 width: s.width,
-                height: s.height
+                height: s.height,
                 isVertical: s.isVertical
             }));
             updates[field + 'Ships'] = myShipsForSending;
@@ -5517,6 +5517,42 @@ function fadeBgm(targetVol, duration = 800) {
         }
     }, stepTime);
 }
+// =========================================
+// ★★★ 玩家名稱輸入打字音效 (簡單版) ★★★
+// =========================================
+
+// 1. 設定個計時器去搵個輸入框 (因為有時輸入框未 Load 出嚟)
+const checkInputInterval = setInterval(() => {
+    // 搵個輸入框 (ID = 'player-name-input')
+    const nameInput = document.getElementById('player-name-input');
+    
+    if (nameInput) {
+        // 搵到了！停止計時器
+        clearInterval(checkInputInterval);
+        
+        // 2. 加入打字監聽
+        nameInput.addEventListener('input', (e) => {
+            // 每次打字，播放 enter_word.mp3
+            // 創建新音效物件，確保連打時可以疊加聲音
+            const sound = new Audio('enter_word.mp3'); 
+            sound.volume = 0.3; // 30% 音量，費事太嘈
+            
+            // 播放 (加 catch 防止瀏覽器阻擋)
+            sound.play().catch(() => {}); 
+        });
+        
+        // 3. (選用) 加入刪除聲 (Backspace)
+        nameInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Backspace') {
+                const delSound = new Audio('delete_word.mp3');
+                delSound.volume = 0.3;
+                delSound.play().catch(() => {});
+            }
+        });
+        
+        console.log("Typing sound loaded for player input!");
+    }
+}, 500); // 每 0.5 秒檢查一次，直到搵到為止
     
 </script>
 <div id="registration-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 9999; flex-direction: column; align-items: center; justify-content: center;">
