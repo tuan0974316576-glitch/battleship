@@ -2090,204 +2090,51 @@ body {
 }
 
 /* ============================================================
-   ★★★ 終極整合版：解碼視窗 (背景 + 全息特效 + 手機適配) ★★★
+   ★★★ 終極電影級：全屏震盪 + 順滑視窗 (Cinematic Glitch) ★★★
    ============================================================ */
 
-/* --- 1. 視窗大背景 (遮罩層) --- */
-#launch-modal { 
-    display: none; /* 只保留呢個，預設隱藏 */
-    position: fixed; 
-    top: 0; left: 0; 
-    width: 100%; height: 100%; 
-    
-    background: rgba(0, 0, 0, 0.3); 
-    backdrop-filter: blur(2px); 
-    z-index: 100; 
-    
-    /* 刪除了 display: flex */
-    
-    /* 保持置中設定 (當 JS 打開佢時會自動用 Flex) */
-    justify-content: center; 
-    align-items: center; 
-    padding-top: 0; 
-    
-    animation: fadeInBg 0.3s ease-out forwards;
-}
+/* --- 1. 定義動畫 Keyframes --- */
 
-/* --- 2. 視窗本體 (Hologram 全息投影框) --- */
-#launch-modal .modal-content {
-    /* ★ 外觀：半透明深藍底 + 發光邊框 ★ */
-    background: rgba(15, 23, 42, 0.75); 
-    backdrop-filter: blur(12px); 
-    border: 1px solid rgba(14, 165, 233, 0.6);
-    box-shadow: 0 0 40px rgba(14, 165, 233, 0.5), inset 0 0 30px rgba(14, 165, 233, 0.2);
-    
-    /* ★ 尺寸設定 ★ */
-    width: 90%; 
-    max-width: 450px; /* 電腦版最大闊度 */
-    padding: 30px;
-    border-radius: 10px;
-    text-align: center;
-    color: #fff;
-    
-    /* 隱藏溢出的掃描線 */
-    overflow: hidden; 
-    position: relative; 
-
-    /* ★ 動畫：彈出 + 持續干擾 Loop ★ */
-animation: 
-        hologram-stream-open 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards,
-        stable-glitch-loop 5s infinite 1s; /* 1秒後開始 Loop 微干擾 */
-        
-    will-change: transform, filter, text-shadow, opacity;
-}
-
-/* --- 3. 內部掃描線特效 (Overlay) --- */
-#launch-modal .modal-content::after {
-    content: "";
-    position: absolute;
-    top: 0; left: 0; width: 100%; height: 200%;
-    pointer-events: none;
-    z-index: 1;
-    
-    /* 淺藍色掃描線漸變 */
-    background: linear-gradient(
-        to bottom,
-        rgba(255, 255, 255, 0) 0%,
-        rgba(255, 255, 255, 0) 50%,
-        rgba(14, 165, 233, 0.15) 50%,
-        rgba(14, 165, 233, 0.05) 51%,
-        rgba(255, 255, 255, 0) 100%
-    );
-    background-size: 100% 4px;
-    animation: scanline-scroll 3s linear infinite;
-}
-
-/* 確保內容在掃描線之上 */
-#launch-modal .modal-content > * {
-    position: relative;
-    z-index: 2;
-}
-
-/* =========================================
-   ★★★ 手機 & 平板 適配 (Overwrite) ★★★
-   ========================================= */
-
-/* --- 手機版 (闊度小於 600px) --- */
-@media (max-width: 600px) {
-    #launch-modal {
-        /* 強制靠上，避開鍵盤 */
-        align-items: flex-start !important; 
-        padding-top: 5vh !important; 
-        overflow-y: scroll; /* 容許滾動 */
+/* (A) 全屏震盪 (用於背景層) - 模擬衝擊波 */
+@keyframes reality-shock {
+    0% { 
+        backdrop-filter: blur(0px); 
+        transform: scale(1);
     }
-
-    #launch-modal .modal-content {
-        box-sizing: border-box;
-        width: 85%;
-        max-width: 350px;
-        padding: 15px 20px; /* 改薄 Padding */
-        
-        /* 底部加超大 Margin，確保鍵盤彈起時有位 Scroll */
-        margin-bottom: 50vh; 
+    10% { 
+        /* 瞬間爆發：強模糊 + 放大 + 變光 */
+        backdrop-filter: blur(10px) brightness(1.5) hue-rotate(15deg); 
+        transform: scale(1.02);
     }
-
-    /* 字體縮細 */
-    .modal-content #q-text { font-size: 24px !important; margin: 5px 0 !important; }
-    .modal-content .vocab-hint { font-size: 28px !important; margin: 10px 0 !important; letter-spacing: 3px !important; }
-    .modal-content div[style*="font-size: 22px"] { font-size: 18px !important; }
-}
-
-/* --- 平板/iPad版 (601px 至 1024px) --- */
-@media (min-width: 601px) and (max-width: 1024px) {
-    #launch-modal {
-        align-items: flex-start !important; 
-        padding-top: 15vh !important; /* iPad 留番多啲頂位 */
-        overflow-y: auto;
+    30% { 
+        /* 回彈：變暗 + 輕微縮細 */
+        backdrop-filter: blur(4px) brightness(0.8); 
+        transform: scale(0.99);
     }
-
-    #launch-modal .modal-content {
-        width: 70%;
-        max-width: 500px;
-        margin-bottom: 20vh;
+    100% { 
+        /* 定格在半透明狀態 */
+        backdrop-filter: blur(2px) brightness(1); 
+        transform: scale(1);
     }
 }
 
-/* --- 動畫 Keyframes 定義 (必須保留) --- */
-@keyframes fadeInBg { from { background: rgba(0,0,0,0); backdrop-filter: blur(0); } to { background: rgba(0,0,0,0.3); backdrop-filter: blur(2px); } }
-@keyframes scanline-scroll { 0% { background-position: 0 0; } 100% { background-position: 0 -100%; } }
-
-
-/* 2. 背景雜訊風暴 */
-@keyframes noise-storm {
-    0% { opacity: 0; background-position: 0 0; }
-    10% { opacity: 0.8; background-position: 50px 50px; background-size: 150% 150%; }
-    20% { opacity: 0.4; background-position: -50px -50px; filter: invert(1); }
-    40% { opacity: 0.6; background-size: 100% 2px; }
-    100% { opacity: 0; }
-}
-
-/* =========================================
-   ★★★ 步驟 3：背景雜訊層 (請獨立貼上) ★★★
-   ========================================= */
-
-/* 這一段是利用 ::before 在視窗背後加一層「雜訊濾鏡」 */
-#launch-modal::before {
-    content: "";
-    position: absolute;
-    /* 放大到 200% 以便涵蓋整個震動範圍 */
-    top: -50%; left: -50%; width: 200%; height: 200%;
-    
-    pointer-events: none; /* 唔好阻住滑鼠點擊 */
-    z-index: -1; /* 放在視窗 (modal-content) 的後面 */
-    
-    /* 製作 Cyberpunk 風格的雜點同橫紋 */
-    background-image: repeating-linear-gradient(
-        0deg, 
-        transparent, 
-        transparent 2px, 
-        rgba(14, 165, 233, 0.3) 3px, 
-        rgba(14, 165, 233, 0.3) 3px
-    ), radial-gradient(white, rgba(255,255,255,0.1) 2px, transparent 3px);
-    
-    background-size: 100% 4px, 10px 10px;
-    
-animation: noise-storm 2s ease-out forwards;
-    opacity: 0.5; /* 減低透明度，唔好太花 */
-}
-/* ============================================================
-   ★★★ 終極修正版：保留重型特效 + 去除窒機感 (Heavy FX, Smooth Motion) ★★★
-   ============================================================ */
-
-/* --- 1. 進場動畫：重型扭曲展開 (保留 Skew/色差，去除 Clip-path) --- */
-@keyframes heavy-smooth-open {
+/* (B) 視窗進場：順滑扭曲 (保留 Skew 但去除窒機感) */
+@keyframes smooth-entry {
     0% {
         opacity: 0;
-        /* 一開始：極度扭曲 + 縮細 + 強光 */
-        transform: scale(0.2) skew(45deg) translateY(50px);
-        filter: blur(10px) brightness(2.5); 
-        box-shadow: 0 0 50px rgba(14, 165, 233, 1);
+        /* 由極扁 + 極歪開始 */
+        transform: scale(0.2) scaleY(0.05) skew(45deg) translateY(30px);
+        filter: blur(20px) brightness(2);
     }
-    40% {
-        opacity: 0.8;
-        /* 快速衝過頭，反向扭曲 */
-        transform: scale(1.05) skew(-15deg);
-        filter: blur(0) brightness(1.5);
-        /* 保留強烈 RGB 色差 (紅藍重影) */
-        text-shadow: 5px 0 rgba(255,0,0,0.7), -5px 0 rgba(0,0,255,0.7);
-    }
-    60% {
-        /* 回彈修正 */
-        transform: scale(0.95) skew(5deg);
-        filter: brightness(1.2);
-        text-shadow: -3px 0 red, 3px 0 blue;
-    }
-    80% {
-        transform: scale(1.01) skew(-2deg);
-        text-shadow: 2px 0 red, -2px 0 blue;
+    50% {
+        opacity: 1;
+        /* 展開過頭，反向歪 (Q彈感) */
+        transform: scale(1.05) skew(-10deg);
+        filter: blur(0) brightness(1.2);
+        /* 順滑色差 */
+        text-shadow: 4px 0 rgba(255,0,0,0.5), -4px 0 rgba(0,0,255,0.5);
     }
     100% {
-        /* 定格 */
         transform: scale(1) skew(0deg);
         filter: none;
         text-shadow: none;
@@ -2295,59 +2142,117 @@ animation: noise-storm 2s ease-out forwards;
     }
 }
 
-/* --- 2. 循環動畫：連續流動干擾 (Continuous Signal Drift) --- */
-/* ★ 改良重點：唔再係「定格->跳」，而係全程都用 ease-in-out 慢慢扭 */
-@keyframes continuous-glitch-loop {
-    0% {
-        transform: translate(0, 0) skew(0deg);
-        filter: brightness(1);
+/* (C) 視窗待機：液態流動 (全程 ease-in-out，絕對唔窒) */
+@keyframes fluid-float {
+    0%, 100% { 
+        transform: translate(0, 0) skew(0deg); 
     }
-    25% {
-        /* 慢慢向左歪 + 變光 */
-        transform: translate(-3px, -2px) skew(2deg);
-        filter: brightness(1.1);
-        text-shadow: 2px 0 rgba(255,0,0,0.3); /* 輕微色差 */
+    33% { 
+        /* 慢慢向左上漂 */
+        transform: translate(-3px, -2px) skew(1deg); 
     }
-    50% {
-        /* 慢慢向右歪 + 變暗 */
-        transform: translate(3px, 2px) skew(-2deg);
-        filter: brightness(0.9);
-        text-shadow: -2px 0 rgba(0,0,255,0.3);
-    }
-    75% {
-        /* 向上浮 + 稍微放大 */
-        transform: translate(0, -3px) scale(1.01) skew(1deg);
-        filter: brightness(1.05);
-    }
-    100% {
-        transform: translate(0, 0) skew(0deg);
-        filter: brightness(1);
+    66% { 
+        /* 慢慢向右下沉 */
+        transform: translate(3px, 2px) skew(-1deg); 
     }
 }
 
-/* --- 3. 套用設定 --- */
+/* (D) 雜訊風暴 (背景特效) */
+@keyframes noise-flash {
+    0% { opacity: 0; }
+    10% { opacity: 0.6; background-position: 50px 50px; } /* 雜訊閃現 */
+    20% { opacity: 0.3; filter: invert(1); } /* 畫面反白一下 */
+    100% { opacity: 0; }
+}
+
+/* (E) 掃描線滾動 */
+@keyframes scanline-move { 
+    0% { background-position: 0 0; } 
+    100% { background-position: 0 100%; } 
+}
+
+
+/* --- 2. 視窗大背景 (#launch-modal) --- */
+#launch-modal { 
+    display: none; 
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+    z-index: 100;
+    
+    background: rgba(0, 0, 0, 0.3); /* 基本底色 */
+    
+    /* 刪除 flex，由 JS 控制，但保留置中屬性 */
+    justify-content: center; align-items: center; padding-top: 0; 
+
+    /* ★ 關鍵：加入 reality-shock 動畫 ★ */
+    /* 當視窗打開，成個背景會震一下 */
+    animation: reality-shock 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+
+/* --- 3. 視窗本體 (.modal-content) --- */
 #launch-modal .modal-content {
-    /* 保持原有的外觀設定 */
+    /* 外觀 */
     background: rgba(15, 23, 42, 0.75); 
     backdrop-filter: blur(12px); 
     border: 1px solid rgba(14, 165, 233, 0.6);
-    box-shadow: 0 0 40px rgba(14, 165, 233, 0.5), inset 0 0 30px rgba(14, 165, 233, 0.2);
+    box-shadow: 0 0 50px rgba(14, 165, 233, 0.4), inset 0 0 30px rgba(14, 165, 233, 0.2);
     
     width: 90%; max-width: 450px; 
     padding: 30px; border-radius: 10px;
     text-align: center; color: #fff;
     overflow: hidden; position: relative; 
 
-    /* ★ 關鍵組合：0.8秒重型進場 + 之後 3秒一次連續流動 ★ */
-    /* continuous-glitch-loop 改用 3s 並且 ease-in-out，保證順滑但有扭曲感 */
+    /* ★ 動畫組合：0.7秒進場 + 3秒流動 Loop ★ */
     animation: 
-        heavy-smooth-open 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards,
-        continuous-glitch-loop 3s ease-in-out infinite 0.8s;
+        smooth-entry 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) forwards,
+        fluid-float 3s ease-in-out infinite 0.7s; /* 0.7s 後無縫接軌 */
         
     will-change: transform, filter, text-shadow;
 }
-    </style>
 
+/* --- 4. 內部掃描線 (Overlay) --- */
+#launch-modal .modal-content::after {
+    content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 200%;
+    pointer-events: none; z-index: 1;
+    background: linear-gradient(to bottom, transparent 50%, rgba(14, 165, 233, 0.1) 50%, transparent 51%);
+    background-size: 100% 4px;
+    animation: scanline-move 3s linear infinite;
+}
+
+/* 確保內容在掃描線之上 */
+#launch-modal .modal-content > * { position: relative; z-index: 2; }
+
+/* --- 5. 背景雜訊層 (::before) --- */
+#launch-modal::before {
+    content: ""; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+    pointer-events: none; z-index: -1;
+    
+    /* 雜點紋理 */
+    background-image: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(14,165,233,0.2) 3px, rgba(14,165,233,0.2) 3px),
+                      radial-gradient(white, rgba(255,255,255,0.1) 2px, transparent 3px);
+    background-size: 100% 4px, 10px 10px;
+    
+    /* 雜訊閃現 1.5秒 */
+    animation: noise-flash 1.5s ease-out forwards;
+    opacity: 0.5;
+}
+
+
+/* =========================================
+   ★★★ 手機 & 平板 適配 ★★★
+   ========================================= */
+@media (max-width: 600px) {
+    #launch-modal { align-items: flex-start !important; padding-top: 5vh !important; overflow-y: scroll; }
+    #launch-modal .modal-content { width: 85%; max-width: 350px; padding: 15px 20px; margin-bottom: 50vh; }
+    .modal-content #q-text { font-size: 24px !important; margin: 5px 0 !important; }
+    .modal-content .vocab-hint { font-size: 28px !important; margin: 10px 0 !important; letter-spacing: 3px !important; }
+    .modal-content div[style*="font-size: 22px"] { font-size: 18px !important; }
+}
+
+@media (min-width: 601px) and (max-width: 1024px) {
+    #launch-modal { align-items: flex-start !important; padding-top: 15vh !important; overflow-y: auto; }
+    #launch-modal .modal-content { width: 70%; max-width: 500px; margin-bottom: 20vh; }
+}
+</style>
 </head>
 <body>
 <div id="splash-screen" onclick="startExperience()">
@@ -5830,6 +5735,7 @@ function playUnderAttackAlert() {
 </div>
 </body>
 </html>
+
 
 
 
