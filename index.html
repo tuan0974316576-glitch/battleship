@@ -2090,88 +2090,240 @@ body {
 }
 
 /* ============================================================
-   ★★★ 終極完美版 v2：線條展開 + 順滑扭曲 (Line Expand + Smooth Skew) ★★★
+   ★★★ 終極整合版：解碼視窗 (背景 + 全息特效 + 手機適配) ★★★
    ============================================================ */
 
-/* --- 1. 進場動畫：由一條發光線 -> 扭曲展開 -> 定格 --- */
-@keyframes smooth-skew-open {
-    0% {
-        opacity: 0;
-        /* 狀態：極扁嘅橫線 (ScaleY 0.05) + 嚴重扭曲 (Skew 50deg) + 縮細 (Scale 0.2) */
-        transform: scale(0.2) scaleY(0.05) skew(50deg) translateY(50px);
-        /* 發光特效：扮激光掃描 */
-        filter: blur(10px) brightness(2.5); 
-        box-shadow: 0 0 50px rgba(14, 165, 233, 1);
-    }
-    30% {
-        opacity: 0.8;
-        /* 狀態：拉長變成視窗高度，但依然有扭曲 */
-        transform: scale(0.8) scaleY(1) skew(20deg);
-        filter: blur(5px) brightness(1.5);
-    }
-    60% {
-        /* 狀態：衝力過頭，反向扭曲 (回彈感) */
-        transform: scale(1.05) skew(-10deg);
-        filter: blur(2px) brightness(1.2);
-        /* 強烈 RGB 色差 */
-        text-shadow: 4px 0 rgba(255,0,0,0.6), -4px 0 rgba(0,0,255,0.6);
-    }
-    80% {
-        /* 狀態：輕微修正 */
-        transform: scale(0.98) skew(2deg);
-        filter: blur(0);
-        text-shadow: -2px 0 red, 2px 0 blue;
-    }
-    100% {
-        /* 狀態：完美定格 */
-        transform: scale(1) skew(0deg);
-        filter: none;
-        text-shadow: none;
-        opacity: 1;
-    }
+/* --- 1. 視窗大背景 (遮罩層) --- */
+#launch-modal { 
+    display: none; /* 只保留呢個，預設隱藏 */
+    position: fixed; 
+    top: 0; left: 0; 
+    width: 100%; height: 100%; 
+    
+    background: rgba(0, 0, 0, 0.3); 
+    backdrop-filter: blur(2px); 
+    z-index: 100; 
+    
+    /* 刪除了 display: flex */
+    
+    /* 保持置中設定 (當 JS 打開佢時會自動用 Flex) */
+    justify-content: center; 
+    align-items: center; 
+    padding-top: 0; 
+    
+    animation: fadeInBg 0.3s ease-out forwards;
 }
 
-/* --- 2. 循環動畫：輕微漂移 (保持不變，因為呢個已經好順) --- */
-@keyframes smooth-skew-loop {
-    0%, 100% { 
-        transform: translate(0, 0) skew(0deg);
-        filter: brightness(1);
-        box-shadow: 0 0 40px rgba(14, 165, 233, 0.5), inset 0 0 30px rgba(14, 165, 233, 0.2);
-    }
-    33% { 
-        transform: translate(-2px, -3px) skew(1deg);
-        filter: brightness(1.1);
-        box-shadow: 0 0 50px rgba(14, 165, 233, 0.6), inset 0 0 35px rgba(14, 165, 233, 0.3);
-    }
-    66% { 
-        transform: translate(2px, 2px) skew(-1deg);
-        filter: brightness(0.95);
-    }
-}
-
-/* --- 3. 視窗本體 (.modal-content) 設定 --- */
+/* --- 2. 視窗本體 (Hologram 全息投影框) --- */
 #launch-modal .modal-content {
-    /* 外觀設定 (保持不變) */
+    /* ★ 外觀：半透明深藍底 + 發光邊框 ★ */
     background: rgba(15, 23, 42, 0.75); 
     backdrop-filter: blur(12px); 
     border: 1px solid rgba(14, 165, 233, 0.6);
     box-shadow: 0 0 40px rgba(14, 165, 233, 0.5), inset 0 0 30px rgba(14, 165, 233, 0.2);
     
+    /* ★ 尺寸設定 ★ */
     width: 90%; 
-    max-width: 450px; 
+    max-width: 450px; /* 電腦版最大闊度 */
     padding: 30px;
     border-radius: 10px;
     text-align: center;
     color: #fff;
+    
+    /* 隱藏溢出的掃描線 */
     overflow: hidden; 
     position: relative; 
 
-    /* ★ 動畫組合：0.8秒進場 (時間長少少畀你看清楚變化) + 之後 Loop ★ */
-    animation: 
-        smooth-skew-open 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards,
-        smooth-skew-loop 4s ease-in-out infinite 0.8s;
+    /* ★ 動畫：彈出 + 持續干擾 Loop ★ */
+animation: 
+        hologram-stream-open 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards,
+        stable-glitch-loop 5s infinite 1s; /* 1秒後開始 Loop 微干擾 */
         
-    will-change: transform, filter, text-shadow, box-shadow;
+    will-change: transform, filter, text-shadow, opacity;
+}
+
+/* --- 3. 內部掃描線特效 (Overlay) --- */
+#launch-modal .modal-content::after {
+    content: "";
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 200%;
+    pointer-events: none;
+    z-index: 1;
+    
+    /* 淺藍色掃描線漸變 */
+    background: linear-gradient(
+        to bottom,
+        rgba(255, 255, 255, 0) 0%,
+        rgba(255, 255, 255, 0) 50%,
+        rgba(14, 165, 233, 0.15) 50%,
+        rgba(14, 165, 233, 0.05) 51%,
+        rgba(255, 255, 255, 0) 100%
+    );
+    background-size: 100% 4px;
+    animation: scanline-scroll 3s linear infinite;
+}
+
+/* 確保內容在掃描線之上 */
+#launch-modal .modal-content > * {
+    position: relative;
+    z-index: 2;
+}
+
+/* =========================================
+   ★★★ 手機 & 平板 適配 (Overwrite) ★★★
+   ========================================= */
+
+/* --- 手機版 (闊度小於 600px) --- */
+@media (max-width: 600px) {
+    #launch-modal {
+        /* 強制靠上，避開鍵盤 */
+        align-items: flex-start !important; 
+        padding-top: 5vh !important; 
+        overflow-y: scroll; /* 容許滾動 */
+    }
+
+    #launch-modal .modal-content {
+        box-sizing: border-box;
+        width: 85%;
+        max-width: 350px;
+        padding: 15px 20px; /* 改薄 Padding */
+        
+        /* 底部加超大 Margin，確保鍵盤彈起時有位 Scroll */
+        margin-bottom: 50vh; 
+    }
+
+    /* 字體縮細 */
+    .modal-content #q-text { font-size: 24px !important; margin: 5px 0 !important; }
+    .modal-content .vocab-hint { font-size: 28px !important; margin: 10px 0 !important; letter-spacing: 3px !important; }
+    .modal-content div[style*="font-size: 22px"] { font-size: 18px !important; }
+}
+
+/* --- 平板/iPad版 (601px 至 1024px) --- */
+@media (min-width: 601px) and (max-width: 1024px) {
+    #launch-modal {
+        align-items: flex-start !important; 
+        padding-top: 15vh !important; /* iPad 留番多啲頂位 */
+        overflow-y: auto;
+    }
+
+    #launch-modal .modal-content {
+        width: 70%;
+        max-width: 500px;
+        margin-bottom: 20vh;
+    }
+}
+
+/* --- 動畫 Keyframes 定義 (必須保留) --- */
+@keyframes fadeInBg { from { background: rgba(0,0,0,0); backdrop-filter: blur(0); } to { background: rgba(0,0,0,0.3); backdrop-filter: blur(2px); } }
+@keyframes scanline-scroll { 0% { background-position: 0 0; } 100% { background-position: 0 -100%; } }
+
+
+/* 1. 視窗彈出 + 撕裂扭曲 */
+@keyframes hologram-stream-open {
+    0% {
+        opacity: 0;
+        transform: scaleY(0.1) scaleX(1.3); /* 一開始扁平 */
+        filter: blur(10px) brightness(0); /* 黑影 */
+    }
+    10% {
+        opacity: 0.8;
+        transform: scaleY(0.5) scaleX(1.1);
+        filter: blur(5px) brightness(1.5); /* 突然爆光 */
+        box-shadow: 0 0 50px rgba(14, 165, 233, 0.8);
+    }
+    30% {
+        opacity: 0.9;
+        transform: scaleY(1.05) scaleX(0.95); /* 輕微回彈 */
+        /* 輕微 RGB 色差，扮訊號不穩，但唔扭曲形狀 */
+        text-shadow: 2px 0 rgba(255,0,0,0.7), -2px 0 rgba(0,0,255,0.7);
+        filter: blur(0) brightness(1.2);
+    }
+    50% {
+        transform: scale(1);
+        /* 掃描線閃一下 */
+        background: linear-gradient(rgba(14,165,233,0.1), rgba(14,165,233,0));
+        text-shadow: none;
+    }
+    60% {
+        /* 快速閃爍 */
+        opacity: 0.8;
+        text-shadow: -1px 0 red, 1px 0 blue;
+    }
+    70% {
+        opacity: 1;
+        text-shadow: none;
+    }
+    85% {
+        /* 最後微調 */
+        transform: scale(1.01);
+        box-shadow: 0 0 30px rgba(14, 165, 233, 0.4);
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+        filter: none;
+        box-shadow: 0 0 40px rgba(14, 165, 233, 0.5), inset 0 0 30px rgba(14, 165, 233, 0.2);
+    }
+}
+
+/* 2. 背景雜訊風暴 */
+@keyframes noise-storm {
+    0% { opacity: 0; background-position: 0 0; }
+    10% { opacity: 0.8; background-position: 50px 50px; background-size: 150% 150%; }
+    20% { opacity: 0.4; background-position: -50px -50px; filter: invert(1); }
+    40% { opacity: 0.6; background-size: 100% 2px; }
+    100% { opacity: 0; }
+}
+
+/* =========================================
+   ★★★ 步驟 3：背景雜訊層 (請獨立貼上) ★★★
+   ========================================= */
+
+/* 這一段是利用 ::before 在視窗背後加一層「雜訊濾鏡」 */
+#launch-modal::before {
+    content: "";
+    position: absolute;
+    /* 放大到 200% 以便涵蓋整個震動範圍 */
+    top: -50%; left: -50%; width: 200%; height: 200%;
+    
+    pointer-events: none; /* 唔好阻住滑鼠點擊 */
+    z-index: -1; /* 放在視窗 (modal-content) 的後面 */
+    
+    /* 製作 Cyberpunk 風格的雜點同橫紋 */
+    background-image: repeating-linear-gradient(
+        0deg, 
+        transparent, 
+        transparent 2px, 
+        rgba(14, 165, 233, 0.3) 3px, 
+        rgba(14, 165, 233, 0.3) 3px
+    ), radial-gradient(white, rgba(255,255,255,0.1) 2px, transparent 3px);
+    
+    background-size: 100% 4px, 10px 10px;
+    
+animation: noise-storm 2s ease-out forwards;
+    opacity: 0.5; /* 減低透明度，唔好太花 */
+}
+/* =========================================
+   ★★★ 補漏：持續干擾動畫 (令視窗 Keep 住閃) ★★★
+   ========================================= */
+@keyframes stable-glitch-loop {
+    0%, 92% { 
+        transform: scale(1) skew(0deg) translate(0,0); 
+        filter: none; 
+    }
+    93% { 
+        /* 突然變光 + 輕微位移 */
+        transform: translate(2px, -2px) skew(2deg); 
+        filter: brightness(1.5) contrast(1.2); 
+    }
+    95% { 
+        /* 反向扭曲 + 色差 */
+        transform: translate(-2px, 2px); 
+        filter: hue-rotate(90deg);
+    }
+    96% { transform: scale(1); filter: none; }
+    98% { transform: scale(1.01); filter: brightness(1.2); }
+    100% { transform: scale(1); filter: none; }
 }
     </style>
 
@@ -5657,10 +5809,6 @@ function playUnderAttackAlert() {
 </div>
 </body>
 </html>
-
-
-
-
 
 
 
