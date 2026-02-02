@@ -2115,31 +2115,62 @@ body {
 }
 
 /* --- 2. 視窗本體 (Hologram 全息投影框) --- */
+/* =========================================
+   ★★★ 新版：流暢全息呼吸 (Smooth Hologram Breathe) ★★★
+   ========================================= */
+
+/* 1. 定義新 Loop 動畫：流暢懸浮 + 輕微扭曲 */
+/* 全程順滑過渡，唔會再窒 */
+@keyframes hologram-float {
+    0% {
+        transform: translate(0, 0) scale(1) skew(0deg);
+        filter: brightness(1);
+        box-shadow: 0 0 40px rgba(14, 165, 233, 0.5), inset 0 0 30px rgba(14, 165, 233, 0.2);
+    }
+    33% {
+        /* 慢慢向上浮，輕微向左歪 */
+        transform: translate(0, -5px) scale(1.01) skew(1deg);
+        filter: brightness(1.1);
+        box-shadow: 0 0 50px rgba(14, 165, 233, 0.6), inset 0 0 40px rgba(14, 165, 233, 0.3);
+    }
+    66% {
+        /* 慢慢向下沉，輕微向右歪 (模擬信號漂移) */
+        transform: translate(0, 2px) scale(0.99) skew(-1deg);
+        filter: brightness(0.95);
+    }
+    100% {
+        transform: translate(0, 0) scale(1) skew(0deg);
+        filter: brightness(1);
+        box-shadow: 0 0 40px rgba(14, 165, 233, 0.5), inset 0 0 30px rgba(14, 165, 233, 0.2);
+    }
+}
+
+/* 2. 修改視窗 (.modal-content) 設定 */
 #launch-modal .modal-content {
-    /* ★ 外觀：半透明深藍底 + 發光邊框 ★ */
+    /* 外觀設定 (保持不變) */
     background: rgba(15, 23, 42, 0.75); 
     backdrop-filter: blur(12px); 
     border: 1px solid rgba(14, 165, 233, 0.6);
+    /* 預設陰影 */
     box-shadow: 0 0 40px rgba(14, 165, 233, 0.5), inset 0 0 30px rgba(14, 165, 233, 0.2);
     
-    /* ★ 尺寸設定 ★ */
+    /* 尺寸設定 (保持不變) */
     width: 90%; 
-    max-width: 450px; /* 電腦版最大闊度 */
+    max-width: 450px; 
     padding: 30px;
     border-radius: 10px;
     text-align: center;
     color: #fff;
-    
-    /* 隱藏溢出的掃描線 */
     overflow: hidden; 
     position: relative; 
 
-    /* ★ 動畫：彈出 + 持續干擾 Loop ★ */
-animation: 
+    /* ★ 關鍵修改：將 stable-glitch-loop 換成 hologram-float ★ */
+    /* 4秒一個循環，無限 Loop，感覺似呼吸緊 */
+    animation: 
         hologram-stream-open 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards,
-        stable-glitch-loop 5s infinite 1s; /* 1秒後開始 Loop 微干擾 */
+        hologram-float 4s ease-in-out infinite 0.8s;
         
-    will-change: transform, filter, text-shadow, opacity;
+    will-change: transform, filter, box-shadow;
 }
 
 /* --- 3. 內部掃描線特效 (Overlay) --- */
@@ -2302,28 +2333,6 @@ animation:
     
 animation: noise-storm 2s ease-out forwards;
     opacity: 0.5; /* 減低透明度，唔好太花 */
-}
-/* =========================================
-   ★★★ 補漏：持續干擾動畫 (令視窗 Keep 住閃) ★★★
-   ========================================= */
-@keyframes stable-glitch-loop {
-    0%, 92% { 
-        transform: scale(1) skew(0deg) translate(0,0); 
-        filter: none; 
-    }
-    93% { 
-        /* 突然變光 + 輕微位移 */
-        transform: translate(2px, -2px) skew(2deg); 
-        filter: brightness(1.5) contrast(1.2); 
-    }
-    95% { 
-        /* 反向扭曲 + 色差 */
-        transform: translate(-2px, 2px); 
-        filter: hue-rotate(90deg);
-    }
-    96% { transform: scale(1); filter: none; }
-    98% { transform: scale(1.01); filter: brightness(1.2); }
-    100% { transform: scale(1); filter: none; }
 }
     </style>
 
@@ -5809,6 +5818,7 @@ function playUnderAttackAlert() {
 </div>
 </body>
 </html>
+
 
 
 
