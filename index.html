@@ -2503,6 +2503,7 @@ body {
 <script src="vocab_data.js"></script>
 
 <script>
+    
 let currentPracticeMode = 'READING'; // 預設模式
 let recognition = null; // 語音識別物件
 let battleLog = [];
@@ -2883,7 +2884,7 @@ function initPVPListeners() {
                     const status = document.getElementById('game-status');
                     status.innerHTML = `OPPONENT TIMED OUT!`;
                     status.style.color = "var(--success)";
-                    playSound('time-out-sfx'); // 修正音效名
+                    playSound('time_out'); // 修正音效名 (請確保檔案名正確，例如 'time_out.mp3')
                     setGameTimeout(startPlayerTurn, 1500);
                     return;
                 }
@@ -2902,8 +2903,13 @@ function initPVPListeners() {
                 // 延遲顯示結果
                 setGameTimeout(() => {
                     if (myGrid[idx] === 1) {
+                        // --- 擊中邏輯 ---
                         cell.classList.add('hit');
                         playSound('hit-sfx');
+                        
+                        // ★★★ 加在這裡：播放警報聲 (每8秒一次) ★★★
+                        playUnderAttackAlert(); 
+
                         triggerAnimation(cell, 'orange');
                         
                         myDamage++;
@@ -2913,6 +2919,7 @@ function initPVPListeners() {
 
                         if (checkGameOver()) return;
                     } else {
+                        // --- 打失邏輯 ---
                         cell.classList.add('miss');
                         cell.innerText = "X";
                     }
@@ -2926,7 +2933,7 @@ function initPVPListeners() {
                 }, 1200);
             }
         });
-    }   
+    }
     // --- 7. 佈陣邏輯 ---
     function createGrid(elementId) {
         const board = document.getElementById(elementId);
@@ -3730,6 +3737,7 @@ function aiFire() {
             cell.classList.add('hit');
             playSound('hit-sfx');
             triggerAnimation(cell, 'orange');
+            playUnderAttackAlert();
             
             myDamage++;
             
@@ -5553,7 +5561,28 @@ const checkInputInterval = setInterval(() => {
         console.log("Typing sound loaded for player input!");
     }
 }, 500); // 每 0.5 秒檢查一次，直到搵到為止
-    
+// --- ★★★ 戰鬥警報音效模組 (放在最頂) ★★★ ---
+const alertSfx = new Audio('your-forces-are-under-attack.mp3');
+alertSfx.volume = 1.0; // 警報聲大聲啲
+let lastAlertTime = 0; // 記住上次響是幾時
+
+function playUnderAttackAlert() {
+    const now = Date.now();
+    // 冷卻機制：如果距離上次播放超過 8000 毫秒 (8秒)
+    if (now - lastAlertTime > 8000) {
+        // 閃避效果：播放時暫時將 BGM 收細
+        const bgm = document.getElementById('bgm-audio');
+        if (bgm) bgm.volume = 0.1;
+        
+        alertSfx.play().catch(e => console.log(e));
+        lastAlertTime = now;
+        
+        // 3秒後將 BGM 變回正常
+        setTimeout(() => {
+            if (bgm) bgm.volume = 0.3; 
+        }, 3000);
+    }
+}
 </script>
 <div id="registration-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 9999; flex-direction: column; align-items: center; justify-content: center;">
     
@@ -5620,6 +5649,7 @@ const checkInputInterval = setInterval(() => {
 </div>
 </body>
 </html>
+
 
 
 
