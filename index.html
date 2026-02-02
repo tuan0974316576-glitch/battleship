@@ -2218,54 +2218,6 @@ animation:
 @keyframes scanline-scroll { 0% { background-position: 0 0; } 100% { background-position: 0 -100%; } }
 
 
-/* 1. 視窗彈出 + 撕裂扭曲 */
-@keyframes hologram-stream-open {
-    0% {
-        opacity: 0;
-        transform: scaleY(0.1) scaleX(1.3); /* 一開始扁平 */
-        filter: blur(10px) brightness(0); /* 黑影 */
-    }
-    10% {
-        opacity: 0.8;
-        transform: scaleY(0.5) scaleX(1.1);
-        filter: blur(5px) brightness(1.5); /* 突然爆光 */
-        box-shadow: 0 0 50px rgba(14, 165, 233, 0.8);
-    }
-    30% {
-        opacity: 0.9;
-        transform: scaleY(1.05) scaleX(0.95); /* 輕微回彈 */
-        /* 輕微 RGB 色差，扮訊號不穩，但唔扭曲形狀 */
-        text-shadow: 2px 0 rgba(255,0,0,0.7), -2px 0 rgba(0,0,255,0.7);
-        filter: blur(0) brightness(1.2);
-    }
-    50% {
-        transform: scale(1);
-        /* 掃描線閃一下 */
-        background: linear-gradient(rgba(14,165,233,0.1), rgba(14,165,233,0));
-        text-shadow: none;
-    }
-    60% {
-        /* 快速閃爍 */
-        opacity: 0.8;
-        text-shadow: -1px 0 red, 1px 0 blue;
-    }
-    70% {
-        opacity: 1;
-        text-shadow: none;
-    }
-    85% {
-        /* 最後微調 */
-        transform: scale(1.01);
-        box-shadow: 0 0 30px rgba(14, 165, 233, 0.4);
-    }
-    100% {
-        transform: scale(1);
-        opacity: 1;
-        filter: none;
-        box-shadow: 0 0 40px rgba(14, 165, 233, 0.5), inset 0 0 30px rgba(14, 165, 233, 0.2);
-    }
-}
-
 /* 2. 背景雜訊風暴 */
 @keyframes noise-storm {
     0% { opacity: 0; background-position: 0 0; }
@@ -2303,27 +2255,96 @@ animation:
 animation: noise-storm 2s ease-out forwards;
     opacity: 0.5; /* 減低透明度，唔好太花 */
 }
-/* =========================================
-   ★★★ 補漏：持續干擾動畫 (令視窗 Keep 住閃) ★★★
-   ========================================= */
-@keyframes stable-glitch-loop {
-    0%, 92% { 
-        transform: scale(1) skew(0deg) translate(0,0); 
-        filter: none; 
+/* ============================================================
+   ★★★ 終極修正版：保留重型特效 + 去除窒機感 (Heavy FX, Smooth Motion) ★★★
+   ============================================================ */
+
+/* --- 1. 進場動畫：重型扭曲展開 (保留 Skew/色差，去除 Clip-path) --- */
+@keyframes heavy-smooth-open {
+    0% {
+        opacity: 0;
+        /* 一開始：極度扭曲 + 縮細 + 強光 */
+        transform: scale(0.2) skew(45deg) translateY(50px);
+        filter: blur(10px) brightness(2.5); 
+        box-shadow: 0 0 50px rgba(14, 165, 233, 1);
     }
-    93% { 
-        /* 突然變光 + 輕微位移 */
-        transform: translate(2px, -2px) skew(2deg); 
-        filter: brightness(1.5) contrast(1.2); 
+    40% {
+        opacity: 0.8;
+        /* 快速衝過頭，反向扭曲 */
+        transform: scale(1.05) skew(-15deg);
+        filter: blur(0) brightness(1.5);
+        /* 保留強烈 RGB 色差 (紅藍重影) */
+        text-shadow: 5px 0 rgba(255,0,0,0.7), -5px 0 rgba(0,0,255,0.7);
     }
-    95% { 
-        /* 反向扭曲 + 色差 */
-        transform: translate(-2px, 2px); 
-        filter: hue-rotate(90deg);
+    60% {
+        /* 回彈修正 */
+        transform: scale(0.95) skew(5deg);
+        filter: brightness(1.2);
+        text-shadow: -3px 0 red, 3px 0 blue;
     }
-    96% { transform: scale(1); filter: none; }
-    98% { transform: scale(1.01); filter: brightness(1.2); }
-    100% { transform: scale(1); filter: none; }
+    80% {
+        transform: scale(1.01) skew(-2deg);
+        text-shadow: 2px 0 red, -2px 0 blue;
+    }
+    100% {
+        /* 定格 */
+        transform: scale(1) skew(0deg);
+        filter: none;
+        text-shadow: none;
+        opacity: 1;
+    }
+}
+
+/* --- 2. 循環動畫：連續流動干擾 (Continuous Signal Drift) --- */
+/* ★ 改良重點：唔再係「定格->跳」，而係全程都用 ease-in-out 慢慢扭 */
+@keyframes continuous-glitch-loop {
+    0% {
+        transform: translate(0, 0) skew(0deg);
+        filter: brightness(1);
+    }
+    25% {
+        /* 慢慢向左歪 + 變光 */
+        transform: translate(-3px, -2px) skew(2deg);
+        filter: brightness(1.1);
+        text-shadow: 2px 0 rgba(255,0,0,0.3); /* 輕微色差 */
+    }
+    50% {
+        /* 慢慢向右歪 + 變暗 */
+        transform: translate(3px, 2px) skew(-2deg);
+        filter: brightness(0.9);
+        text-shadow: -2px 0 rgba(0,0,255,0.3);
+    }
+    75% {
+        /* 向上浮 + 稍微放大 */
+        transform: translate(0, -3px) scale(1.01) skew(1deg);
+        filter: brightness(1.05);
+    }
+    100% {
+        transform: translate(0, 0) skew(0deg);
+        filter: brightness(1);
+    }
+}
+
+/* --- 3. 套用設定 --- */
+#launch-modal .modal-content {
+    /* 保持原有的外觀設定 */
+    background: rgba(15, 23, 42, 0.75); 
+    backdrop-filter: blur(12px); 
+    border: 1px solid rgba(14, 165, 233, 0.6);
+    box-shadow: 0 0 40px rgba(14, 165, 233, 0.5), inset 0 0 30px rgba(14, 165, 233, 0.2);
+    
+    width: 90%; max-width: 450px; 
+    padding: 30px; border-radius: 10px;
+    text-align: center; color: #fff;
+    overflow: hidden; position: relative; 
+
+    /* ★ 關鍵組合：0.8秒重型進場 + 之後 3秒一次連續流動 ★ */
+    /* continuous-glitch-loop 改用 3s 並且 ease-in-out，保證順滑但有扭曲感 */
+    animation: 
+        heavy-smooth-open 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards,
+        continuous-glitch-loop 3s ease-in-out infinite 0.8s;
+        
+    will-change: transform, filter, text-shadow;
 }
     </style>
 
@@ -5809,6 +5830,7 @@ function playUnderAttackAlert() {
 </div>
 </body>
 </html>
+
 
 
 
