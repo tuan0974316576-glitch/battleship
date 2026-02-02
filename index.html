@@ -2184,6 +2184,36 @@ body {
     margin: 0 5px; 
     letter-spacing: 2px;
 }
+/* --- ★★★ 科技感視窗展開動畫 (Holo-Deploy) ★★★ --- */
+@keyframes holoDeploy {
+    0% {
+        transform: scale(0.8) translateY(20px); /* 一開始細啲、低啲 */
+        opacity: 0;
+        filter: blur(10px); /* 模糊效果 (似投影未對焦) */
+        box-shadow: 0 0 0 rgba(0, 240, 255, 0);
+    }
+    40% {
+        opacity: 1;
+        filter: blur(0px); /* 對焦完成 */
+        box-shadow: 0 0 30px var(--primary); /* 藍光爆發 */
+    }
+    100% {
+        transform: scale(1) translateY(0);
+        box-shadow: 0 0 15px rgba(0, 0, 0, 0.5); /* 回復正常陰影 */
+    }
+}
+
+/* 當加上這個 class 時，觸發動畫 */
+.tech-anim-active {
+    animation: holoDeploy 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; /* 彈下彈下嘅物理效果 */
+    transform-origin: center;
+}
+
+/* 確保輸入框一開始係隱形嘅 (配合 JS 用) */
+.input-hidden-start {
+    opacity: 0;
+    transition: opacity 0.3s ease-in-out;
+}
     </style>
 
 </head>
@@ -3230,11 +3260,15 @@ battleUnsubscribe = onValue(ref(db, 'rooms/' + currentRoomId), (snapshot) => {
         }
     }
 
-// --- 最終完整整合版：出題視窗 (圖片圖示 + 智能排版 + 語音修復) ---
+// --- 最終完整整合版：出題視窗 (圖片圖示 + 智能排版 + 語音 + 科技動畫 + iOS修復) ---
 function openLaunchModal(index) {
     // 1. 停止選位倒數
     if (typeof turnTimerInterval !== 'undefined' && turnTimerInterval) clearInterval(turnTimerInterval);
     document.getElementById('turn-timer-container').style.display = 'none';
+
+    // ★ 新增：播放確認語音 (增加科技感)
+    // 建議載入: roger.mp3 或 deploy.mp3
+    playSound('roger'); 
 
     // 狀態文字
     let statusText = "DECRYPTING...";
@@ -3270,31 +3304,38 @@ function openLaunchModal(index) {
     // 重置基本狀態
     msgArea.innerText = "";
     input.value = "";
+    input.classList.remove('error-shake'); // 確保移除錯誤震動
     
     // 清理舊的 Mic 按鈕 (防止重複)
     const oldMic = document.getElementById('mic-btn');
     if(oldMic) oldMic.remove();
 
-    // ★★★ 關鍵：先顯示視窗，再執行後面的 focus，確保鍵盤彈出 ★★★
+    // ★★★ 關鍵修改 1：啟動科技感展開動畫 ★★★
     modal.style.display = "flex";
+    
+    // 重置動畫 Class (讓它每次打開都彈一次)
+    modal.classList.remove('tech-anim-active');
+    void modal.offsetWidth; // 強制瀏覽器重繪 (Magic!)
+    modal.classList.add('tech-anim-active');
+
 
     // ★★★ 核心：根據模式切換介面 ★★★
-if (currentPracticeMode === 'SPEAKING') {
-    const textToRead = currentVocab.sent ? currentVocab.sent : currentVocab.en;
-    qText.innerText = `READ: ${textToRead}`;
-    
-    // 字體縮細少少，因為句子比較長
-    qText.style.fontSize = "22px"; 
-    qText.style.lineHeight = "1.4"; // 增加行距，比較好讀
-    qText.style.cursor = "default";
-    qText.onclick = null;
+    if (currentPracticeMode === 'SPEAKING') {
+        const textToRead = currentVocab.sent ? currentVocab.sent : currentVocab.en;
+        qText.innerText = `READ: ${textToRead}`;
+        
+        // 字體縮細少少，因為句子比較長
+        qText.style.fontSize = "22px"; 
+        qText.style.lineHeight = "1.4"; // 增加行距，比較好讀
+        qText.style.cursor = "default";
+        qText.onclick = null;
 
-    qDisplay.innerText = "(Tap Mic & Read Sentence)";
+        qDisplay.innerText = "(Tap Mic & Read Sentence)";
         qDisplay.style.color = "#94a3b8"; 
         
         input.style.display = 'none'; 
 
-        // 動態加入 Mic 按鈕 (使用你畫的 PNG)
+        // 動態加入 Mic 按鈕
         const micBtn = document.createElement('div');
         micBtn.id = 'mic-btn';
         micBtn.className = 'mic-btn'; 
@@ -3319,7 +3360,7 @@ if (currentPracticeMode === 'SPEAKING') {
             contentHTML += `<div style="font-family:'Orbitron'; font-size:14px; color:#d946ef; margin-bottom:15px; letter-spacing:2px;">// AUDIO INTERCEPTED //</div>`;
         }
 
-        // 2. 加入高科技喇叭掣 (使用你畫的 PNG)
+        // 2. 加入高科技喇叭掣
         const textToRead = currentVocab.sent ? currentVocab.sent : currentVocab.en;
         const safeText = textToRead.replace(/'/g, "\\'");
 
@@ -3336,8 +3377,17 @@ if (currentPracticeMode === 'SPEAKING') {
         qDisplay.innerHTML = generateSmartBlanks(currentVocab.en);
         qDisplay.style.color = "var(--primary)";
         
+        // ★★★ 關鍵修改 2：iOS 鍵盤防卡死 (Ghost Focus) ★★★
         input.style.display = 'block';
-        input.focus(); // 小延遲確保 focus 成功
+        input.style.opacity = '0'; // 先隱形
+        void input.offsetWidth;    // 強制重繪
+        input.focus();             // 立即彈出鍵盤 (iOS 允許)
+        
+        // 動畫播完後才慢慢顯示輸入框文字
+        setTimeout(() => {
+            input.style.opacity = '1';
+            input.style.transition = 'opacity 0.3s ease';
+        }, 300);
 
         // 自動讀出整句句子
         setTimeout(() => speakText(textToRead), 300);
@@ -3352,8 +3402,17 @@ if (currentPracticeMode === 'SPEAKING') {
         qDisplay.innerHTML = generateSmartBlanks(currentVocab.en);
         qDisplay.style.color = "var(--primary)";
         
+        // ★★★ 關鍵修改 3：iOS 鍵盤防卡死 (Reading 模式也要) ★★★
         input.style.display = 'block';
-        input.focus();
+        input.style.opacity = '0'; // 先隱形
+        void input.offsetWidth;    // 強制重繪
+        input.focus();             // 立即彈出鍵盤
+        
+        // 延遲淡入
+        setTimeout(() => {
+            input.style.opacity = '1';
+            input.style.transition = 'opacity 0.3s ease';
+        }, 300);
     }
 
     // --- 動畫與倒數 ---
@@ -5649,6 +5708,7 @@ function playUnderAttackAlert() {
 </div>
 </body>
 </html>
+
 
 
 
