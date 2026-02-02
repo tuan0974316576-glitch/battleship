@@ -3995,13 +3995,32 @@ function startPlayerTurn() {
         }
     }
 
-    function triggerAnimation(cell, type) {
-        const d = document.createElement('div');
-        if (type === 'blue') d.classList.add('anim-blue');
-        if (type === 'orange') d.classList.add('anim-orange');
-        cell.appendChild(d);
-        setTimeout(() => d.remove(), 500);
-    }
+// --- 修改後的動畫函數 (確保動畫在戰艦上面) ---
+function triggerAnimation(cell, type) {
+    const d = document.createElement('div');
+    if (type === 'blue') d.classList.add('anim-blue');
+    if (type === 'orange') d.classList.add('anim-orange');
+    
+    // ★ 關鍵修改 1：將動畫加到 Board (父層)，而不是 Cell (子層) ★
+    // 這樣動畫就可以跟戰艦 (ship-overlay) 在同一個層級競爭
+    const board = cell.parentElement; 
+    
+    // ★ 關鍵修改 2：手動設定動畫的位置和大小 ★
+    // 因為移出了 Cell，我們要告訴它 Cell 在哪裡
+    d.style.left = cell.offsetLeft + 'px';
+    d.style.top = cell.offsetTop + 'px';
+    d.style.width = cell.offsetWidth + 'px'; // 確保大小跟格仔一樣 (包含手機版 RWD)
+    d.style.height = cell.offsetHeight + 'px';
+    
+    // ★ 關鍵修改 3：設定極高的 z-index ★
+    // 戰艦係 z-index: 6，我哋設定 100 確保一定喺上面
+    d.style.zIndex = '100'; 
+    
+    board.appendChild(d);
+    
+    // 0.5秒後移除
+    setTimeout(() => d.remove(), 500);
+}
 
     function playSound(id) {
         const s = document.getElementById(id);
@@ -5649,3 +5668,4 @@ function playUnderAttackAlert() {
 </div>
 </body>
 </html>
+
