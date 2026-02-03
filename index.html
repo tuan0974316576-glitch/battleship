@@ -2290,6 +2290,29 @@ body {
 .ship-entering-h {
     animation: ship-enter-horizontal 1.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
 }
+/* =========================================
+   ★★★ 新增：噴射推進器 (Thruster Exhaust) ★★★
+   ========================================= */
+
+/* 定義噴火動畫 (2 Frames 循環) */
+@keyframes thruster-burn {
+    from { background-position: 0 0; }
+    to { background-position: 0 -32px; } /* 總高度 32px (16x2) */
+}
+
+.ship-thruster {
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    background-image: url('exhaust_01a.png'); /* 記得確保檔案名正確 */
+    background-size: 16px 32px; /* 鎖定 Spritesheet 大細 */
+    
+    /* 動畫：0.1秒極速閃動，無限 Loop */
+    animation: thruster-burn 0.1s steps(2) infinite;
+    
+    pointer-events: none; /* 唔好阻住滑鼠 */
+    z-index: -1; /* 放在船身下面 (噴氣通常係由引擎噴出嚟) */
+}
         </style>
 </head>
 <body>
@@ -3251,27 +3274,49 @@ function getShipIndices(idx, conf, v) {
 
     // --- 8. 戰鬥流程 ---
 function startBattle() {
-    // ★★★ (新加) 戰艦進場特效代碼 START ★★★
-    // 1. 搵出所有玩家已部署嘅戰艦 (用 ship-overlay class)
+    // ★★★ 戰艦進場 + 安裝推進器特效 ★★★
     const myShips = document.querySelectorAll('#player-grid .ship-overlay');
     
     myShips.forEach((ship, index) => {
-        // 2. 判斷方向 (直船: 高度 > 闊度)
-        // 留意：因為用圖片，所以直接 Check offsetHeight 同 offsetWidth 就最準
+        // 1. 判斷方向 (直船: 高 > 闊)
         const isVertical = ship.offsetHeight > ship.offsetWidth;
 
-        // 3. 重置動畫 (防止重複)
+        // 2. 重置動畫 Class (防止重複)
         ship.classList.remove('ship-entering-v', 'ship-entering-h');
-        void ship.offsetWidth; // 強制瀏覽器重繪 (Magic!)
+        
+        // 3. 檢查有冇裝過推進器，冇先加 (防止重複添加)
+        if (!ship.querySelector('.ship-thruster')) {
+            const thruster = document.createElement('div');
+            thruster.className = 'ship-thruster';
+            
+            // ★ 定位邏輯：根據船尾位置調整 ★
+            if (isVertical) {
+                // 垂直船 (尾部在底)：放在底部正中間
+                thruster.style.bottom = '-14px'; // 稍微凸出嚟
+                thruster.style.left = '50%';
+                thruster.style.transform = 'translateX(-50%)'; // 水平置中
+            } else {
+                // 水平船 (尾部在右)：放在右邊正中間，並旋轉 -90度 (噴向右)
+                thruster.style.right = '-14px';
+                thruster.style.top = '50%';
+                // rotate(-90deg) 令火光向右噴
+                thruster.style.transform = 'translateY(-50%) rotate(-90deg)'; 
+            }
+            
+            ship.appendChild(thruster);
+        }
 
-        // 4. 加入對應動畫 Class
+        // 4. 強制瀏覽器重繪 (Magic!)
+        void ship.offsetWidth;
+
+        // 5. 加入進場動畫 (配合之前的設定)
         if (isVertical) {
             ship.classList.add('ship-entering-v');
         } else {
             ship.classList.add('ship-entering-h');
         }
 
-        // 5. 設定延遲 (每隻船錯開 0.1秒 進場，更有層次感)
+        // 6. 設定延遲
         ship.style.animationDelay = (index * 0.1) + 's';
     });
         if (deploymentTimerInterval) clearInterval(deploymentTimerInterval);
@@ -5796,6 +5841,7 @@ function playUnderAttackAlert() {
 </div>
 </body>
 </html>
+
 
 
 
