@@ -2090,75 +2090,46 @@ body {
 }
 
 /* ============================================================
-   ★★★ 終極電影級 V5：手機防爆版 (Mobile Safe Cinematic) ★★★
+   ★★★ 終極 V7：回歸初心 + 防爆動畫 (Simple & Clean) ★★★
    ============================================================ */
 
-/* --- 1. 定義動畫 Keyframes --- */
+/* --- 1. 定義動畫 (保留 V5 的防爆設定，由短線展開) --- */
 
-/* (A) 全屏震盪 (背景層) */
 @keyframes reality-shock {
-    0% { 
-        backdrop-filter: blur(0px) hue-rotate(0deg); 
-        transform: scale(1);
-        filter: contrast(1);
-    }
-    15% { 
-        backdrop-filter: blur(20px) hue-rotate(90deg) brightness(1.5); 
-        transform: scale(1.05);
-        filter: contrast(2);
-    }
-    100% { 
-        backdrop-filter: blur(4px) hue-rotate(0deg) brightness(1); 
-        transform: scale(1);
-        filter: contrast(1);
-    }
+    0% { backdrop-filter: blur(0px); transform: scale(1); filter: contrast(1); }
+    15% { backdrop-filter: blur(20px) hue-rotate(90deg) brightness(1.5); transform: scale(1.05); filter: contrast(2); }
+    100% { backdrop-filter: blur(4px) hue-rotate(0deg) brightness(1); transform: scale(1); filter: contrast(1); }
 }
 
-/* (B) 視窗進場：修正了寬度，由「短線」展開，防止手機版爆格 */
 @keyframes smooth-entry {
     0% {
         opacity: 0;
-        /* ★ 修正重點：scaleX 由 1.5 改為 0.1 (由一個點開始) ★ */
-        /* scaleY 保持極幼 (0.002) 扮激光 */
+        /* ★ 核心：scaleX 0.1 (短線) 開始，保證手機唔會爆格 ★ */
         transform: scaleX(0.1) scaleY(0.002) skew(60deg) translateY(50px);
         filter: blur(20px) brightness(5);
         box-shadow: 0 0 100px rgba(14, 165, 233, 1);
     }
     40% {
         opacity: 0.8;
-        /* 階段2：線條快速拉闊到正常寬度，並拉高 */
         transform: scaleX(0.9) scaleY(0.8) skew(30deg);
         filter: blur(5px) brightness(2);
     }
     60% {
         opacity: 1;
-        /* 階段3：過度展開 (Overshoot) */
         transform: scaleX(1.05) scaleY(1.05) skew(-15deg);
         filter: blur(0) brightness(1.2);
         text-shadow: 6px 0 rgba(255,0,0,0.8), -6px 0 rgba(0,0,255,0.8);
     }
-    85% {
-        /* 階段4：回彈 */
-        transform: scale(0.98) skew(3deg);
-        text-shadow: -2px 0 red, 2px 0 blue;
-    }
-    100% {
-        /* 階段5：定格 */
-        transform: scale(1) skew(0deg);
-        filter: none;
-        text-shadow: none;
-        opacity: 1;
-    }
+    85% { transform: scale(0.98) skew(3deg); text-shadow: -2px 0 red, 2px 0 blue; }
+    100% { transform: scale(1) skew(0deg); filter: none; text-shadow: none; opacity: 1; }
 }
 
-/* (C) 待機流動 */
 @keyframes fluid-float {
     0%, 100% { transform: translate(0, 0) skew(0deg); }
     33% { transform: translate(-4px, -3px) skew(2deg); }
     66% { transform: translate(4px, 3px) skew(-2deg); }
 }
 
-/* (D) 雜訊閃爍 */
 @keyframes noise-flash {
     0% { opacity: 0; }
     10% { opacity: 0.8; filter: invert(1) contrast(2); }
@@ -2166,8 +2137,8 @@ body {
     100% { opacity: 0; }
 }
 
-/* (E) 掃描線 */
 @keyframes scanline-move { 0% { background-position: 0 0; } 100% { background-position: 0 100%; } }
+
 
 /* --- 2. 視窗遮罩層 (#launch-modal) --- */
 #launch-modal { 
@@ -2175,7 +2146,12 @@ body {
     position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
     z-index: 100;
     background: rgba(0, 0, 0, 0.4); 
-    justify-content: center; align-items: center; padding-top: 0; 
+    
+    /* ★ 回歸 Flexbox 置中 (電腦版最完美) ★ */
+    display: flex; /* 注意：JS 會切換 display，但這裡定義排版 */
+    justify-content: center; 
+    align-items: center; 
+    
     animation: reality-shock 0.8s cubic-bezier(0.1, 0.9, 0.2, 1) forwards;
 }
 
@@ -2200,7 +2176,6 @@ body {
     text-align: center; color: #fff;
     overflow: hidden; position: relative; 
     
-    /* ★ 關鍵修正：鎖定變形原點在正中心，防止歪埋一邊 ★ */
     transform-origin: center center;
 
     animation: 
@@ -2222,34 +2197,37 @@ body {
 
 
 /* =========================================
-   ★★★ 手機 & 平板 適配 (FIXED CENTER) ★★★
+   ★★★ 手機 & 平板 適配 V7 (視覺置中 + 題目優先) ★★★
    ========================================= */
 @media (max-width: 600px) {
     #launch-modal {
+        /* ★ 手機版：取消 Flex Center，改用 Top Align ★ */
         align-items: flex-start !important;
-        padding-top: 5vh !important;
-        overflow-y: scroll;
-        overflow-x: hidden; /* 確保左右唔會郁 */
+        
+        /* 距離頂部 15% (視覺上好似中間，但鎖死頂部) */
+        padding-top: 15vh !important; 
+        
+        /* 移除 Scroll bar 設定，還原基本 */
+        overflow: visible; 
     }
 
     #launch-modal .modal-content {
         box-sizing: border-box;
         width: 85%;
         max-width: 350px;
-        padding: 15px 20px;
-        margin-bottom: 50vh;
+        padding: 20px 20px;
         
-        /* 強制置中 */
-        margin-left: auto;
-        margin-right: auto;
+        /* 強制置中 (防歪) */
+        margin: 0 auto; 
     }
 
-    .modal-content #q-text { font-size: 24px !important; margin: 5px 0 !important; }
+    /* 字體微調 */
+    .modal-content #q-text { font-size: 24px !important; margin: 10px 0 !important; }
     .modal-content .vocab-hint { font-size: 28px !important; margin: 10px 0 !important; letter-spacing: 3px !important; }
     .modal-content div[style*="font-size: 22px"] { font-size: 18px !important; }
 }
 
-/* 紫色按鈕修正 */
+/* Speaking 按鈕紫色光 */
 #skill-screen .level-btn:nth-child(3) {
     border-color: #d946ef;
     text-shadow: 0 0 5px #d946ef;
@@ -2257,8 +2235,8 @@ body {
 }
 
 @media (min-width: 601px) and (max-width: 1024px) {
-    #launch-modal { align-items: flex-start !important; padding-top: 15vh !important; overflow-y: auto; }
-    #launch-modal .modal-content { width: 70%; max-width: 500px; margin-bottom: 20vh; }
+    #launch-modal { align-items: flex-start !important; padding-top: 15vh !important; }
+    #launch-modal .modal-content { width: 70%; max-width: 500px; }
 }
         </style>
 </head>
@@ -5743,6 +5721,7 @@ function playUnderAttackAlert() {
 </div>
 </body>
 </html>
+
 
 
 
