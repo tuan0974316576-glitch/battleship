@@ -2137,29 +2137,57 @@ body {
 
 
 /* ============================================================
-   ★★★ V12 最終版：V11 手感 + Box-Sizing 修復 (解決過長問題) ★★★
+   ★★★ 終極 V13：絕對修復版 (Desktop Locked / Mobile Scroll) ★★★
    ============================================================ */
 
-/* --- 2. 視窗遮罩層 (#launch-modal) --- */
+/* --- 1. 定義動畫 (保持不變) --- */
+@keyframes reality-shock {
+    0% { backdrop-filter: blur(0px); transform: scale(1); filter: contrast(1); }
+    15% { backdrop-filter: blur(20px) hue-rotate(90deg) brightness(1.5); transform: scale(1.05); filter: contrast(2); }
+    100% { backdrop-filter: blur(4px) hue-rotate(0deg) brightness(1); transform: scale(1); filter: contrast(1); }
+}
+
+@keyframes smooth-entry {
+    0% { opacity: 0; transform: scaleX(0.1) scaleY(0.002) skew(60deg) translateY(50px); filter: blur(20px) brightness(5); }
+    40% { opacity: 0.8; transform: scaleX(0.9) scaleY(0.8) skew(30deg); filter: blur(5px) brightness(2); }
+    60% { opacity: 1; transform: scaleX(1.05) scaleY(1.05) skew(-15deg); filter: blur(0) brightness(1.2); }
+    100% { transform: scale(1) skew(0deg); filter: none; opacity: 1; }
+}
+
+@keyframes fluid-float {
+    0%, 100% { transform: translate(0, 0) skew(0deg); }
+    33% { transform: translate(-4px, -3px) skew(2deg); }
+    66% { transform: translate(4px, 3px) skew(-2deg); }
+}
+
+@keyframes noise-flash {
+    0% { opacity: 0; }
+    10% { opacity: 0.8; filter: invert(1) contrast(2); }
+    100% { opacity: 0; }
+}
+
+@keyframes scanline-move { 0% { background-position: 0 0; } 100% { background-position: 0 100%; } }
+
+
+/* --- 2. 視窗遮罩層 (Base: 電腦版設定) --- */
 #launch-modal { 
-    display: none; 
+    display: none; /* JS 會將佢改做 Flex */
     position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
     z-index: 100;
     background: rgba(0, 0, 0, 0.4); 
     
-    /* ★★★ 關鍵修復：補回這句！防止 Padding 撐爆高度 ★★★ */
-    box-sizing: border-box;
-    
-    /* 電腦版：Flex 置中 */
+    /* ★ 關鍵 1：電腦版強制置中，並且鎖死 Scroll Bar (解決電腦版太長) ★ */
     justify-content: center; 
     align-items: center; 
+    overflow: hidden; 
     
+    box-sizing: border-box;
     animation: reality-shock 0.8s cubic-bezier(0.1, 0.9, 0.2, 1) forwards;
 }
 
-/* 固定背景層 (防止頁面變長) */
+/* 背景層：改用 absolute + 100% (解決手機版 100vh 爆長問題) */
 #launch-modal::before {
-    content: ""; position: fixed; top: 0; left: 0; width: 100%; height: 100vh;
+    content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
     pointer-events: none; z-index: -1;
     background-image: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(14,165,233,0.3) 3px, rgba(14,165,233,0.3) 3px),
                       radial-gradient(white, rgba(255,255,255,0.2) 2px, transparent 3px);
@@ -2168,17 +2196,20 @@ body {
     opacity: 0.6;
 }
 
-/* --- 3. 視窗本體 (.modal-content) --- */
+/* --- 3. 視窗本體 (Base: 電腦版) --- */
 #launch-modal .modal-content {
     background: rgba(15, 23, 42, 0.85); 
     backdrop-filter: blur(12px); 
     border: 1px solid rgba(14, 165, 233, 0.8);
     box-shadow: 0 0 60px rgba(14, 165, 233, 0.6), inset 0 0 40px rgba(14, 165, 233, 0.3);
     
-    width: 90%; max-width: 450px; padding: 30px; border-radius: 10px;
+    /* 電腦版設定 */
+    width: 450px; max-width: 90%; 
+    padding: 30px; 
+    margin: 0; /* ★ 關鍵 2：電腦版唔好要 Margin ★ */
+    
     text-align: center; color: #fff;
     overflow: hidden; position: relative; 
-    
     transform-origin: center center;
 
     animation: 
@@ -2200,34 +2231,35 @@ body {
 
 
 /* =========================================
-   ★★★ 手機 & 平板 適配 (V12) ★★★
+   ★★★ 手機 & 平板 適配 (V13) ★★★
    ========================================= */
 @media (max-width: 600px) {
     #launch-modal {
-        /* 1. 改為靠上對齊，避開 Keyboard */
-        align-items: flex-start !important;
+        /* ★ 關鍵 3：手機版改用 Block 排版，方便 Scroll ★ */
+        display: block !important; 
         
-        /* 2. 距離頂部 5vh (因為有 box-sizing，這裡不會撐爆畫面了) */
-        padding-top: 5vh !important;
+        /* 固定頂部距離 */
+        padding-top: 100px;
         
-        /* 3. 鎖死左右，開放垂直 Scroll */
-        overflow-y: scroll; 
+        /* ★ 關鍵 4：只在手機版開啟 Scroll Bar ★ */
+        overflow-y: auto; 
         overflow-x: hidden;
     }
 
     #launch-modal .modal-content {
-        box-sizing: border-box; 
-        width: 85%; 
+        box-sizing: border-box;
+        width: 85%;
         max-width: 350px;
         padding: 15px 20px;
         
-        /* 底部留位避鍵盤 (這會讓內容可滾動，但不會讓整個背景變長) */
-        margin-bottom: 50vh;
+        /* Block 排版下的置中方法 */
+        margin: 0 auto; 
         
-        margin-left: auto;
-        margin-right: auto;
+        /* ★ 關鍵 5：只在手機版加底部 Margin (避鍵盤) ★ */
+        margin-bottom: 50vh; 
     }
 
+    /* 字體調整 */
     .modal-content #q-text { font-size: 24px !important; margin: 5px 0 !important; }
     .modal-content .vocab-hint { font-size: 28px !important; margin: 10px 0 !important; letter-spacing: 3px !important; }
     .modal-content div[style*="font-size: 22px"] { font-size: 18px !important; }
@@ -2235,8 +2267,8 @@ body {
 
 /* iPad 適配 */
 @media (min-width: 601px) and (max-width: 1024px) {
-    #launch-modal { align-items: flex-start !important; padding-top: 15vh !important; overflow-y: auto; }
-    #launch-modal .modal-content { width: 70%; max-width: 500px; margin-bottom: 20vh; }
+    #launch-modal { display: block !important; padding-top: 15vh; overflow-y: auto; }
+    #launch-modal .modal-content { width: 70%; max-width: 500px; margin: 0 auto 20vh auto; }
 }
 
 /* Speaking 按鈕紫色光 */
@@ -5728,6 +5760,7 @@ function playUnderAttackAlert() {
 </div>
 </body>
 </html>
+
 
 
 
