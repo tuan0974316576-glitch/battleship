@@ -2252,6 +2252,44 @@ body {
     text-shadow: 0 0 5px #d946ef; /* ★ 修正重點：文字改發紫色光 */
     box-shadow: 0 0 10px rgba(217, 70, 239, 0.2); /* 預設紫色陰影 */
 }
+/* =========================================
+   ★★★ 修正版：戰艦進場動畫 (Battle Start Entry) ★★★
+   ========================================= */
+
+/* 1. 垂直船進場 (由下向上駛入 - 保持不變) */
+@keyframes ship-enter-vertical {
+    0% {
+        opacity: 0;
+        transform: translateY(50px) scale(0.9); /* 從下方衝上來 */
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* 2. 水平船進場 (由右向左駛入 - 已修正) */
+/* ★ 修改重點：由 -50px 改為 50px ★ */
+@keyframes ship-enter-horizontal {
+    0% {
+        opacity: 0;
+        /* 正數 50px 代表從右邊開始，向左飛去 0 */
+        transform: translateX(50px) scale(0.9); 
+    }
+    100% {
+        opacity: 1;
+        transform: translateX(0) scale(1);
+    }
+}
+
+/* 3. 套用動畫的 Class (保持不變) */
+.ship-entering-v {
+    animation: ship-enter-vertical 1.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+
+.ship-entering-h {
+    animation: ship-enter-horizontal 1.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
         </style>
 </head>
 <body>
@@ -3213,6 +3251,29 @@ function getShipIndices(idx, conf, v) {
 
     // --- 8. 戰鬥流程 ---
 function startBattle() {
+    // ★★★ (新加) 戰艦進場特效代碼 START ★★★
+    // 1. 搵出所有玩家已部署嘅戰艦 (用 ship-overlay class)
+    const myShips = document.querySelectorAll('#player-grid .ship-overlay');
+    
+    myShips.forEach((ship, index) => {
+        // 2. 判斷方向 (直船: 高度 > 闊度)
+        // 留意：因為用圖片，所以直接 Check offsetHeight 同 offsetWidth 就最準
+        const isVertical = ship.offsetHeight > ship.offsetWidth;
+
+        // 3. 重置動畫 (防止重複)
+        ship.classList.remove('ship-entering-v', 'ship-entering-h');
+        void ship.offsetWidth; // 強制瀏覽器重繪 (Magic!)
+
+        // 4. 加入對應動畫 Class
+        if (isVertical) {
+            ship.classList.add('ship-entering-v');
+        } else {
+            ship.classList.add('ship-entering-h');
+        }
+
+        // 5. 設定延遲 (每隻船錯開 0.1秒 進場，更有層次感)
+        ship.style.animationDelay = (index * 0.1) + 's';
+    });
         if (deploymentTimerInterval) clearInterval(deploymentTimerInterval);
         document.getElementById('turn-timer-container').style.display = 'none';
     const exitBtn = document.getElementById('game-exit-btn');
@@ -5735,6 +5796,7 @@ function playUnderAttackAlert() {
 </div>
 </body>
 </html>
+
 
 
 
