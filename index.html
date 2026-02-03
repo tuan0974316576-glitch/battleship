@@ -1,31 +1,17 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
 <head>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@100;300;400;500;700;900&display=swap" rel="stylesheet">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>VOCAB CONQUEROR - Command Center</title>
-
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#0a9396"> <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Vocab Conqueror">
-    <link rel="apple-touch-icon" href="icon.png"> <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@100;300;400;500;700;900&display=swap" rel="stylesheet">
+   <title>VOCAB CONQUEROR - Command Center</title>
     
-    <script>
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js').then(reg => {
-                    console.log('SW registered!', reg);
-                }).catch(err => {
-                    console.log('SW registration failed: ', err);
-                });
-            });
-        }
-    </script>
-    
-    <script type="module">
+<script type="module">
       import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
       import { getDatabase, ref, set, onValue, update, push, child, get, onDisconnect, off } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
       import { getAuth, signInAnonymously, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";;
       
+      // 將它們掛載到 window
       window.firebaseModules = { 
           initializeApp, 
           getDatabase, 
@@ -39,11 +25,11 @@
           getAuth, 
           signInAnonymously, 
           onAuthStateChanged,
-          onDisconnect,
-          off,
-          GoogleAuthProvider,
-          signInWithPopup,
-          signOut
+          onDisconnect, // ★ 記得加這個
+          off,           // ★ 還有這個
+          GoogleAuthProvider, // 新增
+    signInWithPopup,    // 新增
+    signOut             // 新增
       };
     </script>
 
@@ -2104,96 +2090,130 @@ body {
 }
 
 /* ============================================================
-   ★★★ V11 復刻版：還原舊版手感 + V10 防爆底層 ★★★
+   ★★★ 終極電影級 V4：激進衝擊波 + 順滑展開 (High Impact Smooth) ★★★
    ============================================================ */
 
-/* --- 1. 動畫定義 (保留，令出場靚啲) --- */
+/* --- 1. 定義動畫 Keyframes --- */
+
+/* (A) 全屏現實震盪 (背景層) - 加強了扭曲感 */
 @keyframes reality-shock {
-    0% { backdrop-filter: blur(0px); transform: scale(1); filter: contrast(1); }
-    15% { backdrop-filter: blur(20px) hue-rotate(90deg) brightness(1.5); transform: scale(1.05); filter: contrast(2); }
-    100% { backdrop-filter: blur(4px) hue-rotate(0deg) brightness(1); transform: scale(1); filter: contrast(1); }
+    0% { 
+        backdrop-filter: blur(0px) hue-rotate(0deg); 
+        transform: scale(1);
+        filter: contrast(1);
+    }
+    15% { 
+        /* ★ 激進爆發點 ★ */
+        /* 強烈模糊 + 色相旋轉 + 畫面放大 + 對比度爆升 */
+        backdrop-filter: blur(20px) hue-rotate(90deg) brightness(1.5); 
+        transform: scale(1.05); /* 畫面拉近 */
+        filter: contrast(2); /* 顏色變激 */
+    }
+    100% { 
+        backdrop-filter: blur(4px) hue-rotate(0deg) brightness(1); 
+        transform: scale(1);
+        filter: contrast(1);
+    }
 }
 
+/* (B) 視窗進場：由「極幼光線」扭曲展開 (數值推大) */
 @keyframes smooth-entry {
-    0% { opacity: 0; transform: scaleX(0.1) scaleY(0.002) skew(60deg) translateY(50px); filter: blur(20px) brightness(5); }
-    40% { opacity: 0.8; transform: scaleX(0.9) scaleY(0.8) skew(30deg); filter: blur(5px) brightness(2); }
-    60% { opacity: 1; transform: scaleX(1.05) scaleY(1.05) skew(-15deg); filter: blur(0) brightness(1.2); }
-    100% { transform: scale(1) skew(0deg); filter: none; opacity: 1; }
+    0% {
+        opacity: 0;
+        /* 階段1：比之前更幼 (0.002)，更闊 (1.5)，更歪 (60deg) */
+        transform: scaleX(1.5) scaleY(0.002) skew(60deg) translateY(100px);
+        filter: blur(20px) brightness(5); /* 爆光 */
+        box-shadow: 0 0 100px rgba(14, 165, 233, 1);
+    }
+    30% {
+        opacity: 0.8;
+        /* 階段2：線條急速拉高，依然歪 */
+        transform: scaleX(0.8) scaleY(0.8) skew(30deg);
+        filter: blur(5px) brightness(2);
+    }
+    60% {
+        opacity: 1;
+        /* 階段3：過度展開 (Overshoot)，反向歪 */
+        transform: scaleX(1.05) scaleY(1.05) skew(-15deg);
+        filter: blur(0) brightness(1.2);
+        /* 強烈 RGB 色差 */
+        text-shadow: 6px 0 rgba(255,0,0,0.8), -6px 0 rgba(0,0,255,0.8);
+    }
+    85% {
+        /* 階段4：回彈 */
+        transform: scale(0.98) skew(3deg);
+        text-shadow: -2px 0 red, 2px 0 blue;
+    }
+    100% {
+        /* 階段5：定格 */
+        transform: scale(1) skew(0deg);
+        filter: none;
+        text-shadow: none;
+        opacity: 1;
+    }
 }
 
+/* (C) 待機流動 (保持順滑) */
 @keyframes fluid-float {
     0%, 100% { transform: translate(0, 0) skew(0deg); }
-    33% { transform: translate(-4px, -3px) skew(2deg); }
+    33% { transform: translate(-4px, -3px) skew(2deg); } /* 加大少少幅度 */
     66% { transform: translate(4px, 3px) skew(-2deg); }
 }
 
+/* (D) 雜訊閃爍 (加強版) */
 @keyframes noise-flash {
     0% { opacity: 0; }
-    10% { opacity: 0.8; filter: invert(1) contrast(2); }
+    10% { opacity: 0.8; filter: invert(1) contrast(2); } /* 反白閃爍 */
+    20% { opacity: 0.4; filter: none; }
     100% { opacity: 0; }
 }
 
+/* (E) 掃描線 */
 @keyframes scanline-move { 0% { background-position: 0 0; } 100% { background-position: 0 100%; } }
 
 
-/* ============================================================
-   ★★★ V14 電腦 & 手機 雙重修復版 (解決過長捲軸) ★★★
-   ============================================================ */
-
-/* 1. 外層遮罩：強制全屏，鎖死捲軸 */
+/* --- 2. 視窗遮罩層 (#launch-modal) --- */
 #launch-modal { 
     display: none; 
-    position: fixed; 
-    top: 0; 
-    left: 0; 
-    width: 100vw;   /* 強制視窗寬度 */
-    height: 100vh;  /* 強制視窗高度 */
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
     z-index: 100;
+    
+    /* 基本底色 */
     background: rgba(0, 0, 0, 0.4); 
     
-    /* Flex 置中 */
-    justify-content: center; 
-    align-items: center; 
+    justify-content: center; align-items: center; padding-top: 0; 
     
-    /* 關鍵：防止任何子元素撐開捲軸 */
-    overflow: hidden !important; 
-    
+    /* 全屏震盪動畫：0.8s */
     animation: reality-shock 0.8s cubic-bezier(0.1, 0.9, 0.2, 1) forwards;
 }
 
-/* 2. 背景裝飾層 */
+/* 背景雜訊 (::before) */
 #launch-modal::before {
-    content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    content: ""; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
     pointer-events: none; z-index: -1;
+    
+    /* 雜點紋理 */
     background-image: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(14,165,233,0.3) 3px, rgba(14,165,233,0.3) 3px),
                       radial-gradient(white, rgba(255,255,255,0.2) 2px, transparent 3px);
     background-size: 100% 4px, 10px 10px;
+    
+    /* 雜訊動畫 */
     animation: noise-flash 1s ease-out forwards;
     opacity: 0.6;
 }
 
-/* 3. 彈出框本體：限制高度，內容過多才捲動 */
+/* --- 3. 視窗本體 (.modal-content) --- */
 #launch-modal .modal-content {
-    background: rgba(15, 23, 42, 0.85); 
+    background: rgba(15, 23, 42, 0.85); /* 深色少少，突出光效 */
     backdrop-filter: blur(12px); 
     border: 1px solid rgba(14, 165, 233, 0.8);
     box-shadow: 0 0 60px rgba(14, 165, 233, 0.6), inset 0 0 40px rgba(14, 165, 233, 0.3);
     
-    width: 90%; 
-    max-width: 450px; 
-    
-    /* ★ 關鍵修正：限制最大高度，防止長出螢幕 ★ */
-    max-height: 90vh; 
-    overflow-y: auto; /* 只有內容多過頭先會捲動框框內部 */
-    
-    padding: 30px; 
-    border-radius: 10px;
-    text-align: center; 
-    color: #fff;
-    position: relative; 
-    
-    transform-origin: center center;
+    width: 90%; max-width: 450px; padding: 30px; border-radius: 10px;
+    text-align: center; color: #fff;
+    overflow: hidden; position: relative; 
 
+    /* 進場 (0.8s) + 待機 Loop */
     animation: 
         smooth-entry 0.8s cubic-bezier(0.1, 0.9, 0.2, 1) forwards,
         fluid-float 4s ease-in-out infinite 0.8s;
@@ -2201,73 +2221,58 @@ body {
     will-change: transform, filter, text-shadow;
 }
 
-/* 4. 掃描線特效：修正高度問題 */
+/* 內部掃描線 (::after) */
 #launch-modal .modal-content::after {
-    content: ""; 
-    position: absolute; 
-    top: 0; 
-    left: 0; 
-    width: 100%; 
-    
-    /* ★ 關鍵修正：原本係 200%，現在改回 100% ★ */
-    height: 100%; 
-    
-    pointer-events: none; 
-    z-index: 1;
+    content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 200%;
+    pointer-events: none; z-index: 1;
     background: linear-gradient(to bottom, transparent 50%, rgba(14, 165, 233, 0.15) 50%, transparent 51%);
     background-size: 100% 4px;
-    animation: scanline-move 2s linear infinite;
+    animation: scanline-move 2s linear infinite; /* 加快少少 */
 }
 
+/* 確保文字在頂層 */
 #launch-modal .modal-content > * { position: relative; z-index: 2; }
 
 
 /* =========================================
-   ★★★ 手機 & 平板 適配 (V12 修正版) ★★★
+   ★★★ 手機 & 平板 適配 (FIXED CENTER) ★★★
    ========================================= */
 @media (max-width: 600px) {
     #launch-modal {
-        /* 1. 改為靠上對齊，避開 Keyboard */
+        /* 強制靠上，避開鍵盤 */
         align-items: flex-start !important;
+        padding-top: 5vh !important;
         
-        /* 2. 視窗本身保留頂部空間 */
-        padding-top: 50px !important; 
-        
-        /* 3. 底部加 Padding 而不是 Margin，防止捲動過長 */
-        padding-bottom: 50px !important;
-
-        /* 4. 允許垂直捲動 */
-        overflow-y: auto; 
-        overflow-x: hidden;
+        /* ★ 關鍵修正 1：鎖死橫向捲動，防止動畫 skew 撐開畫面 ★ */
+        overflow-y: scroll;
+        overflow-x: hidden; 
     }
 
     #launch-modal .modal-content {
-        box-sizing: border-box; 
-        width: 85%; 
+        /* ★ 關鍵修正 2：加入 border-box，防止 Padding 撐大寬度 ★ */
+        box-sizing: border-box;
+        
+        width: 85%;
         max-width: 350px;
         padding: 15px 20px;
         
-        /* ★ 修正：移除原本的 margin-bottom: 50vh，改為自動邊距 */
-        margin: 0 auto 20px auto; 
+        /* 底部留位給鍵盤 */
+        margin-bottom: 50vh;
+        
+        /* ★ 關鍵修正 3：強制水平置中 (即使 Flex 失效，這行也能救回來) ★ */
+        margin-left: auto;
+        margin-right: auto;
     }
 
-    /* 字體大小調整保持不變 */
+    /* 字體調整保持不變 */
     .modal-content #q-text { font-size: 24px !important; margin: 5px 0 !important; }
     .modal-content .vocab-hint { font-size: 28px !important; margin: 10px 0 !important; letter-spacing: 3px !important; }
     .modal-content div[style*="font-size: 22px"] { font-size: 18px !important; }
 }
-
-/* iPad 適配 */
-@media (min-width: 601px) and (max-width: 1024px) {
-    #launch-modal { align-items: flex-start !important; padding-top: 15vh !important; overflow-y: auto; }
-    #launch-modal .modal-content { width: 70%; max-width: 500px; margin-bottom: 20vh; }
-}
-
-/* Speaking 按鈕紫色光 */
 #skill-screen .level-btn:nth-child(3) {
-    border-color: #d946ef;
-    text-shadow: 0 0 5px #d946ef;
-    box-shadow: 0 0 10px rgba(217, 70, 239, 0.2);
+    border-color: #d946ef;  /* 預設紫色邊框 */
+    text-shadow: 0 0 5px #d946ef; /* ★ 修正重點：文字改發紫色光 */
+    box-shadow: 0 0 10px rgba(217, 70, 239, 0.2); /* 預設紫色陰影 */
 }
         </style>
 </head>
@@ -5752,17 +5757,6 @@ function playUnderAttackAlert() {
 </div>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
 
 
 
