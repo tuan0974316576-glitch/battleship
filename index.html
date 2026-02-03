@@ -2136,12 +2136,19 @@ body {
 @keyframes scanline-move { 0% { background-position: 0 0; } 100% { background-position: 0 100%; } }
 
 
+/* ============================================================
+   ★★★ V12 最終版：V11 手感 + Box-Sizing 修復 (解決過長問題) ★★★
+   ============================================================ */
+
 /* --- 2. 視窗遮罩層 (#launch-modal) --- */
 #launch-modal { 
     display: none; 
     position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
     z-index: 100;
     background: rgba(0, 0, 0, 0.4); 
+    
+    /* ★★★ 關鍵修復：補回這句！防止 Padding 撐爆高度 ★★★ */
+    box-sizing: border-box;
     
     /* 電腦版：Flex 置中 */
     justify-content: center; 
@@ -2193,15 +2200,14 @@ body {
 
 
 /* =========================================
-   ★★★ 手機 & 平板 適配 (V11 復刻版) ★★★
-   跟足你舊版設定！
+   ★★★ 手機 & 平板 適配 (V12) ★★★
    ========================================= */
 @media (max-width: 600px) {
     #launch-modal {
         /* 1. 改為靠上對齊，避開 Keyboard */
         align-items: flex-start !important;
         
-        /* 2. 跟足你舊版：距離頂部 5vh */
+        /* 2. 距離頂部 5vh (因為有 box-sizing，這裡不會撐爆畫面了) */
         padding-top: 5vh !important;
         
         /* 3. 鎖死左右，開放垂直 Scroll */
@@ -2210,46 +2216,30 @@ body {
     }
 
     #launch-modal .modal-content {
-        /* ★ 跟足你舊版：Box-Sizing 防止爆邊 */
         box-sizing: border-box; 
-        
-        /* ★ 跟足你舊版：85% 寬度 */
         width: 85%; 
         max-width: 350px;
-        
-        /* ★ 跟足你舊版：Padding 上下15 左右20 */
         padding: 15px 20px;
         
-        /* ★ 跟足你舊版：底部超大 Margin 50vh (避鍵盤神器) */
+        /* 底部留位避鍵盤 (這會讓內容可滾動，但不會讓整個背景變長) */
         margin-bottom: 50vh;
         
-        /* 強制置中 (雙重保險) */
         margin-left: auto;
         margin-right: auto;
     }
 
-    /* ★ 跟足你舊版：字體微調 */
-    .modal-content #q-text { 
-        font-size: 24px !important; 
-        margin: 5px 0 !important; 
-    }
-    .modal-content .vocab-hint { 
-        font-size: 28px !important; 
-        margin: 10px 0 !important; 
-        letter-spacing: 3px !important; 
-    }
-    .modal-content div[style*="font-size: 22px"] { 
-        font-size: 18px !important; 
-    }
+    .modal-content #q-text { font-size: 24px !important; margin: 5px 0 !important; }
+    .modal-content .vocab-hint { font-size: 28px !important; margin: 10px 0 !important; letter-spacing: 3px !important; }
+    .modal-content div[style*="font-size: 22px"] { font-size: 18px !important; }
 }
 
-/* iPad 適配 (跟足你舊版) */
+/* iPad 適配 */
 @media (min-width: 601px) and (max-width: 1024px) {
     #launch-modal { align-items: flex-start !important; padding-top: 15vh !important; overflow-y: auto; }
     #launch-modal .modal-content { width: 70%; max-width: 500px; margin-bottom: 20vh; }
 }
 
-/* Speaking 按鈕紫色光 (保留修正) */
+/* Speaking 按鈕紫色光 */
 #skill-screen .level-btn:nth-child(3) {
     border-color: #d946ef;
     text-shadow: 0 0 5px #d946ef;
@@ -5738,6 +5728,7 @@ function playUnderAttackAlert() {
 </div>
 </body>
 </html>
+
 
 
 
