@@ -2234,18 +2234,40 @@ body {
 #launch-modal .modal-content > * { position: relative; z-index: 2; }
 
 
-/* --- 4. 響應式適配 --- */
+/* =========================================
+   ★★★ 手機 & 平板 適配 (FIXED CENTER) ★★★
+   ========================================= */
 @media (max-width: 600px) {
-    #launch-modal { align-items: flex-start !important; padding-top: 5vh !important; overflow-y: scroll; }
-    #launch-modal .modal-content { width: 85%; max-width: 350px; padding: 15px 20px; margin-bottom: 50vh; }
+    #launch-modal {
+        /* 強制靠上，避開鍵盤 */
+        align-items: flex-start !important;
+        padding-top: 5vh !important;
+        
+        /* ★ 關鍵修正 1：鎖死橫向捲動，防止動畫 skew 撐開畫面 ★ */
+        overflow-y: scroll;
+        overflow-x: hidden; 
+    }
+
+    #launch-modal .modal-content {
+        /* ★ 關鍵修正 2：加入 border-box，防止 Padding 撐大寬度 ★ */
+        box-sizing: border-box;
+        
+        width: 85%;
+        max-width: 350px;
+        padding: 15px 20px;
+        
+        /* 底部留位給鍵盤 */
+        margin-bottom: 50vh;
+        
+        /* ★ 關鍵修正 3：強制水平置中 (即使 Flex 失效，這行也能救回來) ★ */
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    /* 字體調整保持不變 */
     .modal-content #q-text { font-size: 24px !important; margin: 5px 0 !important; }
     .modal-content .vocab-hint { font-size: 28px !important; margin: 10px 0 !important; letter-spacing: 3px !important; }
     .modal-content div[style*="font-size: 22px"] { font-size: 18px !important; }
-}
-
-@media (min-width: 601px) and (max-width: 1024px) {
-    #launch-modal { align-items: flex-start !important; padding-top: 15vh !important; overflow-y: auto; }
-    #launch-modal .modal-content { width: 70%; max-width: 500px; margin-bottom: 20vh; }
 }
 #skill-screen .level-btn:nth-child(3) {
     border-color: #d946ef;  /* 預設紫色邊框 */
@@ -5735,6 +5757,7 @@ function playUnderAttackAlert() {
 </div>
 </body>
 </html>
+
 
 
 
