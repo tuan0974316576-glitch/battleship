@@ -2153,12 +2153,20 @@ body {
 @keyframes scanline-move { 0% { background-position: 0 0; } 100% { background-position: 0 100%; } }
 
 
+/* ============================================================
+   ★★★ 終極 V10：完美修復版 (解決過長 + 穩定定位) ★★★
+   ============================================================ */
+
 /* --- 2. 視窗遮罩層 (#launch-modal) --- */
 #launch-modal { 
-    display: none; 
+    display: none; /* 預設隱藏 (JS 打開時會變成 flex) */
+    
     position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
     z-index: 100;
     background: rgba(0, 0, 0, 0.4); 
+    
+    /* ★ 關鍵修正 1：加入 border-box，防止 Padding 撐大個畫面 ★ */
+    box-sizing: border-box;
     
     /* 電腦版：Flex 置中 */
     justify-content: center; 
@@ -2167,12 +2175,12 @@ body {
     animation: reality-shock 0.8s cubic-bezier(0.1, 0.9, 0.2, 1) forwards;
 }
 
-/* ★ 修正重點 1：改用 fixed 定位，高度改回 100%，防止頁面變極長 ★ */
+/* ★ 關鍵修正 2：背景層用 fixed + 100vh，鎖死係螢幕度，絕不變長 ★ */
 #launch-modal::before {
     content: ""; 
-    position: fixed; /* 改為 fixed，鎖死在螢幕背景 */
+    position: fixed; /* 鎖死 */
     top: 0; left: 0; 
-    width: 100%; height: 100%; /* 唔好再用 200% */
+    width: 100%; height: 100vh; /* 用 vh 確保只係螢幕咁高 */
     
     pointer-events: none; z-index: -1;
     background-image: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(14,165,233,0.3) 3px, rgba(14,165,233,0.3) 3px),
@@ -2214,7 +2222,7 @@ body {
 
 
 /* =========================================
-   ★★★ 手機 & 平板 適配 V9 (完美修復版) ★★★
+   ★★★ 手機 & 平板 適配 V10 (Box-Sizing Fix) ★★★
    ========================================= */
 @media (max-width: 600px) {
     #launch-modal {
@@ -2223,7 +2231,7 @@ body {
         /* 固定距離頂部 100px */
         padding-top: 100px !important; 
         
-        /* ★ 修正重點 2：允許垂直滾動 (防止內容被切)，鎖死水平滾動 ★ */
+        /* 允許垂直滾動 (因為有 box-sizing，唔會再無啦啦多 100px 空白) */
         overflow-y: auto; 
         overflow-x: hidden;
     }
@@ -2234,7 +2242,7 @@ body {
         max-width: 350px;
         padding: 20px 20px;
         
-        /* 底部留位，方便手指滑動 */
+        /* 底部留位，方便手指滑動，不會貼底 */
         margin: 0 auto 50px auto; 
     }
 
@@ -5738,6 +5746,7 @@ function playUnderAttackAlert() {
 </div>
 </body>
 </html>
+
 
 
 
