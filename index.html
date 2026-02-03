@@ -2090,11 +2090,10 @@ body {
 }
 
 /* ============================================================
-   ★★★ 終極 V7：回歸初心 + 防爆動畫 (Simple & Clean) ★★★
+   ★★★ 終極 V8：絕對穩定版 (px 定位 + 防爆動畫) ★★★
    ============================================================ */
 
-/* --- 1. 定義動畫 (保留 V5 的防爆設定，由短線展開) --- */
-
+/* --- 1. 定義動畫 --- */
 @keyframes reality-shock {
     0% { backdrop-filter: blur(0px); transform: scale(1); filter: contrast(1); }
     15% { backdrop-filter: blur(20px) hue-rotate(90deg) brightness(1.5); transform: scale(1.05); filter: contrast(2); }
@@ -2104,7 +2103,7 @@ body {
 @keyframes smooth-entry {
     0% {
         opacity: 0;
-        /* ★ 核心：scaleX 0.1 (短線) 開始，保證手機唔會爆格 ★ */
+        /* scaleX 0.1 防止手機爆格 */
         transform: scaleX(0.1) scaleY(0.002) skew(60deg) translateY(50px);
         filter: blur(20px) brightness(5);
         box-shadow: 0 0 100px rgba(14, 165, 233, 1);
@@ -2147,7 +2146,7 @@ body {
     z-index: 100;
     background: rgba(0, 0, 0, 0.4); 
     
-    /* ★ 回歸 Flexbox 置中 (電腦版最完美) ★ */
+    /* 電腦版：Flex 置中 */
     justify-content: center; 
     align-items: center; 
     
@@ -2196,17 +2195,16 @@ body {
 
 
 /* =========================================
-   ★★★ 手機 & 平板 適配 V7 (視覺置中 + 題目優先) ★★★
+   ★★★ 手機 & 平板 適配 V8 (px 絕對定位) ★★★
    ========================================= */
 @media (max-width: 600px) {
     #launch-modal {
-        /* ★ 手機版：取消 Flex Center，改用 Top Align ★ */
         align-items: flex-start !important;
         
-        /* 距離頂部 15% (視覺上好似中間，但鎖死頂部) */
-        padding-top: 15vh !important; 
+        /* ★ 關鍵修改：用 px 取代 vh ★ */
+        /* 無論 Keyboard 彈唔彈，永遠距離頂部 100px */
+        padding-top: 100px !important; 
         
-        /* 移除 Scroll bar 設定，還原基本 */
         overflow: visible; 
     }
 
@@ -2215,8 +2213,6 @@ body {
         width: 85%;
         max-width: 350px;
         padding: 20px 20px;
-        
-        /* 強制置中 (防歪) */
         margin: 0 auto; 
     }
 
@@ -5720,6 +5716,7 @@ function playUnderAttackAlert() {
 </div>
 </body>
 </html>
+
 
 
 
