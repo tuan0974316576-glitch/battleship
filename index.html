@@ -2137,29 +2137,33 @@ body {
 
 
 /* ============================================================
-   ★★★ V12 最終版：V11 手感 + Box-Sizing 修復 (解決過長問題) ★★★
+   ★★★ V14 電腦 & 手機 雙重修復版 (解決過長捲軸) ★★★
    ============================================================ */
 
-/* --- 2. 視窗遮罩層 (#launch-modal) --- */
+/* 1. 外層遮罩：強制全屏，鎖死捲軸 */
 #launch-modal { 
     display: none; 
-    position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+    position: fixed; 
+    top: 0; 
+    left: 0; 
+    width: 100vw;   /* 強制視窗寬度 */
+    height: 100vh;  /* 強制視窗高度 */
     z-index: 100;
     background: rgba(0, 0, 0, 0.4); 
     
-    /* ★★★ 關鍵修復：補回這句！防止 Padding 撐爆高度 ★★★ */
-    box-sizing: border-box;
-    
-    /* 電腦版：Flex 置中 */
+    /* Flex 置中 */
     justify-content: center; 
     align-items: center; 
+    
+    /* 關鍵：防止任何子元素撐開捲軸 */
+    overflow: hidden !important; 
     
     animation: reality-shock 0.8s cubic-bezier(0.1, 0.9, 0.2, 1) forwards;
 }
 
-/* 固定背景層 (防止頁面變長) */
+/* 2. 背景裝飾層 */
 #launch-modal::before {
-    content: ""; position: fixed; top: 0; left: 0; width: 100%; height: 100vh;
+    content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
     pointer-events: none; z-index: -1;
     background-image: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(14,165,233,0.3) 3px, rgba(14,165,233,0.3) 3px),
                       radial-gradient(white, rgba(255,255,255,0.2) 2px, transparent 3px);
@@ -2168,16 +2172,25 @@ body {
     opacity: 0.6;
 }
 
-/* --- 3. 視窗本體 (.modal-content) --- */
+/* 3. 彈出框本體：限制高度，內容過多才捲動 */
 #launch-modal .modal-content {
     background: rgba(15, 23, 42, 0.85); 
     backdrop-filter: blur(12px); 
     border: 1px solid rgba(14, 165, 233, 0.8);
     box-shadow: 0 0 60px rgba(14, 165, 233, 0.6), inset 0 0 40px rgba(14, 165, 233, 0.3);
     
-    width: 90%; max-width: 450px; padding: 30px; border-radius: 10px;
-    text-align: center; color: #fff;
-    overflow: hidden; position: relative; 
+    width: 90%; 
+    max-width: 450px; 
+    
+    /* ★ 關鍵修正：限制最大高度，防止長出螢幕 ★ */
+    max-height: 90vh; 
+    overflow-y: auto; /* 只有內容多過頭先會捲動框框內部 */
+    
+    padding: 30px; 
+    border-radius: 10px;
+    text-align: center; 
+    color: #fff;
+    position: relative; 
     
     transform-origin: center center;
 
@@ -2188,13 +2201,17 @@ body {
     will-change: transform, filter, text-shadow;
 }
 
+/* 4. 掃描線特效：修正高度問題 */
 #launch-modal .modal-content::after {
     content: ""; 
     position: absolute; 
     top: 0; 
     left: 0; 
     width: 100%; 
-    height: 100%; /* ★ 修正：改回 100%，不再需要 200% */
+    
+    /* ★ 關鍵修正：原本係 200%，現在改回 100% ★ */
+    height: 100%; 
+    
     pointer-events: none; 
     z-index: 1;
     background: linear-gradient(to bottom, transparent 50%, rgba(14, 165, 233, 0.15) 50%, transparent 51%);
@@ -5735,6 +5752,7 @@ function playUnderAttackAlert() {
 </div>
 </body>
 </html>
+
 
 
 
