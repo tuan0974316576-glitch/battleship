@@ -2281,6 +2281,38 @@ body {
     text-shadow: 0 0 5px #22c55e;
     box-shadow: 0 0 10px rgba(34, 197, 94, 0.2);
 }
+/* --- 新增：Listening Mode 專用細喇叭 (Inline Emoji Style) --- */
+.cyber-speaker-btn-small {
+    width: 28px;  /* 調整至手指好撳的大小，類似 Emoji */
+    height: 28px;
+    display: inline-block; /* 令佢可以排係文字後面 */
+    vertical-align: middle; /* 對齊文字中間 */
+    margin-left: 8px; /* 同前面文字留少少距離 */
+    cursor: pointer;
+    
+    /* 圖片設定 (用番你張 speaker_icon.png) */
+    background-image: url('speaker_icon.png');
+    background-size: 60%; /* 圖標縮細，留番呼吸位 */
+    background-position: center;
+    background-repeat: no-repeat;
+    
+    /* 圓形發光外框 (紫色) */
+    border-radius: 50%;
+    background-color: rgba(217, 70, 239, 0.1);
+    border: 1px solid rgba(217, 70, 239, 0.5);
+    box-shadow: 0 0 8px rgba(217, 70, 239, 0.4);
+    
+    transition: all 0.2s;
+    position: relative;
+    top: -2px; /* 微調位置，視覺上更平衡 */
+}
+
+/* 按下時的效果 */
+.cyber-speaker-btn-small:active {
+    transform: scale(0.9);
+    background-color: rgba(217, 70, 239, 0.4);
+    box-shadow: 0 0 15px rgba(217, 70, 239, 0.8);
+}
         </style>
 </head>
 <body>
@@ -3399,43 +3431,48 @@ if (currentPracticeMode === 'SPEAKING') {
         const container = document.getElementById('timer-bar-container');
         qDisplay.parentNode.insertBefore(micBtn, container);
 
-    } else if (currentPracticeMode === 'LISTENING') {
-        // --- B. 聽力模式 (Listening) ---
+} else if (currentPracticeMode === 'LISTENING') {
+        // --- B. 聽力模式 (Listening) [V18 Inline Button 版] ---
         fadeBgm(0.1, 800);
         let contentHTML = '';
+
+        // 準備要讀的字 (安全處理單引號)
+        const textToRead = currentVocab.sent ? currentVocab.sent : currentVocab.en;
+        const safeText = textToRead.replace(/'/g, "\\'");
+
+        // ★ 核心改動：建立一個「細粒版」喇叭掣 HTML string ★
+        // 唔再係一大個 div，而係一個 span，可以塞入句子裡面
+        const smallSpeakerBtn = `<span class="cyber-speaker-btn-small" onclick="speakText('${safeText}')"></span>`;
 
         // 1. 顯示句子填空 (如果有句子)
         if (currentVocab.sent) {
             const regex = new RegExp(`\\b${currentVocab.en}\\b`, 'gi');
-            // 將目標字換成跟字數一樣長度的動態底線
+            // 將目標字換成動態底線
             const dynamicBlanks = generateSmartBlanks(currentVocab.en);
             const displayHTML = currentVocab.sent.replace(regex, `<span class="listening-blank">${dynamicBlanks}</span>`);
-            contentHTML += `<div class="sentence-container">${displayHTML}</div>`;
+            
+            // ★ 將小喇叭掣直接加到句子最後面 (Inline) ★
+            // 同時移除咗原本底下的 "TAP TO REPLAY" 字眼
+            contentHTML += `<div class="sentence-container" style="text-align: center;">${displayHTML}${smallSpeakerBtn}</div>`;
         } else {
-            contentHTML += `<div style="font-family:'Orbitron'; font-size:14px; color:#d946ef; margin-bottom:15px; letter-spacing:2px;">// AUDIO INTERCEPTED //</div>`;
+            // 如果無句子，就顯示 Audio Intercepted + 小喇叭
+            contentHTML += `<div style="font-family:'Orbitron'; font-size:14px; color:#d946ef; margin-bottom:15px; letter-spacing:2px;">// AUDIO INTERCEPTED // ${smallSpeakerBtn}</div>`;
         }
 
-        // 2. 加入高科技喇叭掣 (使用你畫的 PNG)
-        const textToRead = currentVocab.sent ? currentVocab.sent : currentVocab.en;
-        const safeText = textToRead.replace(/'/g, "\\'");
-
-        contentHTML += `
-            <div class="cyber-speaker-btn" onclick="speakText('${safeText}')"></div>
-            <div style="font-size:10px; color:#d946ef; margin-top:5px; opacity:0.8; font-family:'Orbitron';">TAP TO REPLAY</div>
-        `;
-        
+        // 更新介面
         qText.innerHTML = contentHTML; 
         qText.style.cursor = "default"; 
         qText.onclick = null; 
 
-        // 3. 顯示智能底線
+        // 2. 顯示智能底線區域 (輸入框上方)
         qDisplay.innerHTML = generateSmartBlanks(currentVocab.en);
         qDisplay.style.color = "var(--primary)";
         
+        // 3. 顯示輸入框
         input.style.display = 'block';
-        setTimeout(() => input.focus(), 10); // 小延遲確保 focus 成功
+        setTimeout(() => input.focus(), 10);
 
-        // 自動讀出整句句子
+        // 自動讀出一次
         setTimeout(() => speakText(textToRead), 300);
 
     } else {
@@ -5764,6 +5801,7 @@ function playUnderAttackAlert() {
 </div>
 </body>
 </html>
+
 
 
 
