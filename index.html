@@ -2209,6 +2209,47 @@ body {
     text-shadow: 0 0 5px #d946ef; /* ★ 修正重點：文字改發紫色光 */
     box-shadow: 0 0 10px rgba(217, 70, 239, 0.2); /* 預設紫色陰影 */
 }
+/* --- 參考技能按鈕編寫的等級按鈕樣式 --- */
+
+#level-screen .level-btn {
+    background: transparent !important; /* 確保中間始終透明 */
+    border: 2px solid var(--primary); /* 使用主藍色邊框 */
+    color: #fff;
+    padding: 15px; 
+    font-family: 'Orbitron', sans-serif;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease; /* 平滑過渡效果 */
+    
+    /* 常駐發光：淡淡的藍色陰影與文字霓虹效果 */
+    text-shadow: 0 0 5px var(--primary);
+    box-shadow: 0 0 10px rgba(14, 165, 233, 0.2);
+    
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* 懸停效果 (Hover)：模仿 READING 按鈕的藍色強光 */
+#level-screen .level-btn:hover {
+    background: transparent !important; /* 懸停時保持透明 */
+    transform: scale(1.1); /* 輕微放大 */
+    
+    /* 加強邊框與文字顏色 */
+    border-color: #0ea5e9;
+    color: #0ea5e9;
+    
+    /* 強力藍色外發光 + 內發光 (模仿技能按鈕核心寫法) */
+    box-shadow: 0 0 20px #0ea5e9, inset 0 0 10px rgba(14, 165, 233, 0.3);
+    text-shadow: 0 0 10px #0ea5e9;
+}
+
+/* 點擊效果 (Active) */
+#level-screen .level-btn:active {
+    transform: scale(0.95); /* 點擊時縮小增加按壓感 */
+    transition: all 0.1s;
+}
     </style>
 
 </head>
@@ -5674,4 +5715,5 @@ function playUnderAttackAlert() {
 </div>
 </body>
 </html>
+
 
