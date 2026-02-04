@@ -402,38 +402,46 @@ body {
         backdrop-filter: blur(10px); 
     }
         
+/* 1. 題目框容器 (父容器) */
 .modal-content {
-    /* 原本係 0.95 (太實色)，現在改做 0.75 讓背景透出來 */
-    background: rgba(15, 23, 42, 0.75) !important; 
+    /* --- 原有樣式保留 --- */
+    background: rgba(15, 23, 42, 0.85) !important; /* 背景調透一點 */
+    border: 2px solid var(--danger);
+    border-radius: 15px;
+    padding: 30px;
+    width: 90%;
+    max-width: 420px;
+    text-align: center;
+    box-shadow: 0 0 60px rgba(239, 68, 68, 0.6);
     
-    /* 加入磨砂效果，令背後的字符看起來更有層次 */
-    backdrop-filter: blur(3px); 
-    -webkit-backdrop-filter: blur(3px);
-
-    /* 確保 Canvas 不會跑出框外 */
-    overflow: hidden; 
-    position: relative; /* 重要：為了定位 Canvas */
+    /* --- ★★★ 關鍵修正部分 ★★★ --- */
+    position: relative;  /* 重要：讓裡面的 Canvas 知道邊界在哪 */
+    overflow: hidden;    /* 重要：防止動畫跑出圓角框外 */
+    backdrop-filter: blur(5px); /* 磨砂玻璃效果 */
+    
+    /* 確保有足夠高度顯示內容 */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
-/* 2. 定位 Canvas：放在最底層 */
+/* 2. 背景動畫畫布 (Canvas) */
 #matrix-bg {
-    position: absolute;
+    position: absolute;  /* 強制脫離文檔流，浮在背後 */
     top: 0;
     left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 0; /* 放在文字後面 */
-    opacity: 0.4; /* 調整透明度，不要搶了題目的鏡 */
-    pointer-events: none; /* 確保點擊穿透，不會擋住輸入框 */
+    width: 100%;         /* 拉闊至 100% */
+    height: 100%;        /* 拉高至 100% */
+    z-index: 0;          /* 放在最底層 */
+    opacity: 0.5;        /* 透明度 */
+    pointer-events: none; /* 確保點擊能穿透它，按到下面的輸入框 */
 }
 
-/* 3. 確保原本的文字在動畫上面 */
-.modal-content > div, 
-.modal-content > input, 
-.modal-content > .vocab-hint,
-.modal-content > #timer-bar-container {
-    position: relative;
-    z-index: 2; /* 浮在動畫上面 */
+/* 3. 確保所有內容浮在動畫上面 (重要！) */
+/* 這會選取 modal-content 裡面的所有 div, input, button 等 */
+.modal-content > * {
+    position: relative; /* 啟用層級控制 */
+    z-index: 2;         /* 放在 Canvas (z-index: 0) 上面 */
 }
 
 .vocab-hint { 
@@ -5823,6 +5831,7 @@ function playUnderAttackAlert() {
 </div>
 </body>
 </html>
+
 
 
 
