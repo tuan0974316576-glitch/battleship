@@ -2235,54 +2235,52 @@ body {
 /* 確保文字在頂層 */
 #launch-modal .modal-content > * { position: relative; z-index: 2; }
 
-/* ============================================================
-   ★★★ V16 最終版：無 Scroll Bar + 置頂 5% + 不避鍵盤 (原地不動) ★★★
-   ============================================================ */
+
+/* =========================================
+   ★★★ 手機 & 平板 適配 (FIXED CENTER) ★★★
+   ========================================= */
 @media (max-width: 600px) {
-    /* 1. 大外框設定 */
     #launch-modal {
-        padding-top: 10vh !important;        /* ★ 核心：永遠置頂 5% */
-        align-items: flex-start !important; 
+        /* 強制靠上，避開鍵盤 */
+        align-items: flex-start !important;
+        padding-top: 5vh !important;
         
-        /* ★ 核心：鎖死背景，絕對唔會令畫面變長 ★ */
-        overflow: hidden !important;        
+        /* ★ 關鍵修正 1：鎖死橫向捲動，防止動畫 skew 撐開畫面 ★ */
+        overflow-y: scroll;
+        overflow-x: hidden; 
     }
 
-    /* 2. 內容框設定 */
     #launch-modal .modal-content {
+        /* ★ 關鍵修正 2：加入 border-box，防止 Padding 撐大寬度 ★ */
         box-sizing: border-box;
+        
         width: 85%;
         max-width: 350px;
-        padding: 20px 20px;
+        padding: 15px 20px;
         
-        /* 水平置中 */
+        /* 底部留位給鍵盤 */
+        margin-bottom: 50vh;
+        
+        /* ★ 關鍵修正 3：強制水平置中 (即使 Flex 失效，這行也能救回來) ★ */
         margin-left: auto;
         margin-right: auto;
-        
-        /* ★ 核心：取消所有 Scroll Bar 及高度限制 (內容幾長就幾長) ★ */
-        max-height: none !important;
-        overflow: visible !important;
-        
-        /* ★ 核心：取消避鍵盤 (原地不動，唔會飛上天) ★ */
-        margin-bottom: 0 !important;
     }
 
-    /* 3. 字體微調 (保留) */
-    .modal-content #q-text { font-size: 24px !important; margin: 10px 0 !important; }
-    .modal-content .vocab-hint { font-size: 28px !important; margin: 5px 0 15px 0 !important; }
+    /* 字體調整保持不變 */
+    .modal-content #q-text { font-size: 24px !important; margin: 5px 0 !important; }
+    .modal-content .vocab-hint { font-size: 28px !important; margin: 10px 0 !important; letter-spacing: 3px !important; }
     .modal-content div[style*="font-size: 22px"] { font-size: 18px !important; }
-    
-    /* 4. 句子容器樣式 (只保留底色，取消 Scroll Bar) */
-    .sentence-container {
-        max-height: none !important; /* 取消限高 */
-        overflow: visible !important; /* 取消 Scroll */
-        margin-bottom: 10px;
-        padding: 5px;
-        background: rgba(0, 0, 0, 0.3);
-        border-radius: 5px;
-    }
 }
-
+#skill-screen .level-btn:nth-child(3) {
+    border-color: #d946ef;  /* 預設紫色邊框 */
+    text-shadow: 0 0 5px #d946ef; /* ★ 修正重點：文字改發紫色光 */
+    box-shadow: 0 0 10px rgba(217, 70, 239, 0.2); /* 預設紫色陰影 */
+}
+#skill-screen .level-btn:nth-child(2) {
+    border-color: #22c55e;
+    text-shadow: 0 0 5px #22c55e;
+    box-shadow: 0 0 10px rgba(34, 197, 94, 0.2);
+}
         </style>
 </head>
 <body>
@@ -5766,11 +5764,6 @@ function playUnderAttackAlert() {
 </div>
 </body>
 </html>
-
-
-
-
-
 
 
 
