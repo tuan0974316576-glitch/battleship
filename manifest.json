@@ -2,7 +2,7 @@
   "name": "VOCAB CONQUEROR",
   "short_name": "VOCAB CONQUEROR",
   "start_url": "./index.html",
-  "display": "standalone",
+  "display": "fullscreen",
   "background_color": "#F1F3F3",
   "theme_color": "#0a9396",
   "orientation": "portrait",
