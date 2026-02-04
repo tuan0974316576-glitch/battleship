@@ -5,7 +5,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
    <title>VOCAB CONQUEROR - Command Center</title>
-    <link rel="manifest" href="manifest.json">
     
 <script type="module">
       import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -371,6 +370,35 @@ body {
         }
         @keyframes playOrange { from { background-position: 0 0; } to { background-position: 100% 0; } }
 
+        /* --- Modal (解碼視窗) --- */
+/* --- Modal (解碼視窗) - 電腦版預設 (保持置中) --- */
+    #launch-modal { 
+        display: none; 
+        position: fixed; 
+        top: 0; left: 0; 
+        width: 100%; height: 100%; 
+        background: rgba(0,0,0,0.85); 
+        z-index: 100; 
+        
+        /* ★ 電腦版設定：保持水平垂直完美置中 ★ */
+        justify-content: center; 
+        align-items: center; 
+        padding-top: 0; /* 電腦版唔使留空 */
+        
+        backdrop-filter: blur(10px); 
+    }
+        
+        .modal-content { 
+            background: rgba(15, 23, 42, 0.95); 
+            border: 2px solid var(--danger); 
+            border-radius: 15px; 
+            padding: 30px; 
+            width: 90%; 
+            max-width: 420px; 
+            text-align: center; 
+            box-shadow: 0 0 60px rgba(239, 68, 68, 0.6); 
+            position: relative;
+        }
 
 .vocab-hint { 
             font-size: 36px; letter-spacing: 8px; color: var(--primary); margin: 20px 0; 
@@ -400,6 +428,7 @@ body {
             .vocab-hint { font-size: 28px; letter-spacing: 4px; }
         }
 /* --- 艦隊側邊欄 --- */
+/* --- 艦隊側邊欄 (修改版：雙列佈局) --- */
 #fleet-sidebar {
     /* ★ 改用 Grid 佈局，不再是一條直線 ★ */
     display: grid;
@@ -687,7 +716,7 @@ body {
         filter: drop-shadow(0 0 5px #f59e0b) drop-shadow(0 0 15px #d97706); 
     }
 }
-
+/* --- 敵軍艦隊狀態欄 --- */
 /* --- 升級版狀態面板 (Status Panel) --- */
         #status-panel {
             display: flex;
@@ -711,6 +740,8 @@ body {
             flex-grow: 1; /* 佔據剩餘空間 */
             justify-content: center;
         }
+
+/* --- 2.0 版：真實形狀能量方塊 --- */
         
         /* 每一整隻船的容器 (改用 Grid 佈局) */
         .enemy-ship-block {
@@ -809,7 +840,71 @@ body {
             transform: scale(0.95); 
         }
     }
+/* --- 手機專用調整 (當螢幕闊度細過 600px) --- */
+    @media (max-width: 600px) { 
+    
+    /* 1. 將成個視窗推高 (解決：想放高少少 & 避開鍵盤) */
+    #launch-modal {
+        align-items: flex-start !important; /* 強制靠上 */
+        padding-top: 5vh !important; /* 由 15vh 改做 5vh，即係貼近頂部好多 */
+        overflow-y: scroll; /* 容許滾動，萬一鍵盤真係太高都可以拉上去 */
+    }
 
+    /* 2. 縮細個框 & 修正左右爆邊 (解決：左右CUT左 & 細少少) */
+    .modal-content {
+        /* ★ 關鍵：將 Padding 計入闊度內，防止 90% + Padding 爆出螢幕 */
+        box-sizing: border-box; 
+        
+        width: 85%; /* 稍微收窄，留番啲邊位呼吸 */
+        max-width: 350px; /* 限制最大闊度 */
+        
+        padding: 15px 20px; /* 上下 15px, 左右 20px (原本係 30px，改薄啲) */
+        
+        /* 底部加超大 Margin，確保鍵盤彈起時，你可以 Scroll 得起個畫面 */
+        margin-bottom: 50vh; 
+    }
+
+    /* 3. 字體微調 (解決：個框太大) */
+    .modal-content #q-text {
+        font-size: 24px !important; /* 中文題目字改細 */
+        margin: 5px 0 !important;
+    }
+    
+    .modal-content .vocab-hint {
+        font-size: 28px !important; /* 英文填充題字改細 */
+        margin: 10px 0 !important;
+        letter-spacing: 3px !important;
+    }
+    
+    .modal-content div[style*="font-size: 22px"] {
+        font-size: 18px !important; /* ⚠️ DECRYPT CODE ⚠️ 標題改細 */
+    }
+}
+/* --- ★ iPad / 平板專用設定 (601px 至 1024px) ★ --- */
+@media (min-width: 601px) and (max-width: 1024px) {
+    
+    #launch-modal {
+        /* 1. 改為靠上對齊，避開 Keyboard */
+        align-items: flex-start !important; 
+        
+        /* 2. 唔使好似手機(5vh)咁貼頂，iPad 留番 15vh 靚仔啲 */
+        padding-top: 15vh !important; 
+        
+        overflow-y: auto; 
+    }
+
+    .modal-content {
+        /* 3. iPad 畫面大，個框可以闊少少，唔使縮到 350px 咁細 */
+        width: 70%; 
+        max-width: 500px; 
+        
+        /* 4. 底部留白，預留空間俾 Keyboard 彈起 */
+        margin-bottom: 20vh; 
+    }
+    
+    /* 字體可以用番 Desktop 大細，唔使縮細，因為 iPad 夠位顯示 */
+}
+        /* --- 等級選擇畫面樣式 --- */
 /* --- 等級選擇畫面樣式 --- */
     .level-grid {
         display: grid;
@@ -1392,7 +1487,9 @@ body {
     background: rgba(10, 20, 35, 0.95); /* 深色半透明背景 */
     backdrop-filter: blur(10px); /* 背景磨砂玻璃效果 */
 }
-
+/* =========================================
+   ★★★ 手機版緊急修正 (MOBILE FIXES) ★★★
+   ========================================= */
 /* =========================================
    ★★★ 手機版緊急修正 (KEYBOARD SAFE V2) ★★★
    ========================================= */
@@ -1909,7 +2006,6 @@ body {
 .review-user.correct {
     color: var(--success); /* 答啱: 綠色 */
     text-shadow: 0 0 5px rgba(34, 197, 94, 0.5);
-    text-transform: lowercase;
 }
 
 .review-user.wrong {
@@ -2088,133 +2184,8 @@ body {
     margin: 0 5px; 
     letter-spacing: 2px;
 }
+    </style>
 
-/* --- 3. 視窗本體 (.modal-content) --- */
-#launch-modal .modal-content {
-    background: rgba(15, 23, 42, 0.85); /* 深色少少，突出光效 */
-    backdrop-filter: blur(12px); 
-    border: 1px solid rgba(14, 165, 233, 0.8);
-    box-shadow: 0 0 60px rgba(14, 165, 233, 0.6), inset 0 0 40px rgba(14, 165, 233, 0.3);
-    
-    width: 90%; max-width: 450px; padding: 30px; border-radius: 10px;
-    text-align: center; color: #fff;
-    overflow: hidden; position: relative; 
-
-    /* 進場 (0.8s) + 待機 Loop */
-    animation: 
-        smooth-entry 0.8s cubic-bezier(0.1, 0.9, 0.2, 1) forwards,
-        fluid-float 4s ease-in-out infinite 0.8s;
-        
-    will-change: transform, filter, text-shadow;
-}
-
-/* 內部掃描線 (::after) */
-#launch-modal .modal-content::after {
-    content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-    pointer-events: none; z-index: 1;
-    background: linear-gradient(to bottom, transparent 50%, rgba(14, 165, 233, 0.15) 50%, transparent 51%);
-    background-size: 100% 4px;
-    animation: scanline-move 2s linear infinite; /* 加快少少 */
-}
-
-/* 確保文字在頂層 */
-#launch-modal .modal-content > * { position: relative; z-index: 2; }
-
-/* ============================================================
-   ★★★ V20 最終版 (針對小喇叭短內容優化 - 保留動畫 + 鎖死位置) ★★★
-   ============================================================ */
-@media (max-width: 600px) {
-    /* 1. 大外框 */
-    #launch-modal {
-        /* 【關鍵修改】改用 px 鎖死位置！ */
-        /* 以前用 15vh，鍵盤一開就會縮水彈高 */
-        /* 改用 100px 或 110px，確保佢保持喺原本比較低嘅位置，填補個 Gap */
-        padding-top: 110px !important; 
-        
-        align-items: flex-start !important;
-        
-        /* 確保背景唔會郁 */
-        overflow: hidden !important;       
-    }
-
-    /* 2. 內容框 */
-    #launch-modal .modal-content {
-        box-sizing: border-box;
-        width: 85%;
-        max-width: 350px;
-        padding: 20px 20px;
-        margin-left: auto;
-        margin-right: auto;
-        
-        /* 取消高度限制 */
-        max-height: none !important;
-        overflow: visible !important;
-        margin-bottom: 0 !important;
-        
-        /* 【保留動畫】唔好加 animation: none */
-        /* 只需要確保 transition 順滑，萬一有少少位移都唔會太突兀 */
-        transition: transform 0.3s ease-out;
-    }
-
-    /* ... 其他樣式保持不變 ... */
-    .sentence-container {
-        max-height: none !important;
-        overflow: visible !important;
-        margin-bottom: 10px;
-        padding: 5px;
-        background: rgba(0, 0, 0, 0.3);
-        border-radius: 5px;
-    }
-    
-    .modal-content #q-text { font-size: 24px !important; margin: 10px 0 !important; }
-    .modal-content .vocab-hint { font-size: 28px !important; margin: 5px 0 15px 0 !important; }
-    .modal-content div[style*="font-size: 22px"] { font-size: 18px !important; }
-}
-
-/* --- 新增：Listening Mode 專用細喇叭 (Inline Emoji Style) --- */
-.cyber-speaker-btn-small {
-    width: 28px;  /* 調整至手指好撳的大小，類似 Emoji */
-    height: 28px;
-    display: inline-block; /* 令佢可以排係文字後面 */
-    vertical-align: middle; /* 對齊文字中間 */
-    margin-left: 8px; /* 同前面文字留少少距離 */
-    cursor: pointer;
-    
-    /* 圖片設定 (用番你張 speaker_icon.png) */
-    background-image: url('speaker_icon.png');
-    background-size: 60%; /* 圖標縮細，留番呼吸位 */
-    background-position: center;
-    background-repeat: no-repeat;
-    
-    /* 圓形發光外框 (紫色) */
-    border-radius: 50%;
-    background-color: rgba(217, 70, 239, 0.1);
-    border: 1px solid rgba(217, 70, 239, 0.5);
-    box-shadow: 0 0 8px rgba(217, 70, 239, 0.4);
-    
-    transition: all 0.2s;
-    position: relative;
-    top: -2px; /* 微調位置，視覺上更平衡 */
-}
-
-/* 按下時的效果 */
-.cyber-speaker-btn-small:active {
-    transform: scale(0.9);
-    background-color: rgba(217, 70, 239, 0.4);
-    box-shadow: 0 0 15px rgba(217, 70, 239, 0.8);
-}
-
-#skill-screen .level-btn:nth-child(3) {
-    border-color: #d946ef;  /* 預設紫色邊框 */
-    text-shadow: 0 0 5px #d946ef; /* ★ 修正重點：文字改發紫色光 */
-    box-shadow: 0 0 10px rgba(217, 70, 239, 0.2); /* 預設紫色陰影 */
-}
-#skill-screen .level-btn:nth-child(2) {
-    border-color: #22c55e;
-    text-shadow: 0 0 5px #22c55e;
-    box-shadow: 0 0 10px rgba(34, 197, 94, 0.2);
-}
-        </style>
 </head>
 <body>
 <div id="splash-screen" onclick="startExperience()">
@@ -3332,48 +3303,43 @@ if (currentPracticeMode === 'SPEAKING') {
         const container = document.getElementById('timer-bar-container');
         qDisplay.parentNode.insertBefore(micBtn, container);
 
-} else if (currentPracticeMode === 'LISTENING') {
-        // --- B. 聽力模式 (Listening) [V18 Inline Button 版] ---
+    } else if (currentPracticeMode === 'LISTENING') {
+        // --- B. 聽力模式 (Listening) ---
         fadeBgm(0.1, 800);
         let contentHTML = '';
-
-        // 準備要讀的字 (安全處理單引號)
-        const textToRead = currentVocab.sent ? currentVocab.sent : currentVocab.en;
-        const safeText = textToRead.replace(/'/g, "\\'");
-
-        // ★ 核心改動：建立一個「細粒版」喇叭掣 HTML string ★
-        // 唔再係一大個 div，而係一個 span，可以塞入句子裡面
-        const smallSpeakerBtn = `<span class="cyber-speaker-btn-small" onclick="speakText('${safeText}')"></span>`;
 
         // 1. 顯示句子填空 (如果有句子)
         if (currentVocab.sent) {
             const regex = new RegExp(`\\b${currentVocab.en}\\b`, 'gi');
-            // 將目標字換成動態底線
+            // 將目標字換成跟字數一樣長度的動態底線
             const dynamicBlanks = generateSmartBlanks(currentVocab.en);
             const displayHTML = currentVocab.sent.replace(regex, `<span class="listening-blank">${dynamicBlanks}</span>`);
-            
-            // ★ 將小喇叭掣直接加到句子最後面 (Inline) ★
-            // 同時移除咗原本底下的 "TAP TO REPLAY" 字眼
-            contentHTML += `<div class="sentence-container" style="text-align: center;">${displayHTML}${smallSpeakerBtn}</div>`;
+            contentHTML += `<div class="sentence-container">${displayHTML}</div>`;
         } else {
-            // 如果無句子，就顯示 Audio Intercepted + 小喇叭
-            contentHTML += `<div style="font-family:'Orbitron'; font-size:14px; color:#d946ef; margin-bottom:15px; letter-spacing:2px;">// AUDIO INTERCEPTED // ${smallSpeakerBtn}</div>`;
+            contentHTML += `<div style="font-family:'Orbitron'; font-size:14px; color:#d946ef; margin-bottom:15px; letter-spacing:2px;">// AUDIO INTERCEPTED //</div>`;
         }
 
-        // 更新介面
+        // 2. 加入高科技喇叭掣 (使用你畫的 PNG)
+        const textToRead = currentVocab.sent ? currentVocab.sent : currentVocab.en;
+        const safeText = textToRead.replace(/'/g, "\\'");
+
+        contentHTML += `
+            <div class="cyber-speaker-btn" onclick="speakText('${safeText}')"></div>
+            <div style="font-size:10px; color:#d946ef; margin-top:5px; opacity:0.8; font-family:'Orbitron';">TAP TO REPLAY</div>
+        `;
+        
         qText.innerHTML = contentHTML; 
         qText.style.cursor = "default"; 
         qText.onclick = null; 
 
-        // 2. 顯示智能底線區域 (輸入框上方)
+        // 3. 顯示智能底線
         qDisplay.innerHTML = generateSmartBlanks(currentVocab.en);
         qDisplay.style.color = "var(--primary)";
         
-        // 3. 顯示輸入框
         input.style.display = 'block';
-        setTimeout(() => input.focus(), 10);
+        setTimeout(() => input.focus(), 10); // 小延遲確保 focus 成功
 
-        // 自動讀出一次
+        // 自動讀出整句句子
         setTimeout(() => speakText(textToRead), 300);
 
     } else {
@@ -4029,32 +3995,13 @@ function startPlayerTurn() {
         }
     }
 
-// --- 修改後的動畫函數 (確保動畫在戰艦上面) ---
-function triggerAnimation(cell, type) {
-    const d = document.createElement('div');
-    if (type === 'blue') d.classList.add('anim-blue');
-    if (type === 'orange') d.classList.add('anim-orange');
-    
-    // ★ 關鍵修改 1：將動畫加到 Board (父層)，而不是 Cell (子層) ★
-    // 這樣動畫就可以跟戰艦 (ship-overlay) 在同一個層級競爭
-    const board = cell.parentElement; 
-    
-    // ★ 關鍵修改 2：手動設定動畫的位置和大小 ★
-    // 因為移出了 Cell，我們要告訴它 Cell 在哪裡
-    d.style.left = cell.offsetLeft + 'px';
-    d.style.top = cell.offsetTop + 'px';
-    d.style.width = cell.offsetWidth + 'px'; // 確保大小跟格仔一樣 (包含手機版 RWD)
-    d.style.height = cell.offsetHeight + 'px';
-    
-    // ★ 關鍵修改 3：設定極高的 z-index ★
-    // 戰艦係 z-index: 6，我哋設定 100 確保一定喺上面
-    d.style.zIndex = '100'; 
-    
-    board.appendChild(d);
-    
-    // 0.5秒後移除
-    setTimeout(() => d.remove(), 500);
-}
+    function triggerAnimation(cell, type) {
+        const d = document.createElement('div');
+        if (type === 'blue') d.classList.add('anim-blue');
+        if (type === 'orange') d.classList.add('anim-orange');
+        cell.appendChild(d);
+        setTimeout(() => d.remove(), 500);
+    }
 
     function playSound(id) {
         const s = document.getElementById(id);
@@ -5702,22 +5649,3 @@ function playUnderAttackAlert() {
 </div>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
