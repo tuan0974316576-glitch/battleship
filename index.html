@@ -2235,52 +2235,58 @@ body {
 /* 確保文字在頂層 */
 #launch-modal .modal-content > * { position: relative; z-index: 2; }
 
-
-/* =========================================
-   ★★★ 手機 & 平板 適配 (FIXED CENTER) ★★★
-   ========================================= */
+/* ============================================================
+   ★★★ V19 最終鎖死版：釘死頂部 + 禁止亂飛 + 無 Scroll Bar ★★★
+   ============================================================ */
 @media (max-width: 600px) {
+    /* 1. 大外框設定 */
     #launch-modal {
-        /* 強制靠上，避開鍵盤 */
-        align-items: flex-start !important;
-        padding-top: 5vh !important;
+        /* 注意：唔好加 display: block，留番俾 JS 控制 (none/flex) */
         
-        /* ★ 關鍵修正 1：鎖死橫向捲動，防止動畫 skew 撐開畫面 ★ */
-        overflow-y: scroll;
-        overflow-x: hidden; 
+        padding-top: 5vh !important;        /* ★ 核心：永遠置頂 5% */
+        align-items: flex-start !important; /* ★ 核心：內容由頂部開始排 */
+        
+        /* ★ 救命金丹：鎖死背景捲動，禁止瀏覽器自動推上去 ★ */
+        overflow: hidden !important;        
     }
 
+    /* 2. 內容框設定 */
     #launch-modal .modal-content {
-        /* ★ 關鍵修正 2：加入 border-box，防止 Padding 撐大寬度 ★ */
         box-sizing: border-box;
-        
         width: 85%;
         max-width: 350px;
-        padding: 15px 20px;
+        padding: 20px 20px;
         
-        /* 底部留位給鍵盤 */
-        margin-bottom: 50vh;
-        
-        /* ★ 關鍵修正 3：強制水平置中 (即使 Flex 失效，這行也能救回來) ★ */
+        /* 水平置中 */
         margin-left: auto;
         margin-right: auto;
+        
+        /* ★ 核心：取消避鍵盤 Margin (因為已經鎖死背景，唔需要再推) ★ */
+        margin-bottom: 0 !important;
+        
+        /* 取消高度限制，因為內容短咗 (有小喇叭) */
+        max-height: none !important;
+        overflow: visible !important;
     }
 
-    /* 字體調整保持不變 */
-    .modal-content #q-text { font-size: 24px !important; margin: 5px 0 !important; }
-    .modal-content .vocab-hint { font-size: 28px !important; margin: 10px 0 !important; letter-spacing: 3px !important; }
+    /* 3. 字體微調 (保留) */
+    .modal-content #q-text { font-size: 24px !important; margin: 10px 0 !important; }
+    .modal-content .vocab-hint { font-size: 28px !important; margin: 5px 0 15px 0 !important; }
     .modal-content div[style*="font-size: 22px"] { font-size: 18px !important; }
+    
+    /* 4. 句子容器 (V18 小喇叭版專用) */
+    .sentence-container {
+        /* 取消 Scroll，直接顯示 */
+        max-height: none !important;
+        overflow: visible !important;
+        margin-bottom: 10px;
+        padding: 5px;
+        background: rgba(0, 0, 0, 0.3);
+        border-radius: 5px;
+    }
 }
-#skill-screen .level-btn:nth-child(3) {
-    border-color: #d946ef;  /* 預設紫色邊框 */
-    text-shadow: 0 0 5px #d946ef; /* ★ 修正重點：文字改發紫色光 */
-    box-shadow: 0 0 10px rgba(217, 70, 239, 0.2); /* 預設紫色陰影 */
-}
-#skill-screen .level-btn:nth-child(2) {
-    border-color: #22c55e;
-    text-shadow: 0 0 5px #22c55e;
-    box-shadow: 0 0 10px rgba(34, 197, 94, 0.2);
-}
+
+
 /* --- 新增：Listening Mode 專用細喇叭 (Inline Emoji Style) --- */
 .cyber-speaker-btn-small {
     width: 28px;  /* 調整至手指好撳的大小，類似 Emoji */
@@ -2312,6 +2318,17 @@ body {
     transform: scale(0.9);
     background-color: rgba(217, 70, 239, 0.4);
     box-shadow: 0 0 15px rgba(217, 70, 239, 0.8);
+}
+
+#skill-screen .level-btn:nth-child(3) {
+    border-color: #d946ef;  /* 預設紫色邊框 */
+    text-shadow: 0 0 5px #d946ef; /* ★ 修正重點：文字改發紫色光 */
+    box-shadow: 0 0 10px rgba(217, 70, 239, 0.2); /* 預設紫色陰影 */
+}
+#skill-screen .level-btn:nth-child(2) {
+    border-color: #22c55e;
+    text-shadow: 0 0 5px #22c55e;
+    box-shadow: 0 0 10px rgba(34, 197, 94, 0.2);
 }
         </style>
 </head>
@@ -5801,6 +5818,7 @@ function playUnderAttackAlert() {
 </div>
 </body>
 </html>
+
 
 
 
