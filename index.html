@@ -2712,24 +2712,37 @@ const targetVoiceConfig = [
     { file: 'roger_that.mp3',        duration: 1100 } 
 ];
 
-// 2. 這是目前的「袋子」，一開始複製一份完整的清單
 let currentVoiceBag = [...targetVoiceConfig];
+// ★ 新增：用來記錄上一句播過咩
+let lastPlayedFile = null;
 
-// 3. 抽籤函數
+// 3. 抽籤函數 (修正版)
 function getNextTargetVoice() {
-    // 如果袋子空了，就重新倒滿 (Reshuffle)
+    // A. 如果袋乾淨了，重新倒滿
     if (currentVoiceBag.length === 0) {
         currentVoiceBag = [...targetVoiceConfig];
         console.log("Voice bag empty! Reshuffling...");
     }
 
-    // 隨機抽一個索引
-    const randomIndex = Math.floor(Math.random() * currentVoiceBag.length);
+    // B. 隨機抽一個索引
+    let randomIndex = Math.floor(Math.random() * currentVoiceBag.length);
+    let selectedVoice = currentVoiceBag[randomIndex];
+
+    // ★★★ C. 防撞機制 (關鍵修改) ★★★
+    // 如果抽中的剛好等於「上一句」 (只會發生在換新袋的第一抽)
+    // 而且袋裡面有超過 1 個選擇 (如果得 1 個就避無可避)
+    if (lastPlayedFile && selectedVoice.file === lastPlayedFile && currentVoiceBag.length > 1) {
+        console.log(`Avoided repeat of ${selectedVoice.file}, picking next one.`);
+        
+        // 簡單直接：揀隔離嗰個 (因為袋係亂或未抽嘅，揀邊個都一樣係隨機)
+        randomIndex = (randomIndex + 1) % currentVoiceBag.length;
+        selectedVoice = currentVoiceBag[randomIndex];
+    }
+
+    // D. 記錄這次播了什麼，供下次檢查
+    lastPlayedFile = selectedVoice.file;
     
-    // 取出該聲音物件
-    const selectedVoice = currentVoiceBag[randomIndex];
-    
-    // 從袋子中移除 (Splice)
+    // E. 從袋中移除
     currentVoiceBag.splice(randomIndex, 1);
     
     return selectedVoice;
@@ -6060,6 +6073,7 @@ function playUnderAttackAlert() {
 </div>
 </body>
 </html>
+
 
 
 
