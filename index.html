@@ -2281,6 +2281,37 @@ body {
     text-shadow: 0 0 5px #22c55e;
     box-shadow: 0 0 10px rgba(34, 197, 94, 0.2);
 }
+/* ============================================================
+   ★★★ V14 修復：針對 Listening Mode 爆長問題 ★★★
+   ============================================================ */
+
+/* 1. 強制限制 Listening Mode 內容高度 */
+/* 只要係手機版，我就限制 .modal-content 最大高度 */
+@media (max-width: 600px) {
+    #launch-modal .modal-content {
+        /* ★ 核心：限制最大高度為螢幕 70% ★ */
+        max-height: 70vh !important; 
+        
+        /* ★ 核心：內容多就出 Scroll Bar，但只係框內 Scroll ★ */
+        overflow-y: auto !important; 
+        
+        /* 確保 Padding 唔會撐爆 */
+        box-sizing: border-box !important;
+        
+        /* 底部 Margin 照舊，避鍵盤 */
+        margin-bottom: 50vh !important;
+    }
+    
+    /* 2. 特別針對 Listening Mode 嘅長句子容器 */
+    .sentence-container {
+        max-height: 150px; /* 限制句子顯示區高度 */
+        overflow-y: auto;  /* 字太多就 Scroll */
+        margin-bottom: 10px;
+        padding: 5px;
+        background: rgba(0, 0, 0, 0.3); /* 加深底色，方便閱讀 */
+        border-radius: 5px;
+    }
+}
         </style>
 </head>
 <body>
@@ -5764,6 +5795,7 @@ function playUnderAttackAlert() {
 </div>
 </body>
 </html>
+
 
 
 
