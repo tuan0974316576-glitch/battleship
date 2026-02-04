@@ -928,30 +928,60 @@ body {
         max-width: 400px; /* 稍微縮窄一點，讓按鈕看起來更緊湊 */
     }
 
-/* --- 等級/技能按鈕樣式 (只修改外觀，不影響排版) --- */
+/* 1. 等級按鈕基礎樣式：加入常駐藍光 */
 .level-btn {
-    background: transparent !important; /* ★ 關鍵：透明底 */
-    border: 2px solid var(--primary);
+    background: rgba(14, 165, 233, 0.05) !important; /* 淡淡的透明藍底 */
+    border: 2px solid var(--primary) !important;
     color: #fff;
-    padding: 15px; 
+    padding: 15px;
     font-family: 'Orbitron', sans-serif;
     font-size: 18px;
     font-weight: bold;
     cursor: pointer;
-    transition: all 0.3s ease;
-    text-shadow: 0 0 5px var(--primary);
-    box-shadow: 0 0 10px rgba(14, 165, 233, 0.2);
     
-    /* 確保文字置中 */
+    /* 動畫過渡：讓縮放和發光更順滑 */
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    
+    /* 藍色文字發光 */
+    text-shadow: 0 0 8px var(--primary);
+    
+    /* 外部藍色光暈 */
+    box-shadow: 0 0 15px rgba(14, 165, 233, 0.3), 
+                inset 0 0 10px rgba(14, 165, 233, 0.1);
+    
     display: flex;
     align-items: center;
     justify-content: center;
+    position: relative;
+    overflow: hidden;
 }
 
-/* 確保 Hover 唔會變實心色 (重要！) */
+/* 2. 滑鼠懸停 (Hover)：輕微放大與增亮 */
 .level-btn:hover {
-    background: transparent !important; 
-    transform: scale(1.1); /* 輕微放大 */
+    background: rgba(14, 165, 233, 0.15) !important;
+    transform: scale(1.05); /* 稍微放大 */
+    box-shadow: 0 0 25px rgba(14, 165, 233, 0.5), 
+                inset 0 0 15px rgba(14, 165, 233, 0.2);
+    text-shadow: 0 0 12px #fff; /* 文字變白光 */
+}
+
+/* 3. 按下瞬間 (Active)：放大加強光特效 */
+.level-btn:active {
+    transform: scale(1.15); /* 明顯放大 */
+    background: var(--primary) !important; /* 背景變實色藍 */
+    color: #000; /* 文字變黑增加對比 */
+    
+    /* 強烈的爆光效果 */
+    box-shadow: 0 0 40px var(--primary), 
+                0 0 60px rgba(14, 165, 233, 0.6);
+    
+    text-shadow: none;
+    transition: all 0.1s; /* 按下反應要快 */
+}
+
+/* 確保原本針對不同 Skill 的顏色不會覆蓋了這個藍光邏輯 (可選) */
+#level-screen .level-btn:hover {
+    border-color: #fff !important; /* 觸碰時邊框變白更像有通電 */
 }
 
 /* --- 個別顏色光暈 --- */
@@ -5674,5 +5704,6 @@ function playUnderAttackAlert() {
 </div>
 </body>
 </html>
+
 
 
