@@ -402,17 +402,39 @@ body {
         backdrop-filter: blur(10px); 
     }
         
-        .modal-content { 
-            background: rgba(15, 23, 42, 0.95); 
-            border: 2px solid var(--danger); 
-            border-radius: 15px; 
-            padding: 30px; 
-            width: 90%; 
-            max-width: 420px; 
-            text-align: center; 
-            box-shadow: 0 0 60px rgba(239, 68, 68, 0.6); 
-            position: relative;
-        }
+.modal-content {
+    /* 原本係 0.95 (太實色)，現在改做 0.75 讓背景透出來 */
+    background: rgba(15, 23, 42, 0.75) !important; 
+    
+    /* 加入磨砂效果，令背後的字符看起來更有層次 */
+    backdrop-filter: blur(3px); 
+    -webkit-backdrop-filter: blur(3px);
+
+    /* 確保 Canvas 不會跑出框外 */
+    overflow: hidden; 
+    position: relative; /* 重要：為了定位 Canvas */
+}
+
+/* 2. 定位 Canvas：放在最底層 */
+#matrix-bg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0; /* 放在文字後面 */
+    opacity: 0.4; /* 調整透明度，不要搶了題目的鏡 */
+    pointer-events: none; /* 確保點擊穿透，不會擋住輸入框 */
+}
+
+/* 3. 確保原本的文字在動畫上面 */
+.modal-content > div, 
+.modal-content > input, 
+.modal-content > .vocab-hint,
+.modal-content > #timer-bar-container {
+    position: relative;
+    z-index: 2; /* 浮在動畫上面 */
+}
 
 .vocab-hint { 
             font-size: 36px; letter-spacing: 8px; color: var(--primary); margin: 20px 0; 
@@ -2494,6 +2516,7 @@ body {
 
     <div id="launch-modal" onclick="focusInput()">
         <div class="modal-content">
+            <canvas id="matrix-bg"></canvas>
             <div style="color: var(--danger); font-family: 'Black Ops One'; font-size: 22px;">⚠️ DECRYPT CODE ⚠️</div>
             <div style="font-size: 18px; margin-top: 10px; color: #94a3b8;">Translate to English:</div>
             <div style="font-size: 24px; margin: 10px 0; color: #fff; font-weight: bold;" id="q-text">...</div>
@@ -3344,6 +3367,7 @@ function openLaunchModal(index) {
 
     // ★★★ 關鍵：先顯示視窗，再執行後面的 focus，確保鍵盤彈出 ★★★
     modal.style.display = "flex";
+    startMatrixEffect();
 
     // ★★★ 核心：根據模式切換介面 ★★★
 if (currentPracticeMode === 'SPEAKING') {
@@ -3480,6 +3504,7 @@ function handlePlayerTimeout() {
     if (typeof timerInterval !== 'undefined') clearInterval(timerInterval);
     document.getElementById('launch-modal').style.display = "none";
     playSound('timeout-sfx');
+    stopMatrixEffect();
     
     currentPhase = 'PHASE_SWITCH'; 
 
@@ -3662,6 +3687,7 @@ function playerFire(success) {
     // 1. 基本清理：停計時器、關閉彈窗
     clearInterval(timerInterval);
     document.getElementById('launch-modal').style.display = "none";
+    stopMatrixEffect();
     
     if (success) {
         // ============================
@@ -5484,6 +5510,87 @@ function backToMainMenu() {
     
     showMainMenu();
 }
+/* =========================================
+   ★★★ CYBERPUNK MATRIX EFFECT (題目背景動畫) ★★★
+   ========================================= */
+let matrixInterval = null;
+
+function startMatrixEffect() {
+    const canvas = document.getElementById('matrix-bg');
+    if (!canvas) return;
+    
+    const ctx = canvas.getContext('2d');
+    
+    // 設定 Canvas 大小等於題目框大小
+    const container = document.querySelector('.modal-content');
+    canvas.width = container.offsetWidth;
+    canvas.height = container.offsetHeight;
+
+    // 字符集 (片假名 + 數字 + 羅馬字) - 營造高科技感
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789$+-*/=%"\'#&_(),.;:?!\\|{}<>[]^~';
+    const charArray = chars.split('');
+
+    const fontSize = 14;
+    const columns = canvas.width / fontSize; // 計算有多少列
+
+    // 每一列目前的 Y 座標 (初始化為 0)
+    const drops = [];
+    for (let x = 0; x < columns; x++) {
+        drops[x] = 1;
+    }
+
+    // 繪製函數
+    function draw() {
+        // 1. 塗黑背景，但帶有透明度 (營造殘影拖尾效果)
+        ctx.fillStyle = 'rgba(15, 23, 42, 0.1)'; // 深藍黑底色
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // 2. 設定文字樣式
+        ctx.fillStyle = '#0ea5e9'; // ★ 主題藍色 (Cyan)
+        ctx.font = fontSize + 'px "Orbitron", monospace'; // 用番你的科技字體
+
+        // 3. 逐列繪製字符
+        for (let i = 0; i < drops.length; i++) {
+            // 隨機選一個字
+            const text = charArray[Math.floor(Math.random() * charArray.length)];
+            
+            // 繪製文字
+            const x = i * fontSize;
+            const y = drops[i] * fontSize;
+            
+            // 隨機讓某些字變白色 (閃爍效果)
+            if (Math.random() > 0.95) {
+                ctx.fillStyle = '#ffffff'; 
+            } else {
+                ctx.fillStyle = '#0ea5e9';
+            }
+            
+            ctx.fillText(text, x, y);
+
+            // 如果超出底部，隨機重置回頂部
+            if (y > canvas.height && Math.random() > 0.975) {
+                drops[i] = 0;
+            }
+
+            // Y 座標增加
+            drops[i]++;
+        }
+    }
+
+    // 防止重複啟動
+    if (matrixInterval) clearInterval(matrixInterval);
+    
+    // 啟動動畫 (每 33ms 一幀 = 30fps)
+    matrixInterval = setInterval(draw, 33);
+}
+
+function stopMatrixEffect() {
+    if (matrixInterval) {
+        clearInterval(matrixInterval);
+        matrixInterval = null;
+    }
+}
+
 window.onload = function() {
     console.log("System Initializing...");
 
@@ -5716,6 +5823,7 @@ function playUnderAttackAlert() {
 </div>
 </body>
 </html>
+
 
 
 
