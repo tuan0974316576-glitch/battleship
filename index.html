@@ -2781,6 +2781,7 @@ let battleLog = [];
     let lastProcessedTimestamp = 0; // ★ 新增：防止重複處理同一手棋
 let battleUnsubscribe = null; // ★ 新增：專門管理戰鬥中的監聽器
 let turnCounter = 0; // 回合計數器
+let isTargeting = false;
     // --- 1. Firebase 設定 (已填入你的資料) ---
     const firebaseConfig = {
         apiKey: "AIzaSyBdfTgb7FpkYdgjvrYWQ0jr-N-1fAaW9Q0",
@@ -3473,21 +3474,28 @@ battleUnsubscribe = onValue(ref(db, 'rooms/' + currentRoomId), (snapshot) => {
    ★★★ TARGET LOCK LOGIC (JS) ★★★
    ========================================= */
 
-// 1. 修改點擊處理：加入動畫攔截
 function handleEnemyGridClick(index) {
-    // 檢查是否輪到玩家回合 (同舊邏輯一樣)
-    if (currentPhase === 'PLAYER_TURN') {
-        const cell = document.getElementById('enemy-grid').children[index];
+    // 1. 檢查鎖定：如果「正在瞄準(isTargeting)」或者「不是玩家回合」，直接無視點擊
+    if (isTargeting || currentPhase !== 'PLAYER_TURN') {
+        return; 
+    }
+
+    const cell = document.getElementById('enemy-grid').children[index];
+    
+    // 如果該格未被翻開
+    if (!cell.classList.contains('revealed')) {
         
-        // 如果該格未被翻開
-        if (!cell.classList.contains('revealed')) {
-            
-            // ★ 新增：先執行鎖定動畫，動畫完結後才 callback 打開題目
-            runTargetLockAnimation(index, () => {
-                openLaunchModal(index);
-            });
-            
-        }
+        // 2. ★ 上鎖：立即設定為 true，防止玩家撳第二下 ★
+        isTargeting = true;
+
+        // 3. 執行鎖定動畫
+        runTargetLockAnimation(index, () => {
+            // 動畫完成後的回調 (Callback)
+            openLaunchModal(index);
+
+            // 4. ★ 解鎖：彈出視窗後，重置為 false ★
+            isTargeting = false;
+        });
     }
 }
 
@@ -6078,6 +6086,7 @@ function playUnderAttackAlert() {
 </div>
 </body>
 </html>
+
 
 
 
