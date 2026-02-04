@@ -2286,6 +2286,88 @@ body {
     transform: scale(0.95); /* 點擊時縮小增加按壓感 */
     transition: all 0.1s;
 }
+/* =========================================
+   ★★★ TARGET LOCK SYSTEM (座標鎖定特效) ★★★
+   ========================================= */
+
+/* 1. 鎖定線與框的容器 (會動態加落去 enemy-grid) */
+.target-overlay {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none; /* 確保唔會阻住點擊 */
+    z-index: 50;
+    overflow: hidden; /* 防止線條飛出棋盤 */
+    border-radius: 12px; /* 跟番棋盤圓角 */
+}
+
+/* 2. 橫線 (Horizontal Line) */
+.aim-line-h {
+    position: absolute;
+    left: 0;
+    width: 100%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--warning), transparent); /* 橙色漸變線 */
+    box-shadow: 0 0 8px var(--warning);
+    opacity: 0;
+}
+
+/* 3. 直線 (Vertical Line) */
+.aim-line-v {
+    position: absolute;
+    top: 0;
+    height: 100%;
+    width: 1px;
+    background: linear-gradient(180deg, transparent, var(--warning), transparent);
+    box-shadow: 0 0 8px var(--warning);
+    opacity: 0;
+}
+
+/* 4. 鎖定框 (Reticle) */
+.aim-reticle {
+    position: absolute;
+    border: 2px solid var(--warning);
+    box-shadow: 0 0 15px var(--warning), inset 0 0 10px var(--warning);
+    opacity: 0;
+    
+    /* 裁剪四角，整成 [ ] 形狀 */
+    clip-path: polygon(
+        0% 0%, 30% 0%, 30% 10%, 70% 10%, 70% 0%, 100% 0%, 
+        100% 100%, 70% 100%, 70% 90%, 30% 90%, 30% 100%, 0% 100%
+    );
+    /* 實際上簡單啲用四角邊框都得，但我哋用 clip-path 型啲 */
+    clip-path: polygon(
+        0 0, 25% 0, 25% 2px, 2px 2px, 2px 25%, 0 25%, /* 左上 */
+        0 100%, 25% 100%, 25% calc(100% - 2px), 2px calc(100% - 2px), 2px 75%, 0 75%, /* 左下 */
+        100% 100%, 75% 100%, 75% calc(100% - 2px), calc(100% - 2px) calc(100% - 2px), calc(100% - 2px) 75%, 100% 75%, /* 右下 */
+        100% 0, 75% 0, 75% 2px, calc(100% - 2px) 2px, calc(100% - 2px) 25%, 100% 25% /* 右上 */
+    );
+    background: rgba(245, 158, 11, 0.1);
+}
+
+/* 5. 動畫 Keyframes */
+
+/* 橫線掃描：由上而下衝落去目標位置 */
+@keyframes scanH {
+    0% { top: 0; opacity: 0; }
+    20% { opacity: 1; }
+    100% { top: var(--target-y); opacity: 0.5; }
+}
+
+/* 直線掃描：由左而右衝過去目標位置 */
+@keyframes scanV {
+    0% { left: 0; opacity: 0; }
+    20% { opacity: 1; }
+    100% { left: var(--target-x); opacity: 0.5; }
+}
+
+/* 鎖定框：放大縮細 (Lock-on) */
+@keyframes lockOn {
+    0% { transform: scale(2) rotate(45deg); opacity: 0; }
+    50% { opacity: 1; }
+    80% { transform: scale(0.9); } /* 縮過頭 */
+    100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
     </style>
 
 </head>
@@ -3324,14 +3406,89 @@ battleUnsubscribe = onValue(ref(db, 'rooms/' + currentRoomId), (snapshot) => {
         }
     }
 
-    function handleEnemyGridClick(index) {
-        if (currentPhase === 'PLAYER_TURN') {
-            const cell = document.getElementById('enemy-grid').children[index];
-            if (!cell.classList.contains('revealed')) {
+/* =========================================
+   ★★★ TARGET LOCK LOGIC (JS) ★★★
+   ========================================= */
+
+// 1. 修改點擊處理：加入動畫攔截
+function handleEnemyGridClick(index) {
+    // 檢查是否輪到玩家回合 (同舊邏輯一樣)
+    if (currentPhase === 'PLAYER_TURN') {
+        const cell = document.getElementById('enemy-grid').children[index];
+        
+        // 如果該格未被翻開
+        if (!cell.classList.contains('revealed')) {
+            
+            // ★ 新增：先執行鎖定動畫，動畫完結後才 callback 打開題目
+            runTargetLockAnimation(index, () => {
                 openLaunchModal(index);
-            }
+            });
+            
         }
     }
+}
+
+// 2. 執行鎖定動畫的主函數
+function runTargetLockAnimation(index, onComplete) {
+    const grid = document.getElementById('enemy-grid');
+    const cell = grid.children[index];
+    
+    // 獲取格仔的相對座標 (相對於 grid)
+    const cellLeft = cell.offsetLeft;
+    const cellTop = cell.offsetTop;
+    const cellW = cell.offsetWidth;
+    const cellH = cell.offsetHeight;
+
+    // 計算中心點 (給線條用)
+    const centerX = cellLeft + cellW / 2;
+    const centerY = cellTop + cellH / 2;
+
+    // A. 建立覆蓋層 (Overlay)
+    const overlay = document.createElement('div');
+    overlay.className = 'target-overlay';
+    grid.appendChild(overlay);
+
+    // B. 建立元件
+    const lineH = document.createElement('div');
+    lineH.className = 'aim-line-h';
+    // 傳入 CSS 變數，告訴動畫終點在哪
+    lineH.style.setProperty('--target-y', centerY + 'px');
+    
+    const lineV = document.createElement('div');
+    lineV.className = 'aim-line-v';
+    lineV.style.setProperty('--target-x', centerX + 'px');
+    
+    const reticle = document.createElement('div');
+    reticle.className = 'aim-reticle';
+    reticle.style.width = cellW + 'px';
+    reticle.style.height = cellH + 'px';
+    reticle.style.left = cellLeft + 'px';
+    reticle.style.top = cellTop + 'px';
+
+    // C. 加入元件
+    overlay.appendChild(lineH);
+    overlay.appendChild(lineV);
+    overlay.appendChild(reticle);
+
+    // D. 播放音效 (重用 deploy 聲，或者任何短促的機械聲)
+    if(typeof playSound === 'function') playSound('deploy-sfx');
+
+    // E. 啟動動畫
+    // 設定 animation 屬性
+    lineH.style.animation = 'scanH 0.3s cubic-bezier(0.2, 0.8, 0.2, 1) forwards';
+    lineV.style.animation = 'scanV 0.3s cubic-bezier(0.2, 0.8, 0.2, 1) forwards';
+    reticle.style.animation = 'lockOn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards';
+
+    // F. 等待動畫完成 (0.5秒) 後執行下一步
+    setTimeout(() => {
+        // 移除動畫層
+        overlay.remove();
+        
+        // 執行回調 (打開題目)
+        if (onComplete) onComplete();
+        
+    }, 500); // 這裡的時間要比 CSS animation 長少少
+}
 
 // --- 最終完整整合版：出題視窗 (圖片圖示 + 智能排版 + 語音修復) ---
 function openLaunchModal(index) {
@@ -5856,6 +6013,7 @@ function playUnderAttackAlert() {
 </div>
 </body>
 </html>
+
 
 
 
