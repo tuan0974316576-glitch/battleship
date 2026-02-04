@@ -2235,87 +2235,55 @@ body {
 /* 確保文字在頂層 */
 #launch-modal .modal-content > * { position: relative; z-index: 2; }
 
-
-/* =========================================
-   ★★★ 手機 & 平板 適配 (FIXED CENTER) ★★★
-   ========================================= */
+/* ============================================================
+   ★★★ V16 最終版：無 Scroll Bar + 置頂 5% + 不避鍵盤 (原地不動) ★★★
+   ============================================================ */
 @media (max-width: 600px) {
+    /* 1. 大外框設定 */
     #launch-modal {
-        /* 強制靠上，避開鍵盤 */
-        align-items: flex-start !important;
-        padding-top: 5vh !important;
+        display: block !important;          /* 確保可以由頂開始排 */
+        padding-top: 10vh !important;        /* ★ 核心：永遠置頂 5% */
+        align-items: flex-start !important; 
         
-        /* ★ 關鍵修正 1：鎖死橫向捲動，防止動畫 skew 撐開畫面 ★ */
-        overflow-y: scroll;
-        overflow-x: hidden; 
+        /* ★ 核心：鎖死背景，絕對唔會令畫面變長 ★ */
+        overflow: hidden !important;        
     }
 
-/* 手機版 Modal Content 設定 */
+    /* 2. 內容框設定 */
     #launch-modal .modal-content {
-        /* --- 1. 必須保留嘅舊設定 (唔好刪！) --- */
         box-sizing: border-box;
         width: 85%;
         max-width: 350px;
-        padding: 15px 20px;
+        padding: 20px 20px;
         
-        /* 確保水平置中 */
+        /* 水平置中 */
         margin-left: auto;
         margin-right: auto;
-
-        /* --- 2. V15 新增/修改設定 (解決 Listening Mode 問題) --- */
-        max-height: 75vh !important;    /* 限制高度，太多內容就 Scroll */
-        overflow-y: auto !important;    /* 開啟內部捲動 */
         
-        /* ★ 將原本的 50vh 改為 20vh (無咁驚青，唔會飛上天) ★ */
-        margin-bottom: 20vh !important; 
+        /* ★ 核心：取消所有 Scroll Bar 及高度限制 (內容幾長就幾長) ★ */
+        max-height: none !important;
+        overflow: visible !important;
+        
+        /* ★ 核心：取消避鍵盤 (原地不動，唔會飛上天) ★ */
+        margin-bottom: 0 !important;
     }
 
-    /* 字體調整保持不變 */
-    .modal-content #q-text { font-size: 24px !important; margin: 5px 0 !important; }
-    .modal-content .vocab-hint { font-size: 28px !important; margin: 10px 0 !important; letter-spacing: 3px !important; }
+    /* 3. 字體微調 (保留) */
+    .modal-content #q-text { font-size: 24px !important; margin: 10px 0 !important; }
+    .modal-content .vocab-hint { font-size: 28px !important; margin: 5px 0 15px 0 !important; }
     .modal-content div[style*="font-size: 22px"] { font-size: 18px !important; }
-}
-#skill-screen .level-btn:nth-child(3) {
-    border-color: #d946ef;  /* 預設紫色邊框 */
-    text-shadow: 0 0 5px #d946ef; /* ★ 修正重點：文字改發紫色光 */
-    box-shadow: 0 0 10px rgba(217, 70, 239, 0.2); /* 預設紫色陰影 */
-}
-#skill-screen .level-btn:nth-child(2) {
-    border-color: #22c55e;
-    text-shadow: 0 0 5px #22c55e;
-    box-shadow: 0 0 10px rgba(34, 197, 94, 0.2);
-}
-/* ============================================================
-   ★★★ V14 修復：針對 Listening Mode 爆長問題 ★★★
-   ============================================================ */
-
-/* 1. 強制限制 Listening Mode 內容高度 */
-/* 只要係手機版，我就限制 .modal-content 最大高度 */
-@media (max-width: 600px) {
-    #launch-modal .modal-content {
-        /* ★ 核心：限制最大高度為螢幕 70% ★ */
-        max-height: 70vh !important; 
-        
-        /* ★ 核心：內容多就出 Scroll Bar，但只係框內 Scroll ★ */
-        overflow-y: auto !important; 
-        
-        /* 確保 Padding 唔會撐爆 */
-        box-sizing: border-box !important;
-        
-        /* 底部 Margin 照舊，避鍵盤 */
-        margin-bottom: 50vh !important;
-    }
     
-    /* 2. 特別針對 Listening Mode 嘅長句子容器 */
+    /* 4. 句子容器樣式 (只保留底色，取消 Scroll Bar) */
     .sentence-container {
-        max-height: 150px; /* 限制句子顯示區高度 */
-        overflow-y: auto;  /* 字太多就 Scroll */
+        max-height: none !important; /* 取消限高 */
+        overflow: visible !important; /* 取消 Scroll */
         margin-bottom: 10px;
         padding: 5px;
-        background: rgba(0, 0, 0, 0.3); /* 加深底色，方便閱讀 */
+        background: rgba(0, 0, 0, 0.3);
         border-radius: 5px;
     }
 }
+
         </style>
 </head>
 <body>
@@ -5799,6 +5767,7 @@ function playUnderAttackAlert() {
 </div>
 </body>
 </html>
+
 
 
 
