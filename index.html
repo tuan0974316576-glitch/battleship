@@ -2310,6 +2310,7 @@ body {
     background: linear-gradient(90deg, transparent, var(--warning), transparent); /* 橙色漸變線 */
     box-shadow: 0 0 8px var(--warning);
     opacity: 0;
+    animation: scanH calc(var(--anim-duration) * 0.6) cubic-bezier(0.2, 0.8, 0.2, 1) forwards !important;
 }
 
 /* 3. 直線 (Vertical Line) */
@@ -2321,10 +2322,13 @@ body {
     background: linear-gradient(180deg, transparent, var(--warning), transparent);
     box-shadow: 0 0 8px var(--warning);
     opacity: 0;
+    animation: scanV calc(var(--anim-duration) * 0.6) cubic-bezier(0.2, 0.8, 0.2, 1) forwards !important;
+    
 }
 
 /* 4. 鎖定框 (Reticle) - 圓形狙擊鏡版 */
 .aim-reticle {
+    animation: lockOn calc(var(--anim-duration) - 0.1s) cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards !important;
     position: absolute;
     /* 變成圓形 */
     border-radius: 50%; 
@@ -2694,7 +2698,42 @@ body {
 <script src="vocab_data.js"></script>
 
 <script>
+/* =========================================
+   ★★★ TARGET VOICE SYSTEM (洗牌袋邏輯) ★★★
+   ========================================= */
+
+// 1. 設定聲音清單 (請根據你實際的 MP3 長度微調 duration)
+// 單位: ms (毫秒)
+const targetVoiceConfig = [
+    { file: 'acknowledged.mp3',      duration: 1300 },
+    { file: 'understood.mp3',        duration: 1100 },
+    { file: 'got_it.mp3',            duration: 800  }, 
+    { file: 'fire_zone_confirmed.mp3', duration: 1600 }, 
+    { file: 'roger_that.mp3',        duration: 1100 } 
+];
+
+// 2. 這是目前的「袋子」，一開始複製一份完整的清單
+let currentVoiceBag = [...targetVoiceConfig];
+
+// 3. 抽籤函數
+function getNextTargetVoice() {
+    // 如果袋子空了，就重新倒滿 (Reshuffle)
+    if (currentVoiceBag.length === 0) {
+        currentVoiceBag = [...targetVoiceConfig];
+        console.log("Voice bag empty! Reshuffling...");
+    }
+
+    // 隨機抽一個索引
+    const randomIndex = Math.floor(Math.random() * currentVoiceBag.length);
     
+    // 取出該聲音物件
+    const selectedVoice = currentVoiceBag[randomIndex];
+    
+    // 從袋子中移除 (Splice)
+    currentVoiceBag.splice(randomIndex, 1);
+    
+    return selectedVoice;
+}
 let currentPracticeMode = 'READING'; // 預設模式
 let recognition = null; // 語音識別物件
 let battleLog = [];
@@ -3434,11 +3473,21 @@ function handleEnemyGridClick(index) {
     }
 }
 
-// 2. 執行鎖定動畫的主函數 (1.5秒慢速版)
+// 執行鎖定動畫的主函數 (動態時長版)
 function runTargetLockAnimation(index, onComplete) {
     const grid = document.getElementById('enemy-grid');
     const cell = grid.children[index];
     
+    // --- 1. 抽取聲音與計算時間 ---
+    const voiceObj = getNextTargetVoice(); 
+    const totalDuration = voiceObj.duration; // 取得該聲音的長度 (ms)
+    
+    // 將 ms 轉換成秒 (給 CSS 用)，例如 1500ms -> "1.5s"
+    const cssDuration = (totalDuration / 1000) + 's'; 
+
+    console.log(`Playing: ${voiceObj.file}, Duration: ${totalDuration}ms`);
+
+    // --- 2. 建立 DOM 元素 (同之前一樣) ---
     const cellLeft = cell.offsetLeft;
     const cellTop = cell.offsetTop;
     const cellW = cell.offsetWidth;
@@ -3446,12 +3495,10 @@ function runTargetLockAnimation(index, onComplete) {
     const centerX = cellLeft + cellW / 2;
     const centerY = cellTop + cellH / 2;
 
-    // A. 建立覆蓋層
     const overlay = document.createElement('div');
     overlay.className = 'target-overlay';
     grid.appendChild(overlay);
 
-    // B. 建立元件
     const lineH = document.createElement('div');
     lineH.className = 'aim-line-h';
     lineH.style.setProperty('--target-y', centerY + 'px');
@@ -3463,33 +3510,31 @@ function runTargetLockAnimation(index, onComplete) {
     const reticle = document.createElement('div');
     reticle.className = 'aim-reticle';
     reticle.style.width = cellW + 'px';
-    reticle.style.height = cellH + 'px'; // 圓形會根據這寬高自動變圓
+    reticle.style.height = cellH + 'px';
     reticle.style.left = cellLeft + 'px';
     reticle.style.top = cellTop + 'px';
+
+    // ★★★ 關鍵：將計算出的時間傳給 CSS 變數 ★★★
+    // 這裡我們把時間設在父層 overlay，或者直接設在元素上都可以
+    lineH.style.setProperty('--anim-duration', cssDuration);
+    lineV.style.setProperty('--anim-duration', cssDuration);
+    reticle.style.setProperty('--anim-duration', cssDuration);
 
     overlay.appendChild(lineH);
     overlay.appendChild(lineV);
     overlay.appendChild(reticle);
 
-    // D. 播放音效 (建議這裡可以播放 Roger 語音)
-    // if(typeof playSound === 'function') playSound('roger-sfx'); 
-    // 目前暫用 deploy 聲頂住先
-    if(typeof playSound === 'function') playSound('deploy-sfx');
+    // --- 3. 播放抽到的聲音 ---
+    // 假設你有一個通用播放函數，如果沒有，可以用簡單的 Audio 物件：
+    const sfx = new Audio(voiceObj.file);
+    sfx.volume = 0.8; // 調整音量
+    sfx.play().catch(e => console.log("Audio play error:", e));
 
-    // E. 啟動動畫 (時間延長)
-    // 線條：0.8秒 慢慢掃入
-    lineH.style.animation = 'scanH 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards';
-    lineV.style.animation = 'scanV 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards';
-    
-    // 鎖定框：1.4秒 慢慢旋轉縮放 (配合 1.5秒 總時間)
-    // 稍微留 0.1秒 空檔比佢停定
-    reticle.style.animation = 'lockOn 1.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards';
-
-    // F. 等待 1.5秒 (1500ms)
+    // --- 4. 等待聲音播完才切換畫面 ---
     setTimeout(() => {
         overlay.remove();
         if (onComplete) onComplete();
-    }, 1500); 
+    }, totalDuration); // 這裡直接使用聲音的長度
 }
 
 // --- 最終完整整合版：出題視窗 (圖片圖示 + 智能排版 + 語音修復) ---
@@ -6015,6 +6060,7 @@ function playUnderAttackAlert() {
 </div>
 </body>
 </html>
+
 
 
 
