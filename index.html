@@ -5524,7 +5524,7 @@ function backToMainMenu() {
     showMainMenu();
 }
 /* =========================================
-   ★★★ CYBERPUNK MATRIX EFFECT (優化版：自然、低調) ★★★
+   ★★★ CYBERPUNK MATRIX EFFECT (平衡版：清晰但不刺眼) ★★★
    ========================================= */
 let matrixInterval = null;
 
@@ -5545,22 +5545,23 @@ function startMatrixEffect() {
     const columns = canvas.width / fontSize; 
 
     const drops = [];
-    // ★ 改動 1：隨機化初始位置 (解決「窗簾」效果)
-    // 令每一列一開始就處於隨機高度，模擬已經落緊雨嘅狀態
+    // 保持：隨機初始位置 (防止「窗簾」效果)
     for (let x = 0; x < columns; x++) {
         drops[x] = Math.random() * (canvas.height / fontSize);
     }
 
     function draw() {
-        // ★ 改動 2：減少殘影 (令畫面冇咁花)
-        // 將透明度由 0.05 改為 0.1，令舊字消失得快啲，畫面更乾淨
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.1)'; 
+        // ★ 微調 1：背景遮蓋度 (0.08) - 數值越細，拖尾越長
+        // 比之前的 0.1 稍微長一點點，增加流動感
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.08)'; 
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        // ★ 改動 3：調暗文字 (30% 透明度)
-        // 使用 rgba 控制透明度，唔會太搶眼
-        const mainColor = 'rgba(14, 165, 233, 0.3)'; 
-        const flashColor = 'rgba(255, 255, 255, 0.4)'; // 白光都調暗埋
+        // ★ 微調 2：主體亮度 (0.65) - 攞個中間值
+        // 比之前的 0.3 光一倍，但比原本的 1.0 柔和
+        const mainColor = 'rgba(14, 165, 233, 0.65)'; 
+        
+        // ★ 微調 3：閃光亮度 (0.8) - 唔好死白，帶少少透
+        const flashColor = 'rgba(255, 255, 255, 0.8)';
 
         ctx.font = fontSize + 'px "Orbitron", monospace';
 
@@ -5569,9 +5570,9 @@ function startMatrixEffect() {
             const x = i * fontSize;
             const y = drops[i] * fontSize;
 
-            // ★ 改動 4：減少閃爍頻率
-            // 由 0.95 (5%機會) 改做 0.995 (0.5%機會)，並使用調暗咗嘅白色
-            if (Math.random() > 0.995) {
+            // ★ 微調 4：閃爍機率 (0.975) - 即係 2.5% 機會閃
+            // 比之前的 0.5% 多啲生氣，但唔會閃盲眼
+            if (Math.random() > 0.975) {
                 ctx.fillStyle = flashColor; 
             } else {
                 ctx.fillStyle = mainColor;
@@ -5579,7 +5580,7 @@ function startMatrixEffect() {
             
             ctx.fillText(text, x, y);
 
-            // 隨機重置回頂部
+            // 隨機重置
             if (y > canvas.height && Math.random() > 0.975) {
                 drops[i] = 0;
             }
@@ -5597,7 +5598,6 @@ window.addEventListener('resize', () => {
         startMatrixEffect();
     }
 });
-
 function stopMatrixEffect() {
     if (matrixInterval) {
         clearInterval(matrixInterval);
@@ -5837,6 +5837,7 @@ function playUnderAttackAlert() {
 </div>
 </body>
 </html>
+
 
 
 
