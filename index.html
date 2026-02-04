@@ -2234,22 +2234,25 @@ body {
 #launch-modal .modal-content > * { position: relative; z-index: 2; }
 
 /* ============================================================
-   ★★★ V20 最終版 (針對小喇叭短內容優化) ★★★
-   目標：釘死頂部、禁止捲動、禁止避鍵盤
+   ★★★ V21 最終修正版：修正高度計算錯誤 + 統一 5vh ★★★
    ============================================================ */
 @media (max-width: 600px) {
-    /* 1. 大外框：負責定位同鎖死背景 */
+    /* 1. 大外框 */
     #launch-modal {
-        /* ⚠️ 絕對唔好加 display: block，留番畀 JS 控制！ */
+        /* 🛑 唔好加 display: block，留番俾 JS 控制 */
         
-        padding-top: 15vh !important;        /* 永遠置頂 5% */
-        align-items: flex-start !important; /* 內容由頂開始排 */
+        /* ★ 修正 1：改番做 5vh (貼頂)，唔好用 15vh (太低) ★ */
+        padding-top: 5vh !important;        
+        align-items: flex-start !important; 
         
-        /* ★ 核心：鎖死背景 (禁止任何捲動) ★ */
+        /* ★ 修正 2：加入 box-sizing，防止 100% + Padding 變長 ★ */
+        box-sizing: border-box !important;
+        
+        /* 鎖死背景 */
         overflow: hidden !important;        
     }
 
-    /* 2. 內容框：負責裝野 */
+    /* 2. 內容框 */
     #launch-modal .modal-content {
         box-sizing: border-box;
         width: 85%;
@@ -2260,15 +2263,15 @@ body {
         margin-left: auto;
         margin-right: auto;
         
-        /* ★ 核心：取消所有高度/捲動限制 (因為依家內容短) ★ */
+        /* 取消高度限制 (內容短) */
         max-height: none !important;
         overflow: visible !important;
         
-        /* ★ 核心：取消避鍵盤 (原地不動，唔好再飛上去) ★ */
+        /* 唔好避鍵盤 (原地不動) */
         margin-bottom: 0 !important;
     }
 
-    /* 3. 句子容器 (配合小喇叭) */
+    /* 3. 句子容器 */
     .sentence-container {
         max-height: none !important;
         overflow: visible !important;
@@ -5815,6 +5818,7 @@ function playUnderAttackAlert() {
 </div>
 </body>
 </html>
+
 
 
 
