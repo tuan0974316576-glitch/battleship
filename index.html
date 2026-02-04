@@ -2250,20 +2250,24 @@ body {
         overflow-x: hidden; 
     }
 
+/* 手機版 Modal Content 設定 */
     #launch-modal .modal-content {
-        /* ★ 關鍵修正 2：加入 border-box，防止 Padding 撐大寬度 ★ */
+        /* --- 1. 必須保留嘅舊設定 (唔好刪！) --- */
         box-sizing: border-box;
-        
         width: 85%;
         max-width: 350px;
         padding: 15px 20px;
         
-        /* 底部留位給鍵盤 */
-        margin-bottom: 50vh;
-        
-        /* ★ 關鍵修正 3：強制水平置中 (即使 Flex 失效，這行也能救回來) ★ */
+        /* 確保水平置中 */
         margin-left: auto;
         margin-right: auto;
+
+        /* --- 2. V15 新增/修改設定 (解決 Listening Mode 問題) --- */
+        max-height: 75vh !important;    /* 限制高度，太多內容就 Scroll */
+        overflow-y: auto !important;    /* 開啟內部捲動 */
+        
+        /* ★ 將原本的 50vh 改為 20vh (無咁驚青，唔會飛上天) ★ */
+        margin-bottom: 20vh !important; 
     }
 
     /* 字體調整保持不變 */
@@ -5795,6 +5799,7 @@ function playUnderAttackAlert() {
 </div>
 </body>
 </html>
+
 
 
 
