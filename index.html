@@ -1392,9 +1392,7 @@ body {
     background: rgba(10, 20, 35, 0.95); /* 深色半透明背景 */
     backdrop-filter: blur(10px); /* 背景磨砂玻璃效果 */
 }
-/* =========================================
-   ★★★ 手機版緊急修正 (MOBILE FIXES) ★★★
-   ========================================= */
+
 /* =========================================
    ★★★ 手機版緊急修正 (KEYBOARD SAFE V2) ★★★
    ========================================= */
@@ -2236,21 +2234,22 @@ body {
 #launch-modal .modal-content > * { position: relative; z-index: 2; }
 
 /* ============================================================
-   ★★★ V19 最終鎖死版：釘死頂部 + 禁止亂飛 + 無 Scroll Bar ★★★
+   ★★★ V20 最終版 (針對小喇叭短內容優化) ★★★
+   目標：釘死頂部、禁止捲動、禁止避鍵盤
    ============================================================ */
 @media (max-width: 600px) {
-    /* 1. 大外框設定 */
+    /* 1. 大外框：負責定位同鎖死背景 */
     #launch-modal {
-        /* 注意：唔好加 display: block，留番俾 JS 控制 (none/flex) */
+        /* ⚠️ 絕對唔好加 display: block，留番畀 JS 控制！ */
         
-        padding-top: 10vh !important;        /* ★ 核心：永遠置頂 10% */
-        align-items: flex-start !important; /* ★ 核心：內容由頂部開始排 */
+        padding-top: 5vh !important;        /* 永遠置頂 5% */
+        align-items: flex-start !important; /* 內容由頂開始排 */
         
-        /* ★ 救命金丹：鎖死背景捲動，禁止瀏覽器自動推上去 ★ */
+        /* ★ 核心：鎖死背景 (禁止任何捲動) ★ */
         overflow: hidden !important;        
     }
 
-    /* 2. 內容框設定 */
+    /* 2. 內容框：負責裝野 */
     #launch-modal .modal-content {
         box-sizing: border-box;
         width: 85%;
@@ -2261,22 +2260,16 @@ body {
         margin-left: auto;
         margin-right: auto;
         
-        /* ★ 核心：取消避鍵盤 Margin (因為已經鎖死背景，唔需要再推) ★ */
-        margin-bottom: 0 !important;
-        
-        /* 取消高度限制，因為內容短咗 (有小喇叭) */
+        /* ★ 核心：取消所有高度/捲動限制 (因為依家內容短) ★ */
         max-height: none !important;
         overflow: visible !important;
+        
+        /* ★ 核心：取消避鍵盤 (原地不動，唔好再飛上去) ★ */
+        margin-bottom: 0 !important;
     }
 
-    /* 3. 字體微調 (保留) */
-    .modal-content #q-text { font-size: 24px !important; margin: 10px 0 !important; }
-    .modal-content .vocab-hint { font-size: 28px !important; margin: 5px 0 15px 0 !important; }
-    .modal-content div[style*="font-size: 22px"] { font-size: 18px !important; }
-    
-    /* 4. 句子容器 (V18 小喇叭版專用) */
+    /* 3. 句子容器 (配合小喇叭) */
     .sentence-container {
-        /* 取消 Scroll，直接顯示 */
         max-height: none !important;
         overflow: visible !important;
         margin-bottom: 10px;
@@ -2284,8 +2277,12 @@ body {
         background: rgba(0, 0, 0, 0.3);
         border-radius: 5px;
     }
+    
+    /* 4. 字體微調 */
+    .modal-content #q-text { font-size: 24px !important; margin: 10px 0 !important; }
+    .modal-content .vocab-hint { font-size: 28px !important; margin: 5px 0 15px 0 !important; }
+    .modal-content div[style*="font-size: 22px"] { font-size: 18px !important; }
 }
-
 
 /* --- 新增：Listening Mode 專用細喇叭 (Inline Emoji Style) --- */
 .cyber-speaker-btn-small {
@@ -5818,6 +5815,7 @@ function playUnderAttackAlert() {
 </div>
 </body>
 </html>
+
 
 
 
