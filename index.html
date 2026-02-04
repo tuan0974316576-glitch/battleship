@@ -2189,7 +2189,7 @@ body {
 
 /* 背景雜訊 (::before) */
 #launch-modal::before {
-    content: ""; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+    content: ""; position: absolute; top: -50%; left: -50%; width: 200%; height: 100%;
     pointer-events: none; z-index: -1;
     
     /* 雜點紋理 */
@@ -2223,7 +2223,7 @@ body {
 
 /* 內部掃描線 (::after) */
 #launch-modal .modal-content::after {
-    content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 200%;
+    content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
     pointer-events: none; z-index: 1;
     background: linear-gradient(to bottom, transparent 50%, rgba(14, 165, 233, 0.15) 50%, transparent 51%);
     background-size: 100% 4px;
@@ -2234,22 +2234,20 @@ body {
 #launch-modal .modal-content > * { position: relative; z-index: 2; }
 
 /* ============================================================
-   ★★★ V21 最終修正版：修正高度計算錯誤 + 統一 5vh ★★★
+   ★★★ V20 最終版 (針對小喇叭短內容優化 - 保留動畫 + 鎖死位置) ★★★
    ============================================================ */
 @media (max-width: 600px) {
     /* 1. 大外框 */
     #launch-modal {
-        /* 🛑 唔好加 display: block，留番俾 JS 控制 */
+        /* 【關鍵修改】改用 px 鎖死位置！ */
+        /* 以前用 15vh，鍵盤一開就會縮水彈高 */
+        /* 改用 100px 或 110px，確保佢保持喺原本比較低嘅位置，填補個 Gap */
+        padding-top: 110px !important; 
         
-        /* ★ 修正 1：改番做 5vh (貼頂)，唔好用 15vh (太低) ★ */
-        padding-top: 5vh !important;        
-        align-items: flex-start !important; 
+        align-items: flex-start !important;
         
-        /* ★ 修正 2：加入 box-sizing，防止 100% + Padding 變長 ★ */
-        box-sizing: border-box !important;
-        
-        /* 鎖死背景 */
-        overflow: hidden !important;        
+        /* 確保背景唔會郁 */
+        overflow: hidden !important;       
     }
 
     /* 2. 內容框 */
@@ -2258,20 +2256,20 @@ body {
         width: 85%;
         max-width: 350px;
         padding: 20px 20px;
-        
-        /* 水平置中 */
         margin-left: auto;
         margin-right: auto;
         
-        /* 取消高度限制 (內容短) */
+        /* 取消高度限制 */
         max-height: none !important;
         overflow: visible !important;
-        
-        /* 唔好避鍵盤 (原地不動) */
         margin-bottom: 0 !important;
+        
+        /* 【保留動畫】唔好加 animation: none */
+        /* 只需要確保 transition 順滑，萬一有少少位移都唔會太突兀 */
+        transition: transform 0.3s ease-out;
     }
 
-    /* 3. 句子容器 */
+    /* ... 其他樣式保持不變 ... */
     .sentence-container {
         max-height: none !important;
         overflow: visible !important;
@@ -2281,7 +2279,6 @@ body {
         border-radius: 5px;
     }
     
-    /* 4. 字體微調 */
     .modal-content #q-text { font-size: 24px !important; margin: 10px 0 !important; }
     .modal-content .vocab-hint { font-size: 28px !important; margin: 5px 0 15px 0 !important; }
     .modal-content div[style*="font-size: 22px"] { font-size: 18px !important; }
@@ -5818,6 +5815,7 @@ function playUnderAttackAlert() {
 </div>
 </body>
 </html>
+
 
 
 
