@@ -2323,26 +2323,32 @@ body {
     opacity: 0;
 }
 
-/* 4. 鎖定框 (Reticle) */
+/* 4. 鎖定框 (Reticle) - 圓形狙擊鏡版 */
 .aim-reticle {
     position: absolute;
+    /* 變成圓形 */
+    border-radius: 50%; 
     border: 2px solid var(--warning);
-    box-shadow: 0 0 15px var(--warning), inset 0 0 10px var(--warning);
+    
+    /* 發光效果 */
+    box-shadow: 0 0 15px var(--warning), inset 0 0 20px rgba(245, 158, 11, 0.2);
     opacity: 0;
     
-    /* 裁剪四角，整成 [ ] 形狀 */
-    clip-path: polygon(
-        0% 0%, 30% 0%, 30% 10%, 70% 10%, 70% 0%, 100% 0%, 
-        100% 100%, 70% 100%, 70% 90%, 30% 90%, 30% 100%, 0% 100%
-    );
-    /* 實際上簡單啲用四角邊框都得，但我哋用 clip-path 型啲 */
-    clip-path: polygon(
-        0 0, 25% 0, 25% 2px, 2px 2px, 2px 25%, 0 25%, /* 左上 */
-        0 100%, 25% 100%, 25% calc(100% - 2px), 2px calc(100% - 2px), 2px 75%, 0 75%, /* 左下 */
-        100% 100%, 75% 100%, 75% calc(100% - 2px), calc(100% - 2px) calc(100% - 2px), calc(100% - 2px) 75%, 100% 75%, /* 右下 */
-        100% 0, 75% 0, 75% 2px, calc(100% - 2px) 2px, calc(100% - 2px) 25%, 100% 25% /* 右上 */
-    );
-    background: rgba(245, 158, 11, 0.1);
+    /* ★ 狙擊鏡細節：中心點 + 十字刻度 ★ */
+    background: 
+        /* 中心準心點 */
+        radial-gradient(circle, var(--warning) 2px, transparent 2.5px),
+        /* 垂直刻度線 (淡淡的) */
+        linear-gradient(to right, transparent 49%, var(--warning) 50%, transparent 51%),
+        /* 水平刻度線 (淡淡的) */
+        linear-gradient(to bottom, transparent 49%, var(--warning) 50%, transparent 51%),
+        /* 整體底色 */
+        rgba(245, 158, 11, 0.05);
+        
+    /* 調整刻度線的大小，只顯示在中間部分，唔好畫滿成個圓 */
+    background-size: 100% 100%, 10px 100%, 100% 10px, 100% 100%;
+    background-repeat: no-repeat;
+    background-position: center;
 }
 
 /* 5. 動畫 Keyframes */
@@ -3428,22 +3434,19 @@ function handleEnemyGridClick(index) {
     }
 }
 
-// 2. 執行鎖定動畫的主函數
+// 2. 執行鎖定動畫的主函數 (1.5秒慢速版)
 function runTargetLockAnimation(index, onComplete) {
     const grid = document.getElementById('enemy-grid');
     const cell = grid.children[index];
     
-    // 獲取格仔的相對座標 (相對於 grid)
     const cellLeft = cell.offsetLeft;
     const cellTop = cell.offsetTop;
     const cellW = cell.offsetWidth;
     const cellH = cell.offsetHeight;
-
-    // 計算中心點 (給線條用)
     const centerX = cellLeft + cellW / 2;
     const centerY = cellTop + cellH / 2;
 
-    // A. 建立覆蓋層 (Overlay)
+    // A. 建立覆蓋層
     const overlay = document.createElement('div');
     overlay.className = 'target-overlay';
     grid.appendChild(overlay);
@@ -3451,7 +3454,6 @@ function runTargetLockAnimation(index, onComplete) {
     // B. 建立元件
     const lineH = document.createElement('div');
     lineH.className = 'aim-line-h';
-    // 傳入 CSS 變數，告訴動畫終點在哪
     lineH.style.setProperty('--target-y', centerY + 'px');
     
     const lineV = document.createElement('div');
@@ -3461,33 +3463,33 @@ function runTargetLockAnimation(index, onComplete) {
     const reticle = document.createElement('div');
     reticle.className = 'aim-reticle';
     reticle.style.width = cellW + 'px';
-    reticle.style.height = cellH + 'px';
+    reticle.style.height = cellH + 'px'; // 圓形會根據這寬高自動變圓
     reticle.style.left = cellLeft + 'px';
     reticle.style.top = cellTop + 'px';
 
-    // C. 加入元件
     overlay.appendChild(lineH);
     overlay.appendChild(lineV);
     overlay.appendChild(reticle);
 
-    // D. 播放音效 (重用 deploy 聲，或者任何短促的機械聲)
+    // D. 播放音效 (建議這裡可以播放 Roger 語音)
+    // if(typeof playSound === 'function') playSound('roger-sfx'); 
+    // 目前暫用 deploy 聲頂住先
     if(typeof playSound === 'function') playSound('deploy-sfx');
 
-    // E. 啟動動畫
-    // 設定 animation 屬性
-    lineH.style.animation = 'scanH 0.3s cubic-bezier(0.2, 0.8, 0.2, 1) forwards';
-    lineV.style.animation = 'scanV 0.3s cubic-bezier(0.2, 0.8, 0.2, 1) forwards';
-    reticle.style.animation = 'lockOn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards';
+    // E. 啟動動畫 (時間延長)
+    // 線條：0.8秒 慢慢掃入
+    lineH.style.animation = 'scanH 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards';
+    lineV.style.animation = 'scanV 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards';
+    
+    // 鎖定框：1.4秒 慢慢旋轉縮放 (配合 1.5秒 總時間)
+    // 稍微留 0.1秒 空檔比佢停定
+    reticle.style.animation = 'lockOn 1.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards';
 
-    // F. 等待動畫完成 (0.5秒) 後執行下一步
+    // F. 等待 1.5秒 (1500ms)
     setTimeout(() => {
-        // 移除動畫層
         overlay.remove();
-        
-        // 執行回調 (打開題目)
         if (onComplete) onComplete();
-        
-    }, 500); // 這裡的時間要比 CSS animation 長少少
+    }, 1500); 
 }
 
 // --- 最終完整整合版：出題視窗 (圖片圖示 + 智能排版 + 語音修復) ---
@@ -6013,6 +6015,7 @@ function playUnderAttackAlert() {
 </div>
 </body>
 </html>
+
 
 
 
