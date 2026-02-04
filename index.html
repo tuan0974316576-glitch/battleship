@@ -1,17 +1,31 @@
-<!DOCTYPE html>
-<html lang="zh-Hant">
 <head>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@100;300;400;500;700;900&display=swap" rel="stylesheet">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-   <title>VOCAB CONQUEROR - Command Center</title>
+    <title>VOCAB CONQUEROR - Command Center</title>
+
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0a9396"> <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Vocab Conqueror">
+    <link rel="apple-touch-icon" href="icon.png"> <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@100;300;400;500;700;900&display=swap" rel="stylesheet">
     
-<script type="module">
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js').then(reg => {
+                    console.log('SW registered!', reg);
+                }).catch(err => {
+                    console.log('SW registration failed: ', err);
+                });
+            });
+        }
+    </script>
+    
+    <script type="module">
       import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
       import { getDatabase, ref, set, onValue, update, push, child, get, onDisconnect, off } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
       import { getAuth, signInAnonymously, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";;
       
-      // 將它們掛載到 window
       window.firebaseModules = { 
           initializeApp, 
           getDatabase, 
@@ -25,11 +39,11 @@
           getAuth, 
           signInAnonymously, 
           onAuthStateChanged,
-          onDisconnect, // ★ 記得加這個
-          off,           // ★ 還有這個
-          GoogleAuthProvider, // 新增
-    signInWithPopup,    // 新增
-    signOut             // 新增
+          onDisconnect,
+          off,
+          GoogleAuthProvider,
+          signInWithPopup,
+          signOut
       };
     </script>
 
@@ -5757,6 +5771,7 @@ function playUnderAttackAlert() {
 </div>
 </body>
 </html>
+
 
 
 
