@@ -5524,7 +5524,7 @@ function backToMainMenu() {
     showMainMenu();
 }
 /* =========================================
-   ★★★ CYBERPUNK MATRIX EFFECT (題目背景動畫) ★★★
+   ★★★ CYBERPUNK MATRIX EFFECT (優化版：自然、低調) ★★★
    ========================================= */
 let matrixInterval = null;
 
@@ -5534,27 +5534,34 @@ function startMatrixEffect() {
     
     const ctx = canvas.getContext('2d');
     
-    // ★★★ 關鍵修改：改用視窗 (Window) 的全螢幕尺寸 ★★★
+    // 設定全螢幕尺寸
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
 
-    // --- 下面這段保持不變 ---
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789$+-*/=%"\'#&_(),.;:?!\\|{}<>[]^~';
     const charArray = chars.split('');
+
     const fontSize = 14;
     const columns = canvas.width / fontSize; 
 
     const drops = [];
+    // ★ 改動 1：隨機化初始位置 (解決「窗簾」效果)
+    // 令每一列一開始就處於隨機高度，模擬已經落緊雨嘅狀態
     for (let x = 0; x < columns; x++) {
-        drops[x] = 1;
+        drops[x] = Math.random() * (canvas.height / fontSize);
     }
 
     function draw() {
-        // 背景塗黑 (帶透明度造成殘影)
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.05)'; // ★ 建議改深黑色，對比更強
+        // ★ 改動 2：減少殘影 (令畫面冇咁花)
+        // 將透明度由 0.05 改為 0.1，令舊字消失得快啲，畫面更乾淨
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.1)'; 
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        ctx.fillStyle = '#0ea5e9'; // 字體顏色
+        // ★ 改動 3：調暗文字 (30% 透明度)
+        // 使用 rgba 控制透明度，唔會太搶眼
+        const mainColor = 'rgba(14, 165, 233, 0.3)'; 
+        const flashColor = 'rgba(255, 255, 255, 0.4)'; // 白光都調暗埋
+
         ctx.font = fontSize + 'px "Orbitron", monospace';
 
         for (let i = 0; i < drops.length; i++) {
@@ -5562,12 +5569,17 @@ function startMatrixEffect() {
             const x = i * fontSize;
             const y = drops[i] * fontSize;
 
-            // 隨機閃白字
-            if (Math.random() > 0.95) ctx.fillStyle = '#ffffff'; 
-            else ctx.fillStyle = '#0ea5e9';
-
+            // ★ 改動 4：減少閃爍頻率
+            // 由 0.95 (5%機會) 改做 0.995 (0.5%機會)，並使用調暗咗嘅白色
+            if (Math.random() > 0.995) {
+                ctx.fillStyle = flashColor; 
+            } else {
+                ctx.fillStyle = mainColor;
+            }
+            
             ctx.fillText(text, x, y);
 
+            // 隨機重置回頂部
             if (y > canvas.height && Math.random() > 0.975) {
                 drops[i] = 0;
             }
@@ -5576,12 +5588,11 @@ function startMatrixEffect() {
     }
 
     if (matrixInterval) clearInterval(matrixInterval);
-    matrixInterval = setInterval(draw, 33);
+    matrixInterval = setInterval(draw, 33); // 30 FPS
 }
 
-// ★ 額外建議：當視窗改變大小時 (例如手機旋轉)，重新調整畫布
+// 視窗大小改變時重置
 window.addEventListener('resize', () => {
-    // 只有當動畫正在播放時才重置，避免浪費效能
     if (document.getElementById('launch-modal').style.display !== 'none') {
         startMatrixEffect();
     }
@@ -5826,6 +5837,7 @@ function playUnderAttackAlert() {
 </div>
 </body>
 </html>
+
 
 
 
