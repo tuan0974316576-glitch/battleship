@@ -2840,8 +2840,8 @@ body {
         startSplashSequence();
     };
 
-    function startSplashSequence() {
-        // A. 倒數計時：保證 Logo 最少顯示 2.5 秒 (扮 Loading 扮得似啲)
+function startSplashSequence() {
+        // A. 倒數 2.5 秒 (Logo 最少顯示時間)
         setTimeout(() => {
             isMinTimePassed = true;
             checkReady(); 
@@ -2849,10 +2849,25 @@ body {
 
         // B. 同步開始在後台下載資源
         startPreloading();
+
+        // ★★★ 新增：強制過關保險掣 (Failsafe) ★★★
+        // 如果 6 秒後都仲未入到去，強制當作 Load 完，費事卡死
+        setTimeout(() => {
+            if (!isAssetsLoaded) {
+                console.log("Loading took too long. Forcing start.");
+                isAssetsLoaded = true;
+                checkReady();
+            }
+        }, 3000); 
     }
 
     function startPreloading() {
-        function onAssetLoaded() {
+        // 定義一個 Wrapper 確保每個檔案只會計數一次
+        function markAssetAsLoaded(sourceFn) {
+            // 如果已經計過，就唔好再計
+            if (sourceFn.loaded) return;
+            sourceFn.loaded = true;
+            
             loadedCount++;
             // 檢查係咪全部 Load 完
             if (loadedCount >= totalAssets) {
@@ -2864,20 +2879,29 @@ body {
         // --- 下載圖片 ---
         assetsManifest.images.forEach(src => {
             const img = new Image();
+            // 標記這個物件，用來防止重複計數
+            img.loaded = false; 
+            
+            img.onload = () => markAssetAsLoaded(img);
+            img.onerror = () => markAssetAsLoaded(img); // 就算失敗都當成功
             img.src = src;
-            img.onload = onAssetLoaded;
-            img.onerror = onAssetLoaded; // 就算失敗都當成功，避免卡死
             imageLibrary[src] = img;
         });
 
         // --- 下載音效 ---
         assetsManifest.audio.forEach(src => {
             const audio = new Audio();
+            audio.loaded = false;
+
             audio.src = src;
-            audio.preload = 'auto'; // 設定強制預載
-            audio.oncanplaythrough = onAssetLoaded;
-            audio.onerror = onAssetLoaded;
-            audio.load(); // 手機瀏覽器 Trick：強制 load
+            audio.preload = 'auto'; 
+            
+            // 改用 onloadeddata，比 canplaythrough 更容易觸發
+            audio.onloadeddata = () => markAssetAsLoaded(audio);
+            audio.onerror = () => markAssetAsLoaded(audio);
+            
+            // 手機瀏覽器 Trick
+            audio.load();
             
             audioLibrary[src] = audio;
         });
@@ -6311,6 +6335,7 @@ function playUnderAttackAlert() {
 </div>
 </body>
 </html>
+
 
 
 
