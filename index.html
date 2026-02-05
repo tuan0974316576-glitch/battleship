@@ -2788,37 +2788,28 @@ body {
 <script src="vocab_data.js"></script>
 
 <script>
-    /* =========================================
-       ★★★ SMART PRELOADER & ASSETS MANIFEST (完整整合版) ★★★
+/* =========================================
+       ★★★ SMART PRELOADER (防卡死終極版) ★★★
        ========================================= */
 
-    // 1. 定義資源清單 (這是你要讀取的檔案列表)
+    // 1. 定義資源清單
     const assetsManifest = {
         images: [
-            // --- 核心 UI & Logo ---
             'enguistics.png', 'icon.png', 'mic_icon.png', 'speaker_icon.png',
-            // --- 背景特效 ---
             'stars_texture.png', 'galaxy.png',
-            // --- 艦船與損壞狀態 ---
             '1x2.png', '1x2_damaged.png', '1x3.png', '1x3_damaged.png',
             '1x3+1.png', '1x3+1_damaged.png', '1x4.png', '1x4_damaged.png',
             '2x4.png', '2x4_damaged.png',
-            // --- 爆炸動畫 ---
             'turret_01_explosion.png', 'turret_02_explosion_01_anim.png'
         ],
         audio: [
-            // --- 系統音效 ---
             'bgm.mp3', 'deploy.mp3', 'open_room.mp3', 'level_select_code_list.mp3',
             'new_commander.mp3', 'time_out.mp3', 'victory.mp3', 'lose.mp3',
-            // --- 戰鬥與攻擊 ---
             'laser_attack.mp3', 'target_hit.mp3', 'target_destory.mp3', 
             'your-fleet-is-under-attack.mp3',
-            // --- 輸入法與介面 ---
             'enter_word.mp3', 'delete_word.mp3', 'wrong_word.mp3',
-            // --- 艦船語音 (Ship Voices) ---
             'ship_0_ghost.mp3', 'ship_1_striker.mp3', 'ship_2_dreadnought.mp3',
             'ship_3_destroyer.mp3', 'ship_4_spectre.mp3',
-            // --- 特工通訊 (Target Lock Voices) ---
             'acknowledged.mp3', 'affirmative.mp3', 'attack_zone_located.mp3',
             'copy_that.mp3', 'fire_zone_confirmed.mp3', 'got_it.mp3',
             'locked_and_loaded.mp3', 'received_your_order.mp3', 'roger.mp3',
@@ -2826,7 +2817,6 @@ body {
         ]
     };
 
-    // 2. 建立資源庫 (Cache) 與變數
     const imageLibrary = {};
     const audioLibrary = {};
 
@@ -2834,104 +2824,105 @@ body {
     let totalAssets = assetsManifest.images.length + assetsManifest.audio.length;
     let isAssetsLoaded = false;
     let isMinTimePassed = false;
+    let hasStarted = false; // 防止重複入 Game
 
-    // 3. 系統啟動：一入網頁就開始
+    // 系統啟動
     window.onload = function() {
+        console.log("System Start. Total Assets to load:", totalAssets);
         startSplashSequence();
     };
 
-function startSplashSequence() {
-        // A. 倒數 2.5 秒 (Logo 最少顯示時間)
+    function startSplashSequence() {
+        // A. 倒數 2.5 秒 (Logo 動畫時間)
         setTimeout(() => {
+            console.log("Timer: 2.5s passed.");
             isMinTimePassed = true;
             checkReady(); 
         }, 2500);
 
-        // B. 同步開始在後台下載資源
+        // B. 開始下載
         startPreloading();
 
-        // ★★★ 新增：強制過關保險掣 (Failsafe) ★★★
-        // 如果 6 秒後都仲未入到去，強制當作 Load 完，費事卡死
+        // ★★★ C. 強制過關保險掣 (Failsafe) ★★★
+        // 4秒後如果仲未入到 Game，強制執行！
         setTimeout(() => {
-            if (!isAssetsLoaded) {
-                console.log("Loading took too long. Forcing start.");
+            if (!hasStarted) {
+                console.warn("⚠️ Loading took too long (>4s). Forcing Start!");
                 isAssetsLoaded = true;
+                isMinTimePassed = true;
                 checkReady();
             }
-        }, 3000); 
+        }, 4000); 
     }
 
     function startPreloading() {
-        // 定義一個 Wrapper 確保每個檔案只會計數一次
-        function markAssetAsLoaded(sourceFn) {
-            // 如果已經計過，就唔好再計
-            if (sourceFn.loaded) return;
-            sourceFn.loaded = true;
-            
+        function markAssetAsLoaded(name, success) {
             loadedCount++;
-            // 檢查係咪全部 Load 完
+            // 可以在 F12 睇下邊個檔案 Load 唔到
+            if(!success) console.warn("Failed to load:", name); 
+            else console.log("Loaded:", name, `(${loadedCount}/${totalAssets})`);
+
             if (loadedCount >= totalAssets) {
+                console.log("All assets loaded!");
                 isAssetsLoaded = true;
                 checkReady();
             }
         }
 
-        // --- 下載圖片 ---
+        // 下載圖片
         assetsManifest.images.forEach(src => {
             const img = new Image();
-            // 標記這個物件，用來防止重複計數
-            img.loaded = false; 
-            
-            img.onload = () => markAssetAsLoaded(img);
-            img.onerror = () => markAssetAsLoaded(img); // 就算失敗都當成功
+            img.onload = () => markAssetAsLoaded(src, true);
+            img.onerror = () => markAssetAsLoaded(src, false); // 就算失敗都當成功，費事卡死
             img.src = src;
             imageLibrary[src] = img;
         });
 
-        // --- 下載音效 ---
+        // 下載音效
         assetsManifest.audio.forEach(src => {
             const audio = new Audio();
-            audio.loaded = false;
-
+            // 某些瀏覽器需要這個設定
+            audio.preload = 'auto';
+            
+            // 使用 onloadeddata 或 onerror 來判斷
+            audio.onloadeddata = () => markAssetAsLoaded(src, true);
+            audio.onerror = () => markAssetAsLoaded(src, false); // 就算失敗都當成功
+            
             audio.src = src;
-            audio.preload = 'auto'; 
-            
-            // 改用 onloadeddata，比 canplaythrough 更容易觸發
-            audio.onloadeddata = () => markAssetAsLoaded(audio);
-            audio.onerror = () => markAssetAsLoaded(audio);
-            
-            // 手機瀏覽器 Trick
-            audio.load();
+            audio.load(); // 強制觸發下載
             
             audioLibrary[src] = audio;
         });
     }
 
-    // 4. 檢查狀態：決定幾時轉畫面
+    // 檢查狀態並切換畫面
     function checkReady() {
-        // 條件：資源 Load 完 AND 時間夠 2.5秒
+        // 防止重複執行
+        if (hasStarted) return;
+
+        // 條件：資源 Load 完 (或強制過關) AND 時間夠 2.5秒
         if (isAssetsLoaded && isMinTimePassed) {
-            
+            hasStarted = true; // 鎖定，確保只行一次
+            console.log("Entering Game Sequence...");
+
             const logoSplash = document.getElementById('logo-splash');
             const titleScreen = document.getElementById('splash-screen');
 
-            // 1. Logo 慢慢淡出 (Fade Out)
+            // 1. Logo 淡出
             if(logoSplash) logoSplash.style.opacity = '0';
 
-            // 2. 1秒後 (等淡出動畫完)，隱藏 Logo，顯示 TAP TO START
+            // 2. 1秒後切換到 TAP TO START
             setTimeout(() => {
                 if(logoSplash) logoSplash.style.display = 'none';
-                
-                // 顯示 Title Screen
                 if(titleScreen) titleScreen.style.display = 'flex';
                 
-                // 這裡可以播一下 "System Ready" 的細聲效 (Optional)
+                // 播一聲細聲效 (如果有)
                 if(audioLibrary['acknowledged.mp3']) {
                      const sfx = audioLibrary['acknowledged.mp3'].cloneNode();
                      sfx.volume = 0.5;
                      sfx.play().catch(e=>{});
                 }
-            }, 1000); // 對應 CSS transition 1s
+            }, 1000); 
         }
     }
 
@@ -6335,6 +6326,7 @@ function playUnderAttackAlert() {
 </div>
 </body>
 </html>
+
 
 
 
