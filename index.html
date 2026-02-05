@@ -5250,6 +5250,10 @@ function showMainMenu() {
 // --- 新增：點擊開始遊戲 ---
 // --- 新增：點擊開始遊戲 (修正版：顯示大箱) ---
 function startExperience() {
+    window.ignoreConnectionAlert = true;
+    setTimeout(() => {
+        window.ignoreConnectionAlert = false;
+    }, 3000);
     // 1. 播放音樂
     playBgm();
     
@@ -5409,25 +5413,38 @@ window.addEventListener('load', () => {
         });
 
         // 連線狀態監測 (保持之前的修正)
+       // 連線狀態監測 (已修復：加入入 Game 緩衝期)
         const connectedRef = ref(db, ".info/connected");
         onValue(connectedRef, (snap) => {
             const el = document.getElementById('connection-status');
             if (!el) return; 
+            
+            // 預設顯示狀態
             el.style.display = 'block';
             
             if (snap.val() === true) {
+                // --- 綠燈：連線正常 ---
                 el.style.background = "#22c55e"; 
                 el.style.boxShadow = "0 0 5px #22c55e";
             } else {
-                el.style.background = "#ef4444"; 
-                el.style.boxShadow = "0 0 5px #ef4444";
+                // --- 紅燈：斷線 ---
                 
-                // 修正：Splash Screen 顯示時不報錯
+                // ★★★ 關鍵修正：檢查有無免死金牌 ★★★
+                // 1. 如果仲係 Tap To Start 畫面 -> 唔報警
                 const splash = document.getElementById('splash-screen');
-                if (splash && splash.style.display !== 'none' && splash.style.opacity !== '0') {
+                const isSplashVisible = (splash && splash.style.display !== 'none');
+                
+                // 2. 如果啱啱入 Game (有免死金牌) -> 唔報警
+                if (isSplashVisible || window.ignoreConnectionAlert) {
+                    // 雖然斷線，但暫時扮沒事，費事嚇親玩家
                     return; 
                 }
 
+                // 真係斷線先至報警
+                el.style.background = "#ef4444"; 
+                el.style.boxShadow = "0 0 5px #ef4444";
+                
+                // 彈出警告 + 播聲
                 if (typeof showNotification === 'function') {
                     showNotification("CONNECTION LOST!", "error"); 
                 }
@@ -6086,6 +6103,7 @@ function playUnderAttackAlert() {
 </div>
 </body>
 </html>
+
 
 
 
