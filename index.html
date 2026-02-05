@@ -1877,7 +1877,39 @@ body {
         width: 60vw; max-width: 250px; height: 90px; 
     }
 }
+/* =========================================
+   ★★★ SPLASH SCREEN (TAP TO START) ★★★
+   ========================================= */
+#splash-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: transparent; 
+    backdrop-filter: none; 
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000; 
+    transition: opacity 0.5s;
+}
 
+.splash-content {
+    text-align: center;
+    animation: fadeIn 1s ease-out;
+}
+
+/* 閃爍文字特效 */
+.blink-text {
+    animation: blinker 1.5s linear infinite;
+    text-shadow: 0 0 10px #0ea5e9;
+}
+
+@keyframes blinker {
+    50% { opacity: 0; }
+}
 /* =========================================
    ★★★ 強制修復 LOBBY & LEVEL & SKILL 畫面置中 ★★★
    ========================================= */
@@ -2346,156 +2378,34 @@ body {
     80% { transform: scale(0.9); } /* 縮過頭 */
     100% { transform: scale(1) rotate(0deg); opacity: 1; }
 }
-/* =========================================
-   ★★★ 終極合併版：LOGO 開場 + 標題特效 ★★★
-   ========================================= */
-
-/* --- 1. 公司 Logo 開場層 (最頂層，純黑底) --- */
-#logo-splash {
-    position: fixed;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    
-    background-color: #000 !important; /* 強制黑底 */
-    z-index: 20000 !important;         /* 最高層級 */
-    
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    font-family: 'Orbitron', sans-serif;
-    transition: opacity 1s ease-in-out;
-}
-
-/* --- 2. 標題畫面層 (TAP TO START) --- */
-#splash-screen {
-    position: fixed;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    
-    /* ★ 改良：用深藍半透底 (原本係 transparent 會透視見到星星) */
-    background: rgba(15, 23, 42, 0.95);
-    backdrop-filter: blur(5px); /* 加少少磨砂玻璃效果，更有質感 */
-    
-    z-index: 10000 !important; /* 層級第二高 */
-    
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: opacity 0.5s;
-}
-
-/* --- 3. ★ 還原你原本的內容特效 ★ --- */
-.splash-content {
-    text-align: center;
-    animation: fadeIn 1s ease-out; /* 還原 FadeIn */
-}
-
-/* 還原閃爍文字特效 */
-.blink-text {
-    animation: blinker 1.5s linear infinite; /* 還原閃爍 */
-    text-shadow: 0 0 10px #0ea5e9;           /* 還原發光 */
-    
-    /* 確保字體樣式跟返你原本 HTML */
-    font-family: 'Orbitron'; 
-    color: #0ea5e9; 
-    font-size: 18px; 
-    letter-spacing: 5px; 
-    margin-top: 20px;
-}
-
-/* --- 4. Logo 圖片與 Glitch 特效 (新加) --- */
-.logo-container {
-    position: relative;
-    width: 400px; max-width: 80%;
-    margin-bottom: 30px;
-}
-.glitch-image-wrapper { position: relative; width: 100%; display: flex; justify-content: center; }
-.logo-img { width: 100%; height: auto; display: block; }
-
-/* 主圖與殘影 */
-.main-layer { position: relative; z-index: 2; filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.5)); }
-.glitch-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0.8; z-index: 1; display: block; }
-.layer-red { mix-blend-mode: screen; filter: opacity(0.5) drop-shadow(-2px 0 0 #ff00c1); animation: img-glitch-anim-1 4s infinite linear alternate-reverse; }
-.layer-blue { mix-blend-mode: screen; filter: opacity(0.5) drop-shadow(2px 0 0 #00fff9); animation: img-glitch-anim-2 4s infinite linear alternate-reverse; }
-
-/* Loading 文字 */
-#loading-status { color: #444; font-size: 12px; letter-spacing: 2px; margin-top: 20px; animation: blink 1s infinite; }
-#game-content-wrapper { display: none; }
-
-/* --- 5. 動畫 Keyframes (全部齊晒) --- */
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes blinker {
-    50% { opacity: 0; }
-}
-
-@keyframes blink { 
-    0%, 100% { opacity: 1; } 50% { opacity: 0.3; } 
-}
-
-@keyframes img-glitch-anim-1 {
-    0% { clip-path: inset(20% 0 80% 0); transform: translate(-2px, 1px); }
-    5% { clip-path: inset(60% 0 10% 0); transform: translate(2px, -1px); }
-    15% { clip-path: inset(80% 0 5% 0); transform: translate(2px, -2px); }
-    25% { clip-path: inset(100% 0 0 0); transform: translate(0, 0); } 
-    95% { clip-path: inset(100% 0 0 0); transform: translate(0, 0); }
-    100% { clip-path: inset(30% 0 50% 0); transform: translate(2px, 2px); }
-}
-
-@keyframes img-glitch-anim-2 {
-    0% { clip-path: inset(10% 0 60% 0); transform: translate(2px, -1px); }
-    5% { clip-path: inset(80% 0 5% 0); transform: translate(-2px, 2px); }
-    15% { clip-path: inset(10% 0 80% 0); transform: translate(-2px, -2px); }
-    25% { clip-path: inset(100% 0 0 0); transform: translate(0, 0); } 
-    95% { clip-path: inset(100% 0 0 0); transform: translate(0, 0); }
-    100% { clip-path: inset(10% 0 70% 0); transform: translate(-2px, -1px); }
-}
     </style>
 
 </head>
 <body>
-    <div id="logo-splash">
-        <div class="logo-container">
-            <div class="glitch-image-wrapper">
-                <img src="enguistics.png" class="logo-img main-layer">
-                <img src="enguistics.png" class="logo-img glitch-layer layer-red">
-                <img src="enguistics.png" class="logo-img glitch-layer layer-blue">
-            </div>
-        </div>
-        <div id="loading-status">INITIALIZING SYSTEM...</div>
-    </div>
-
-    <div id="splash-screen" style="display: none;" onclick="startExperience()">
-        <div class="splash-content">
-            <div class="main-title" style="position: relative; z-index: 10000;">VOCAB<br>CONQUEROR</div>
-            
-            <div class="blink-text" style="font-family: 'Orbitron'; color: #0ea5e9; font-size: 18px; letter-spacing: 5px; margin-top: 20px;">
-                >> TAP TO START <<
-            </div>
-            <div style="font-family: 'Orbitron'; color: #64748b; font-size: 10px; margin-top: 10px;">SYSTEM READY</div>
-        </div>
-    </div>
-
-    <div id="game-content-wrapper" style="display: none;">
+<div id="splash-screen" onclick="startExperience()">
+    <div class="splash-content">
+        <div class="main-title" style="position: relative; z-index: 10000;">VOCAB<br>CONQUEROR</div>
         
-        <div id="start-screen" class="screen active" style="display: flex; flex-direction: column; justify-content: center; align-items: center;">
-            
-            <div class="main-title">VOCAB<br>CONQUEROR</div>
+        <div class="blink-text" style="font-family: 'Orbitron'; color: #0ea5e9; font-size: 18px; letter-spacing: 5px; margin-top: 20px;">
+            >> TAP TO START <<
+        </div>
+        <div style="font-family: 'Orbitron'; color: #64748b; font-size: 10px; margin-top: 10px;">INITIALIZING SYSTEM...</div>
+    </div>
+</div>
+<div id="game-content-wrapper" style="display: none;">
+<div id="start-screen" class="screen active" style="display: flex; flex-direction: column; justify-content: center; align-items: center;">
+    
+    <div class="main-title">VOCAB<br>CONQUEROR</div>
 
-            <div id="login-hud" class="hud-container">
-                
-                <div id="connecting-panel" style="text-align: center; padding: 20px;">
-                    <div class="login-spinner" style="margin: 0 auto; border-top-color: #f59e0b;"></div>
-                    <div style="margin-top: 15px; color: #f59e0b; font-family: 'Orbitron'; letter-spacing: 2px; font-size: 12px; font-weight: bold;">
-                        ESTABLISHING LINK...
-                    </div>
-                </div>
+    <div id="login-hud" class="hud-container">
+        
+        <div id="connecting-panel" style="text-align: center; padding: 20px;">
+            <div class="login-spinner" style="margin: 0 auto; border-top-color: #f59e0b;"></div>
+            <div style="margin-top: 15px; color: #f59e0b; font-family: 'Orbitron'; letter-spacing: 2px; font-size: 12px; font-weight: bold;">
+                ESTABLISHING LINK...
+            </div>
+        </div>
+
         <div id="login-panel" style="position: relative; display: none;">
             <div class="hud-line"></div>
             <div style="font-size: 10px; color: #ff4444; letter-spacing: 2px; margin-bottom: 15px; font-family: 'Orbitron';">SYSTEM ACCESS: RESTRICTED</div>
@@ -2788,182 +2698,6 @@ body {
 <script src="vocab_data.js"></script>
 
 <script>
-/* =========================================
-       ★★★ SMART PRELOADER (防卡死終極版) ★★★
-       ========================================= */
-
-    // 1. 定義資源清單
-    const assetsManifest = {
-        images: [
-            'enguistics.png', 'icon.png', 'mic_icon.png', 'speaker_icon.png',
-            'stars_texture.png', 'galaxy.png',
-            '1x2.png', '1x2_damaged.png', '1x3.png', '1x3_damaged.png',
-            '1x3+1.png', '1x3+1_damaged.png', '1x4.png', '1x4_damaged.png',
-            '2x4.png', '2x4_damaged.png',
-            'turret_01_explosion.png', 'turret_02_explosion_01_anim.png'
-        ],
-        audio: [
-            'bgm.mp3', 'deploy.mp3', 'open_room.mp3', 'level_select_code_list.mp3',
-            'new_commander.mp3', 'time_out.mp3', 'victory.mp3', 'lose.mp3',
-            'laser_attack.mp3', 'target_hit.mp3', 'target_destory.mp3', 
-            'your-fleet-is-under-attack.mp3',
-            'enter_word.mp3', 'delete_word.mp3', 'wrong_word.mp3',
-            'ship_0_ghost.mp3', 'ship_1_striker.mp3', 'ship_2_dreadnought.mp3',
-            'ship_3_destroyer.mp3', 'ship_4_spectre.mp3',
-            'acknowledged.mp3', 'affirmative.mp3', 'attack_zone_located.mp3',
-            'copy_that.mp3', 'fire_zone_confirmed.mp3', 'got_it.mp3',
-            'locked_and_loaded.mp3', 'received_your_order.mp3', 'roger.mp3',
-            'roger_that.mp3', 'understood.mp3'
-        ]
-    };
-
-    const imageLibrary = {};
-    const audioLibrary = {};
-
-    let loadedCount = 0;
-    let totalAssets = assetsManifest.images.length + assetsManifest.audio.length;
-    let isAssetsLoaded = false;
-    let isMinTimePassed = false;
-    let hasStarted = false; // 防止重複入 Game
-
-    // 系統啟動
-    window.onload = function() {
-        console.log("System Start. Total Assets to load:", totalAssets);
-        startSplashSequence();
-    };
-
-    function startSplashSequence() {
-        // A. 倒數 2.5 秒 (Logo 動畫時間)
-        setTimeout(() => {
-            console.log("Timer: 2.5s passed.");
-            isMinTimePassed = true;
-            checkReady(); 
-        }, 2500);
-
-        // B. 開始下載
-        startPreloading();
-
-        // ★★★ C. 強制過關保險掣 (Failsafe) ★★★
-        // 4秒後如果仲未入到 Game，強制執行！
-        setTimeout(() => {
-            if (!hasStarted) {
-                console.warn("⚠️ Loading took too long (>4s). Forcing Start!");
-                isAssetsLoaded = true;
-                isMinTimePassed = true;
-                checkReady();
-            }
-        }, 4000); 
-    }
-
-    function startPreloading() {
-        function markAssetAsLoaded(name, success) {
-            loadedCount++;
-            // 可以在 F12 睇下邊個檔案 Load 唔到
-            if(!success) console.warn("Failed to load:", name); 
-            else console.log("Loaded:", name, `(${loadedCount}/${totalAssets})`);
-
-            if (loadedCount >= totalAssets) {
-                console.log("All assets loaded!");
-                isAssetsLoaded = true;
-                checkReady();
-            }
-        }
-
-        // 下載圖片
-        assetsManifest.images.forEach(src => {
-            const img = new Image();
-            img.onload = () => markAssetAsLoaded(src, true);
-            img.onerror = () => markAssetAsLoaded(src, false); // 就算失敗都當成功，費事卡死
-            img.src = src;
-            imageLibrary[src] = img;
-        });
-
-        // 下載音效
-        assetsManifest.audio.forEach(src => {
-            const audio = new Audio();
-            // 某些瀏覽器需要這個設定
-            audio.preload = 'auto';
-            
-            // 使用 onloadeddata 或 onerror 來判斷
-            audio.onloadeddata = () => markAssetAsLoaded(src, true);
-            audio.onerror = () => markAssetAsLoaded(src, false); // 就算失敗都當成功
-            
-            audio.src = src;
-            audio.load(); // 強制觸發下載
-            
-            audioLibrary[src] = audio;
-        });
-    }
-
-    // 檢查狀態並切換畫面
-    function checkReady() {
-        // 防止重複執行
-        if (hasStarted) return;
-
-        // 條件：資源 Load 完 (或強制過關) AND 時間夠 2.5秒
-        if (isAssetsLoaded && isMinTimePassed) {
-            hasStarted = true; // 鎖定，確保只行一次
-            console.log("Entering Game Sequence...");
-
-            const logoSplash = document.getElementById('logo-splash');
-            const titleScreen = document.getElementById('splash-screen');
-
-            // 1. Logo 淡出
-            if(logoSplash) logoSplash.style.opacity = '0';
-
-            // 2. 1秒後切換到 TAP TO START
-            setTimeout(() => {
-                if(logoSplash) logoSplash.style.display = 'none';
-                if(titleScreen) titleScreen.style.display = 'flex';
-                
-                // 播一聲細聲效 (如果有)
-                if(audioLibrary['acknowledged.mp3']) {
-                     const sfx = audioLibrary['acknowledged.mp3'].cloneNode();
-                     sfx.volume = 0.5;
-                     sfx.play().catch(e=>{});
-                }
-            }, 1000); 
-        }
-    }
-
-    // ★★★ 玩家按 "TAP TO START" 後觸發 (最終版) ★★★
-    function startExperience() {
-        const titleScreen = document.getElementById('splash-screen'); 
-        const gameWrapper = document.getElementById('game-content-wrapper');
-
-        // 1. 播放確認音效
-        if(typeof playSound === 'function') {
-            // 優先嘗試用 playSound 函數播放
-            if(audioLibrary['deploy.mp3']) playSound('deploy.mp3'); 
-            else playSound('deploy.mp3'); 
-        } else if(audioLibrary['deploy.mp3']) {
-            // 如果無 playSound 函數，直接播 Audio 物件
-            audioLibrary['deploy.mp3'].cloneNode().play().catch(e=>{});
-        }
-
-        // 2. 標題畫面消失
-        if (titleScreen) {
-            titleScreen.style.display = 'none';
-        }
-        
-        // 3. 遊戲畫面出現
-        if (gameWrapper) {
-            gameWrapper.style.display = 'block';
-            // 確保 Start Screen (Login畫面) 係顯示緊
-            const startScreen = document.getElementById('start-screen');
-            if(startScreen) startScreen.style.display = 'flex';
-        }
-
-        // 4. 正式播 BGM
-        if(typeof playBgm === 'function') {
-            playBgm();
-        } else if(audioLibrary['bgm.mp3']) {
-            audioLibrary['bgm.mp3'].loop = true; 
-            audioLibrary['bgm.mp3'].play().catch(e => console.log("BGM play failed:", e));
-        }
-    }
-
-    // ... (之後先接你原本的其他 JavaScript 代碼) ...
 /* =========================================
    ★★★ TARGET VOICE SYSTEM (洗牌袋邏輯) ★★★
    ========================================= */
@@ -5513,6 +5247,32 @@ function showMainMenu() {
     initCarouselControl();
 }
 
+// --- 新增：點擊開始遊戲 ---
+// --- 新增：點擊開始遊戲 (修正版：顯示大箱) ---
+function startExperience() {
+    // 1. 播放音樂
+    playBgm();
+    
+    // 2. 播放音效
+    if(typeof playSound === 'function') playSound('deploy-sfx');
+
+    // 3. 淡出 Splash Screen
+    const splash = document.getElementById('splash-screen');
+    splash.style.opacity = '0';
+    setTimeout(() => {
+        splash.style.display = 'none';
+    }, 500);
+
+    // ★★★ 關鍵新增：顯示遊戲內容大箱 ★★★
+    // 如果唔加呢句，因為大箱預設係 display: none，你會見到全黑畫面
+    const gameWrapper = document.getElementById('game-content-wrapper');
+    if (gameWrapper) {
+        gameWrapper.style.display = 'block'; 
+        // 額外保險：確保 Login Screen 係 Active 嘅
+        document.getElementById('start-screen').style.display = 'flex';
+    }
+}
+
 // 輔助函數：切換 HUD 面板
 function switchHudPanel(panelId) {
     // 1. 先隱藏所有面板
@@ -6326,12 +6086,6 @@ function playUnderAttackAlert() {
 </div>
 </body>
 </html>
-
-
-
-
-
-
 
 
 
