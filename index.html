@@ -2378,87 +2378,71 @@ body {
     80% { transform: scale(0.9); } /* 縮過頭 */
     100% { transform: scale(1) rotate(0deg); opacity: 1; }
 }
-<body>
-    <div id="logo-splash">
-        <div class="logo-container">
-            <div class="glitch-image-wrapper">
-                <img src="enguistics.png" class="logo-img main-layer">
-                <img src="enguistics.png" class="logo-img glitch-layer layer-red">
-                <img src="enguistics.png" class="logo-img glitch-layer layer-blue">
-            </div>
-        </div>
-        <div id="loading-status">INITIALIZING SYSTEM...</div>
-    </div>
-
-    <div id="splash-screen" style="display: none;" onclick="startExperience()">
-        <div class="splash-content">
-            <div class="main-title">VOCAB<br>CONQUEROR</div>
-            
-            <div class="blink-text" style="font-family: 'Orbitron'; color: #0ea5e9; font-size: 18px; letter-spacing: 5px; margin-top: 20px;">
-                >> TAP TO START <<
-            </div>
-            
-            <div style="font-family: 'Orbitron'; color: #64748b; font-size: 10px; margin-top: 10px;">
-                SYSTEM READY
-            </div>
-        </div>
-    </div>
-
-    <div id="game-content-wrapper" style="display: none;">
-        ```
-
----
-
-### 第二步：修改 CSS (為 Logo 畫面加入樣式)
-
-請在 `<style>` 中加入或修改：
-
-```css
 /* =========================================
-   ★★★ LOGO SPLASH SCREEN (第一階段) ★★★
+   ★★★ 必須修正的 CSS (修復全黑背景與點擊問題) ★★★
    ========================================= */
+
+/* 1. 公司 Logo 開場層 (這層必須是全黑且最高層級) */
 #logo-splash {
-    position: fixed;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    background-color: #000; /* 純黑底 */
-    z-index: 20000; /* ★ 最高層級，遮住後面所有野 */
-    display: flex;
+    position: fixed;       /* 固定在螢幕，不隨捲動 */
+    top: 0; 
+    left: 0;
+    width: 100%; 
+    height: 100%;
+    
+    background-color: #000 !important; /* ★ 重點：強制純黑底色 */
+    z-index: 20000 !important;         /* ★ 重點：層級最高，遮住後面所有野 */
+    
+    display: flex;         /* 讓內容置中 */
     flex-direction: column;
     justify-content: center;
     align-items: center;
     font-family: 'Orbitron', sans-serif;
+    
     transition: opacity 1s ease-in-out; /* 淡出動畫 */
 }
 
-/* 復用之前的 Glitch 樣式 (如果你之前刪了，記得加返下面的) */
-.logo-container { width: 400px; max-width: 80%; position: relative; margin-bottom: 20px; }
-.glitch-image-wrapper { position: relative; width: 100%; display: flex; justify-content: center; }
-.logo-img { width: 100%; height: auto; display: block; }
-.main-layer { position: relative; z-index: 2; filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.5)); }
-.glitch-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0.8; z-index: 1; display: block; }
-.layer-red { mix-blend-mode: screen; filter: opacity(0.5) drop-shadow(-2px 0 0 #ff00c1); animation: img-glitch-anim-1 4s infinite linear alternate-reverse; }
-.layer-blue { mix-blend-mode: screen; filter: opacity(0.5) drop-shadow(2px 0 0 #00fff9); animation: img-glitch-anim-2 4s infinite linear alternate-reverse; }
-
-/* 狀態文字 */
-#loading-status {
-    color: #444; font-size: 12px; letter-spacing: 2px; margin-top: 20px; animation: blink 1s infinite;
-}
-
-/* =========================================
-   ★★★ ORIGINAL TITLE SCREEN (第二階段) ★★★
-   ========================================= */
+/* 2. 標題畫面層 (TAP TO START) */
 #splash-screen {
-    /* 這裡只需確保它樣式正確，z-index 低過 logo-splash 即可 */
     position: fixed;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
+    top: 0; 
+    left: 0;
+    width: 100%; 
+    height: 100%;
+    
     background: rgba(15, 23, 42, 0.95); /* 深藍半透底 */
-    z-index: 10000;
-    display: flex; /* 注意：HTML inline style 設了 none，JS 會改回 flex */
+    z-index: 10000 !important;          /* 層級第二高 (比 Logo 低，比遊戲高) */
+    
+    /* 注意：這裡不寫 display: none，因為我們會用 JS 控制它 */
+    display: flex; 
     justify-content: center;
     align-items: center;
-    cursor: pointer;
+    cursor: pointer; /* 鼠標變手指 */
+}
+
+/* 3. Logo 圖片大小設定 (如果圖片太大會撐爆畫面) */
+.logo-container {
+    width: 400px;
+    max-width: 80%; /* 手機版自動縮細 */
+    position: relative;
+    margin-bottom: 30px;
+}
+
+.glitch-image-wrapper {
+    position: relative;
+    display: flex;
+    justify-content: center;
+}
+
+.logo-img {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+/* 4. 確保遊戲層一開始隱藏 */
+#game-content-wrapper {
+    display: none; /* 預設隱藏，等 Start 之後先開 */
 }
     </style>
 
@@ -6315,6 +6299,7 @@ function playUnderAttackAlert() {
 </div>
 </body>
 </html>
+
 
 
 
