@@ -1877,39 +1877,7 @@ body {
         width: 60vw; max-width: 250px; height: 90px; 
     }
 }
-/* =========================================
-   ★★★ SPLASH SCREEN (TAP TO START) ★★★
-   ========================================= */
-#splash-screen {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: transparent; 
-    backdrop-filter: none; 
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000; 
-    transition: opacity 0.5s;
-}
 
-.splash-content {
-    text-align: center;
-    animation: fadeIn 1s ease-out;
-}
-
-/* 閃爍文字特效 */
-.blink-text {
-    animation: blinker 1.5s linear infinite;
-    text-shadow: 0 0 10px #0ea5e9;
-}
-
-@keyframes blinker {
-    50% { opacity: 0; }
-}
 /* =========================================
    ★★★ 強制修復 LOBBY & LEVEL & SKILL 畫面置中 ★★★
    ========================================= */
@@ -2379,70 +2347,114 @@ body {
     100% { transform: scale(1) rotate(0deg); opacity: 1; }
 }
 /* =========================================
-   ★★★ 必須修正的 CSS (修復全黑背景與點擊問題) ★★★
+   ★★★ 終極合併版：LOGO 開場 + 標題特效 ★★★
    ========================================= */
 
-/* 1. 公司 Logo 開場層 (這層必須是全黑且最高層級) */
+/* --- 1. 公司 Logo 開場層 (最頂層，純黑底) --- */
 #logo-splash {
-    position: fixed;       /* 固定在螢幕，不隨捲動 */
-    top: 0; 
-    left: 0;
-    width: 100%; 
-    height: 100%;
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
     
-    background-color: #000 !important; /* ★ 重點：強制純黑底色 */
-    z-index: 20000 !important;         /* ★ 重點：層級最高，遮住後面所有野 */
+    background-color: #000 !important; /* 強制黑底 */
+    z-index: 20000 !important;         /* 最高層級 */
     
-    display: flex;         /* 讓內容置中 */
+    display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
     font-family: 'Orbitron', sans-serif;
-    
-    transition: opacity 1s ease-in-out; /* 淡出動畫 */
+    transition: opacity 1s ease-in-out;
 }
 
-/* 2. 標題畫面層 (TAP TO START) */
+/* --- 2. 標題畫面層 (TAP TO START) --- */
 #splash-screen {
     position: fixed;
-    top: 0; 
-    left: 0;
-    width: 100%; 
-    height: 100%;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
     
-    background: rgba(15, 23, 42, 0.95); /* 深藍半透底 */
-    z-index: 10000 !important;          /* 層級第二高 (比 Logo 低，比遊戲高) */
+    /* ★ 改良：用深藍半透底 (原本係 transparent 會透視見到星星) */
+    background: rgba(15, 23, 42, 0.95);
+    backdrop-filter: blur(5px); /* 加少少磨砂玻璃效果，更有質感 */
     
-    /* 注意：這裡不寫 display: none，因為我們會用 JS 控制它 */
-    display: flex; 
-    justify-content: center;
+    z-index: 10000 !important; /* 層級第二高 */
+    
+    display: flex;
+    flex-direction: column;
     align-items: center;
-    cursor: pointer; /* 鼠標變手指 */
+    justify-content: center;
+    cursor: pointer;
+    transition: opacity 0.5s;
 }
 
-/* 3. Logo 圖片大小設定 (如果圖片太大會撐爆畫面) */
+/* --- 3. ★ 還原你原本的內容特效 ★ --- */
+.splash-content {
+    text-align: center;
+    animation: fadeIn 1s ease-out; /* 還原 FadeIn */
+}
+
+/* 還原閃爍文字特效 */
+.blink-text {
+    animation: blinker 1.5s linear infinite; /* 還原閃爍 */
+    text-shadow: 0 0 10px #0ea5e9;           /* 還原發光 */
+    
+    /* 確保字體樣式跟返你原本 HTML */
+    font-family: 'Orbitron'; 
+    color: #0ea5e9; 
+    font-size: 18px; 
+    letter-spacing: 5px; 
+    margin-top: 20px;
+}
+
+/* --- 4. Logo 圖片與 Glitch 特效 (新加) --- */
 .logo-container {
-    width: 400px;
-    max-width: 80%; /* 手機版自動縮細 */
     position: relative;
+    width: 400px; max-width: 80%;
     margin-bottom: 30px;
 }
+.glitch-image-wrapper { position: relative; width: 100%; display: flex; justify-content: center; }
+.logo-img { width: 100%; height: auto; display: block; }
 
-.glitch-image-wrapper {
-    position: relative;
-    display: flex;
-    justify-content: center;
+/* 主圖與殘影 */
+.main-layer { position: relative; z-index: 2; filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.5)); }
+.glitch-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0.8; z-index: 1; display: block; }
+.layer-red { mix-blend-mode: screen; filter: opacity(0.5) drop-shadow(-2px 0 0 #ff00c1); animation: img-glitch-anim-1 4s infinite linear alternate-reverse; }
+.layer-blue { mix-blend-mode: screen; filter: opacity(0.5) drop-shadow(2px 0 0 #00fff9); animation: img-glitch-anim-2 4s infinite linear alternate-reverse; }
+
+/* Loading 文字 */
+#loading-status { color: #444; font-size: 12px; letter-spacing: 2px; margin-top: 20px; animation: blink 1s infinite; }
+#game-content-wrapper { display: none; }
+
+/* --- 5. 動畫 Keyframes (全部齊晒) --- */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
-.logo-img {
-    width: 100%;
-    height: auto;
-    display: block;
+@keyframes blinker {
+    50% { opacity: 0; }
 }
 
-/* 4. 確保遊戲層一開始隱藏 */
-#game-content-wrapper {
-    display: none; /* 預設隱藏，等 Start 之後先開 */
+@keyframes blink { 
+    0%, 100% { opacity: 1; } 50% { opacity: 0.3; } 
+}
+
+@keyframes img-glitch-anim-1 {
+    0% { clip-path: inset(20% 0 80% 0); transform: translate(-2px, 1px); }
+    5% { clip-path: inset(60% 0 10% 0); transform: translate(2px, -1px); }
+    15% { clip-path: inset(80% 0 5% 0); transform: translate(2px, -2px); }
+    25% { clip-path: inset(100% 0 0 0); transform: translate(0, 0); } 
+    95% { clip-path: inset(100% 0 0 0); transform: translate(0, 0); }
+    100% { clip-path: inset(30% 0 50% 0); transform: translate(2px, 2px); }
+}
+
+@keyframes img-glitch-anim-2 {
+    0% { clip-path: inset(10% 0 60% 0); transform: translate(2px, -1px); }
+    5% { clip-path: inset(80% 0 5% 0); transform: translate(-2px, 2px); }
+    15% { clip-path: inset(10% 0 80% 0); transform: translate(-2px, -2px); }
+    25% { clip-path: inset(100% 0 0 0); transform: translate(0, 0); } 
+    95% { clip-path: inset(100% 0 0 0); transform: translate(0, 0); }
+    100% { clip-path: inset(10% 0 70% 0); transform: translate(-2px, -1px); }
 }
     </style>
 
@@ -6299,6 +6311,7 @@ function playUnderAttackAlert() {
 </div>
 </body>
 </html>
+
 
 
 
