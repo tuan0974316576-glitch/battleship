@@ -5541,7 +5541,8 @@ window.addEventListener('load', () => {
 function playBgm() {
     const bgm = document.getElementById('bgm');
     if (bgm && bgm.paused) {
-        bgm.volume = 0.3;
+        // 使用計算後的音量
+        bgm.volume = gameVolume.bgm * BGM_MAX_GAIN; 
         bgm.play().catch(e => console.log("BGM waiting for interaction"));
     }
 }
@@ -6105,10 +6106,14 @@ function playUnderAttackAlert() {
 }
 // 全局音量控制中心
 let gameVolume = {
-    bgm: 0.3,
+    bgm: 0.5,  // ★ 改動 1: 預設改做 0.5 (50%)
     sfx: 0.5,
     voice: 1.0
 };
+
+// ★ 新增：BGM 最大音量限制 (因為你首 BGM 本身可能好大聲)
+// 當 Slider 係 1.0 (100%) 時，實際 BGM 只會去到 0.6 (60%)
+const BGM_MAX_GAIN = 0.6; 
 
 function toggleSettingsModal() {
     const modal = document.getElementById('settings-modal');
@@ -6116,10 +6121,11 @@ function toggleSettingsModal() {
     modal.style.display = isHidden ? 'flex' : 'none';
     
     if (isHidden) {
-        // 同步當前數值到 Slider
+        // 同步 Slider 顯示 (顯示 0.5)
         document.getElementById('vol-bgm').value = gameVolume.bgm;
         document.getElementById('vol-sfx').value = gameVolume.sfx;
         document.getElementById('vol-voice').value = gameVolume.voice;
+        
         if(typeof playSound === 'function') playSound('open-room-sfx');
     } else {
         if(typeof playSound === 'function') playSound('delete-sfx');
@@ -6133,18 +6139,27 @@ function updateVolume(type, val) {
     // 即時套用 BGM 音量
     if (type === 'bgm') {
         const bgm = document.getElementById('bgm');
-        if (bgm) bgm.volume = v;
+        if (bgm) {
+            // ★ 改動 2: 實際音量 = 設定值 * 限制系數
+            // 例子: 設定 0.5 * 0.6 = 實際 0.3 (这就係你要的效果！)
+            bgm.volume = v * BGM_MAX_GAIN; 
+        }
     }
     
-    // 保存到瀏覽器，下次開 Game 自動套用
+    // 保存到瀏覽器
     localStorage.setItem(`setting_${type}`, v);
 }
 
 // 讀取保存的設定
 window.addEventListener('load', () => {
-    gameVolume.bgm = parseFloat(localStorage.getItem('setting_bgm')) || 0.3;
+    // ★ 改動 3: 如果第一次玩 (無 Record)，預設用 0.5
+    gameVolume.bgm = parseFloat(localStorage.getItem('setting_bgm')) || 0.5;
     gameVolume.sfx = parseFloat(localStorage.getItem('setting_sfx')) || 0.5;
     gameVolume.voice = parseFloat(localStorage.getItem('setting_voice')) || 1.0;
+    
+    // 確保一入 Game 就套用音量限制
+    const bgm = document.getElementById('bgm');
+    if (bgm) bgm.volume = gameVolume.bgm * BGM_MAX_GAIN;
 });
 </script>
 <div id="registration-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 9999; flex-direction: column; align-items: center; justify-content: center;">
@@ -6238,6 +6253,7 @@ window.addEventListener('load', () => {
 </div>
 </body>
 </html>
+
 
 
 
