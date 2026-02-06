@@ -3221,6 +3221,7 @@ function initPVPListeners() {
                         playUnderAttackAlert(); 
 
                         triggerAnimation(cell, 'orange');
+                        triggerDamageVibration('HIT');
                         
                         myDamage++;
                         
@@ -4130,13 +4131,14 @@ function aiFire() {
     setGameTimeout(() => {
         let isGameOver = false; 
 
-        if (myGrid[t] === 1) { // ★ 打中了！
-            cell.classList.add('hit');
-            playSound('hit-sfx');
-            triggerAnimation(cell, 'orange');
-            playUnderAttackAlert();
-            
-            myDamage++;
+if (myGrid[t] === 1) { // ★ 打中了！
+        cell.classList.add('hit');
+        playSound('hit-sfx');
+        triggerAnimation(cell, 'orange');
+        playUnderAttackAlert();
+        triggerDamageVibration('HIT'); 
+
+        myDamage++;
             
             // ★★★ 關鍵新增 1：AI 變聰明了！加入周圍格仔入 Stack ★★★
             addSmartTargets(t);
@@ -4306,6 +4308,7 @@ function startPlayerTurn() {
     grid.appendChild(img);
     
     playSound('destroy-sfx'); 
+    triggerDamageVibration('DESTROY');
 }
 // ★ 新增全局變數 (請確保放在 global 區域，例如 let enemyShots = []; 附近) ★
 // ★ 新增：初始化敵軍狀態欄 ★
@@ -6161,6 +6164,18 @@ window.addEventListener('load', () => {
     const bgm = document.getElementById('bgm');
     if (bgm) bgm.volume = gameVolume.bgm * BGM_MAX_GAIN;
 });
+function triggerDamageVibration(type) {
+    // 檢查瀏覽器支唔支援震動
+    if (!navigator.vibrate) return;
+
+    if (type === 'HIT') {
+        // 普通被擊中：震一下 (200毫秒)
+        navigator.vibrate(200); 
+    } else if (type === 'DESTROY') {
+        // 戰艦沉沒：劇烈震動 (震400ms -> 停50ms -> 震200ms)
+        navigator.vibrate([400, 50, 200]); 
+    }
+}
 </script>
 <div id="registration-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 9999; flex-direction: column; align-items: center; justify-content: center;">
     
@@ -6253,6 +6268,7 @@ window.addEventListener('load', () => {
 </div>
 </body>
 </html>
+
 
 
 
