@@ -2380,14 +2380,14 @@ body {
 }
 /* 右上角齒輪按鈕 */
 #main-settings-btn {
-    position: absolute;
+    position: fixed;
     top: 25px;
     right: 25px;
     width: 40px;
     height: 40px;
     opacity: 0.4; /* 半透明效果 */
     cursor: pointer;
-    z-index: 10005;
+    z-index: 20000;
     transition: all 0.3s ease;
     filter: drop-shadow(0 0 5px var(--primary));
 }
@@ -2395,6 +2395,7 @@ body {
 #main-settings-btn:hover {
     opacity: 1; /* 碰觸時變亮 */
     transform: rotate(90deg) scale(1.1);
+    filter: drop-shadow(0 0 15px var(--primary)); /* Hover 時發光 */
 }
 
 /* 設定容器背景與磨砂玻璃 */
@@ -2440,8 +2441,9 @@ body {
 
 </head>
 <body>
+<img src="option.png" id="main-settings-btn" onclick="event.stopPropagation(); toggleSettingsModal()" alt="Settings">
 <div id="splash-screen" onclick="startExperience()">
-    <img src="option.png" id="main-settings-btn" onclick="event.stopPropagation(); toggleSettingsModal()" alt="Settings">
+    
     <div class="splash-content">
         <div class="main-title" style="position: relative; z-index: 10000;">VOCAB<br>CONQUEROR</div>
         
@@ -6236,6 +6238,7 @@ window.addEventListener('load', () => {
 </div>
 </body>
 </html>
+
 
 
 
