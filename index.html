@@ -3762,7 +3762,6 @@ if (currentPracticeMode === 'SPEAKING') {
 
 // --- 動畫與倒數 (修正版) ---
     // 1. 先重置條 Bar 做 100% (視覺上準備好)
-    const timerBar = document.getElementById('timer-bar');
     timerBar.style.transition = 'none';
     timerBar.style.width = '100%';
     timerBar.offsetHeight; // Trigger reflow
@@ -6336,6 +6335,7 @@ function speakText(text, element = null) {
 </div>
 </body>
 </html>
+
 
 
 
