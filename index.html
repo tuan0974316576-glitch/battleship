@@ -3760,42 +3760,34 @@ if (currentPracticeMode === 'SPEAKING') {
         setTimeout(() => input.focus(), 10);
     }
 
-    // --- 動畫與倒數 ---
+// --- 動畫與倒數 (修正版) ---
+    // 1. 先重置條 Bar 做 100% (視覺上準備好)
+    const timerBar = document.getElementById('timer-bar');
     timerBar.style.transition = 'none';
-    timerBar.style.width = '0%';
-    timerBar.offsetHeight; 
-
-    timerBar.style.transition = 'width 0.5s ease-out';
     timerBar.style.width = '100%';
-
-    let timeMultiplier = 0.7;
-    let baseTime = 3;
-    if (currentPracticeMode === 'SPEAKING') {
-        baseTime = 4; timeMultiplier = 0.8;
+    timerBar.offsetHeight; // Trigger reflow
+    
+    // 2. 確保清除舊 Timer
+    if (typeof timerInterval !== 'undefined' && timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
     }
 
-    const totalTime = baseTime + (currentVocab.en.length * timeMultiplier);
-    let timeLeft = totalTime;
-    
-    if(typeof timerInterval !== 'undefined' && timerInterval) clearInterval(timerInterval);
-    
-    setTimeout(() => {
-        if(modal.style.display === 'none') return;
-
-        timerBar.style.transition = 'width 0.1s linear';
-        
-        timerInterval = setInterval(() => {
-            timeLeft -= 0.1; 
-            const percentage = (timeLeft / totalTime) * 100;
-            timerBar.style.width = percentage + "%";
-            
-            if (timeLeft <= 0) {
-                clearInterval(timerInterval);
-                handlePlayerTimeout();
+    // 3. 決定幾時開始計時
+    if (currentPracticeMode === 'LISTENING') {
+        // ★ Listening 模式：暫停！等 speakText 讀完先開始 (在 onend 觸發) ★
+        console.log("WAITING FOR AUDIO TO FINISH...");
+    } else {
+        // ★ 其他模式 (Reading/Speaking)：延遲 0.5秒 後即刻開始 ★
+        setTimeout(() => {
+            // 確保視窗仲開緊先計時
+            if (document.getElementById('launch-modal').style.display === 'flex') {
+                startCountdownTimer();
             }
-        }, 100); 
-    }, 500); 
-}
+        }, 500);
+    }
+
+} // <--- 記得保留這個函數結束括號
 // --- 0. 語音預熱系統 (解決延遲) ---
 function warmUpVoiceEngine() {
     if ('speechSynthesis' in window) {
@@ -5031,9 +5023,16 @@ function speakText(text, element) {
         if (element) element.classList.add('speaking');
     };
 
-    // 讀完：除特效
-    utterance.onend = () => {
+utterance.onend = () => {
         if (element) element.classList.remove('speaking');
+
+        // ★★★ 新增：Listening 模式讀完後，才開始計時！ ★★★
+        if (currentPracticeMode === 'LISTENING' && 
+            document.getElementById('launch-modal').style.display === 'flex') {
+            
+            // 呼叫我們剛剛寫的新函數
+            startCountdownTimer();
+        }
     };
 
     synth.speak(utterance);
@@ -6170,6 +6169,42 @@ window.addEventListener('load', () => {
     const bgm = document.getElementById('bgm');
     if (bgm) bgm.volume = gameVolume.bgm * BGM_MAX_GAIN;
 });
+
+// --- ★ 新增：獨立計時器啟動函數 ★ ---
+function startCountdownTimer() {
+    // 1. 如果計時器已經在跑，就唔好再這啟動 (防止重複)
+    if (timerInterval) return;
+
+    const modal = document.getElementById('launch-modal');
+    if (modal.style.display === 'none') return; // 如果視窗閂咗就唔好計
+
+    const timerBar = document.getElementById('timer-bar');
+    
+    // 計算時間 (邏輯同原本一樣)
+    let timeMultiplier = 0.7;
+    let baseTime = 3;
+    if (currentPracticeMode === 'SPEAKING') {
+        baseTime = 4; timeMultiplier = 0.8;
+    }
+    const totalTime = baseTime + (currentVocab.en.length * timeMultiplier);
+    let timeLeft = totalTime;
+
+    // 開始動畫
+    timerBar.style.transition = 'width 0.1s linear';
+    
+    // 啟動倒數
+    timerInterval = setInterval(() => {
+        timeLeft -= 0.1;
+        const percentage = (timeLeft / totalTime) * 100;
+        timerBar.style.width = percentage + "%";
+        
+        if (timeLeft <= 0) {
+            clearInterval(timerInterval);
+            timerInterval = null; // 確保重置
+            handlePlayerTimeout();
+        }
+    }, 100);
+}
 </script>
 <div id="registration-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 9999; flex-direction: column; align-items: center; justify-content: center;">
     
@@ -6262,6 +6297,7 @@ window.addEventListener('load', () => {
 </div>
 </body>
 </html>
+
 
 
 
