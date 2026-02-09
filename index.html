@@ -3532,7 +3532,7 @@ battleUnsubscribe = onValue(ref(db, 'rooms/' + currentRoomId), (snapshot) => {
     }
 
 /* =========================================
-   ★★★ TARGET LOCK LOGIC (JS) ★★★
+   ★★★ TARGET LOCK LOGIC (JS) - 修正計時器 Bug 版 ★★★
    ========================================= */
 
 function handleEnemyGridClick(index) {
@@ -3546,7 +3546,16 @@ function handleEnemyGridClick(index) {
     // 如果該格未被翻開
     if (!cell.classList.contains('revealed')) {
         
-        // 2. ★ 上鎖：立即設定為 true，防止玩家撳第二下 ★
+        // ★★★ 關鍵修正：一撳落去，即刻殺死計時器！ ★★★
+        // 唔好等動畫播完先停，因為動畫播放期間唔應該計時
+        if (typeof turnTimerInterval !== 'undefined' && turnTimerInterval) {
+            clearInterval(turnTimerInterval);
+        }
+        // (選用) 順手隱藏埋條計時 Bar，畀玩家知「系統收到你指令啦」
+        const timerContainer = document.getElementById('turn-timer-container');
+        if (timerContainer) timerContainer.style.display = 'none';
+
+        // 2. ★ 上鎖：立即設定為 true
         isTargeting = true;
 
         // 3. 執行鎖定動畫
@@ -3554,7 +3563,7 @@ function handleEnemyGridClick(index) {
             // 動畫完成後的回調 (Callback)
             openLaunchModal(index);
 
-            // 4. ★ 解鎖：彈出視窗後，重置為 false ★
+            // 4. ★ 解鎖
             isTargeting = false;
         });
     }
@@ -6253,6 +6262,7 @@ window.addEventListener('load', () => {
 </div>
 </body>
 </html>
+
 
 
 
