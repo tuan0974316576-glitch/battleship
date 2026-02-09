@@ -4999,45 +4999,6 @@ if (speechSynthesis.onvoiceschanged !== undefined) {
     speechSynthesis.onvoiceschanged = loadVoices;
 }
 
-// B. 讀字函數 (包含閃爍特效)
-function speakText(text, element) {
-    if (!text) return;
-    
-    synth.cancel(); // 停止上一句
-
-    // 清除舊特效
-    document.querySelectorAll('.vocab-row.speaking').forEach(el => el.classList.remove('speaking'));
-
-    const utterance = new SpeechSynthesisUtterance(text);
-    
-    if (!techVoice) loadVoices();
-    if (techVoice) utterance.voice = techVoice;
-
-    // 調音
-    utterance.pitch = 1.1; 
-    utterance.rate = 1.0;  
-    utterance.volume = 1.0;
-
-    // 開始讀：加特效 + 播聲
-    utterance.onstart = () => {
-        if (element) element.classList.add('speaking');
-    };
-
-utterance.onend = () => {
-        if (element) element.classList.remove('speaking');
-
-        // ★★★ 新增：Listening 模式讀完後，才開始計時！ ★★★
-        if (currentPracticeMode === 'LISTENING' && 
-            document.getElementById('launch-modal').style.display === 'flex') {
-            
-            // 呼叫我們剛剛寫的新函數
-            startCountdownTimer();
-        }
-    };
-
-    synth.speak(utterance);
-}
-
 // 3. 渲染單字列表 (最終完整版)
 // 3. 渲染單字列表 (修正重疊音效版)
 // ★ 新增第二個參數 isSilent：如果是 true，就不會播放切換音效
@@ -5745,27 +5706,6 @@ function selectSkill(skill) {
         createRoom();
     }
 }
-// ============================================
-// ★★★ PHASE 2: VOICE CORE (語音核心) ★★★
-// ============================================
-
-// --- 1. 電腦說話 (Text-to-Speech) - 用於 Listening Mode ---
-function speakText(text) {
-    if ('speechSynthesis' in window) {
-        // 停止舊嘅語音，防止疊聲
-        window.speechSynthesis.cancel(); 
-
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.volume = gameVolume.voice;
-        utterance.lang = 'en-US'; // 設定美式英文
-        utterance.rate = 0.9;     // 語速稍慢，適合教學
-        utterance.pitch = 1;
-        
-        window.speechSynthesis.speak(utterance);
-    } else {
-        alert("Audio not supported on this device.");
-    }
-}
 
 // --- 2. 玩家說話 (Speech-to-Text) - 用於 Speaking Mode ---
 function startListening() {
@@ -6205,6 +6145,105 @@ function startCountdownTimer() {
         }
     }, 100);
 }
+
+/* =========================================
+   ★★★ ADVANCED VOICE ENGINE (Smart Timing) ★★★
+   ========================================= */
+
+function speakText(text, element = null) {
+    if (!text) return;
+
+    // 1. 檢查支援性
+    if (!('speechSynthesis' in window)) {
+        console.error("Browser does not support Speech Synthesis");
+        return;
+    }
+
+    // 2. 停止舊語音 & 清除舊特效
+    window.speechSynthesis.cancel();
+    document.querySelectorAll('.vocab-row.speaking').forEach(el => el.classList.remove('speaking'));
+
+    const utterance = new SpeechSynthesisUtterance(text);
+    
+    // 3. 設定語音參數 (整合音量設定)
+    // 即使你未加音量設定，這段代碼也會自動用預設值，不會報錯
+    if (typeof gameVolume !== 'undefined') {
+        utterance.volume = gameVolume.voice; 
+    } else {
+        utterance.volume = 1.0;
+    }
+    
+    // 嘗試套用 Google Voice 或其他英文聲
+    if (typeof techVoice !== 'undefined' && techVoice) {
+         utterance.voice = techVoice;
+    }
+    
+    utterance.rate = 0.9; // 語速適中
+    utterance.pitch = 1.0;
+
+    // --- ★★★ 核心邏輯：智能鎖定目標字位置 ★★★ ---
+    let hasTimerStarted = false;
+    let targetWordEndIndex = -1;
+
+    // 只在 LISTENING 模式下進行計算
+    if (typeof currentPracticeMode !== 'undefined' && currentPracticeMode === 'LISTENING' && 
+        typeof currentVocab !== 'undefined' && currentVocab.en && 
+        text.toLowerCase().includes(currentVocab.en.toLowerCase())) {
+        
+        const targetWord = currentVocab.en;
+        // 使用 Regex 準確搵出個字係句子入面既「結束位置」
+        const escapedTarget = targetWord.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); 
+        const regex = new RegExp(`\\b${escapedTarget}\\b`, 'i');
+        const match = regex.exec(text);
+        
+        if (match) {
+            // match.index 係單字開始位置 + 單字長度 = 結束位置
+            targetWordEndIndex = match.index + match[0].length;
+        }
+    }
+
+    // 4. 設定事件監聽器
+    
+    // A. 開始讀 (視覺特效)
+    utterance.onstart = () => {
+        if (element) element.classList.add('speaking');
+    };
+
+    // B. ★★★ 邊界事件 (每讀一個字都會 Trigger) ★★★
+    utterance.onboundary = (event) => {
+        // 條件：搵到目標字 + Timer 未開始 + 是單字邊界
+        if (targetWordEndIndex !== -1 && !hasTimerStarted) {
+            // 如果 當前位置 >= 目標字結束位置，即係代表目標字已經讀完！
+            if (event.charIndex >= targetWordEndIndex) {
+                console.log("Target word finished! Starting timer instantly.");
+                hasTimerStarted = true;
+                if (typeof startCountdownTimer === 'function') {
+                    startCountdownTimer(); // <--- 立即啟動計時！
+                }
+            }
+        }
+    };
+
+    // C. 讀完 (Fallback 保險掣)
+    utterance.onend = () => {
+        if (element) element.classList.remove('speaking');
+        
+        // 如果讀完都未 Trigger (例如個字係整句既最後一個字)，就係度 Trigger
+        if (typeof currentPracticeMode !== 'undefined' && currentPracticeMode === 'LISTENING' && 
+            !hasTimerStarted) {
+             const modal = document.getElementById('launch-modal');
+             // 確保視窗仲開緊
+             if (modal && modal.style.display === 'flex') {
+                 if (typeof startCountdownTimer === 'function') {
+                    startCountdownTimer();
+                 }
+             }
+        }
+    };
+
+    // 5. 正式發聲
+    window.speechSynthesis.speak(utterance);
+}
 </script>
 <div id="registration-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 9999; flex-direction: column; align-items: center; justify-content: center;">
     
@@ -6297,6 +6336,7 @@ function startCountdownTimer() {
 </div>
 </body>
 </html>
+
 
 
 
