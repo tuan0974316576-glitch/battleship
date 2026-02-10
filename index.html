@@ -1427,7 +1427,37 @@ body {
     text-shadow: 0 0 8px #0ea5e9;
     letter-spacing: 4px;
 }
+/* ★★★ Apple 按鈕：銀白 Cyberpunk 風格 ★★★ */
+#apple-login-btn {
+    position: relative;
+    background: rgba(0, 0, 0, 0.6); 
+    border: 1px solid #ffffff;      
+    color: #ffffff;                 
+    padding: 12px 30px;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 16px;
+    font-weight: bold;
+    letter-spacing: 2px;
+    cursor: pointer;
+    overflow: hidden;
+    transition: 0.3s;
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.2); /* 改成：白光暈 */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    box-sizing: border-box;
+    margin-top: 15px; /* 加少少距離，唔好貼住上面個掣 */
+}
 
+/* Hover 特效：字距拉開 + 強烈發光 */
+#apple-login-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    box-shadow: 0 0 20px #ffffff;
+    text-shadow: 0 0 8px #ffffff; 
+    letter-spacing: 4px;
+}
 /* Profile Panel 動畫 */
 #user-profile-panel {
     background: rgba(15, 23, 42, 0.8);
@@ -2476,7 +2506,10 @@ body {
                 <span class="text">INITIALIZE LINK</span>
                 <div class="btn-glitch"></div>
             </button>
-
+<button id="apple-login-btn" onclick="loginWithApple()" style="margin-bottom: 10px; display: none;"> <span class="icon"></span> 
+    <span class="text">SIGN IN WITH APPLE</span>
+    <div class="btn-glitch"></div>
+</button>
             <button class="logout-link" onclick="playAsGuest()" style="color: #64748b; font-size: 10px; margin-top: 5px;">
                &gt; BYPASS SECURITY (GUEST MODE)
             </button>
@@ -6335,6 +6368,7 @@ function speakText(text, element = null) {
 </div>
 </body>
 </html>
+
 
 
 
