@@ -2131,7 +2131,7 @@ body {
 /* --- 戰後回顧樣式 --- */
 .review-item {
     display: grid;
-    grid-template-columns: 0.5fr 1fr 1fr; /* 3欄比例 */
+    grid-template-columns: 0.5fr 1fr 1fr 1fr; /* ★ 改為 4 欄，比例平均分配 */
     padding: 8px 0;
     border-bottom: 1px solid rgba(71, 85, 105, 0.3);
     font-family: 'Orbitron', sans-serif;
@@ -2803,11 +2803,12 @@ body {
     <div id="review-container" style="width: 90%; max-width: 600px; background: rgba(15, 23, 42, 0.8); border: 1px solid #334155; border-radius: 10px; padding: 15px; margin-bottom: 20px; display: flex; flex-direction: column;">
         <div style="font-family: 'Orbitron'; color: #0ea5e9; font-size: 16px; margin-bottom: 10px; text-align: center; letter-spacing: 2px;">>> MISSION DEBRIEF <<</div>
         
-        <div style="display: grid; grid-template-columns: 0.5fr 1fr 1fr; border-bottom: 1px solid #475569; padding-bottom: 5px; margin-bottom: 10px; color: #94a3b8; font-size: 12px; font-weight: bold;">
-            <span>TURN</span>
-            <span>YOUR INPUT</span>
-            <span>CORRECT CODE</span>
-        </div>
+<div style="display: grid; grid-template-columns: 0.5fr 1fr 1fr 1fr; border-bottom: 1px solid #475569; padding-bottom: 5px; margin-bottom: 10px; color: #94a3b8; font-size: 12px; font-weight: bold;">
+    <span>TURN</span>
+    <span>MEANING</span> 
+    <span>YOUR INPUT</span>
+    <span>CORRECT CODE</span>
+</div>
 
         <div id="review-list" style="overflow-y: auto; max-height: 300px; padding-right: 5px;">
             </div>
@@ -5646,7 +5647,7 @@ function createTwinklingStars() {
         container.appendChild(star);
     }
 }
-// ★★★ 新增：渲染戰後報告 ★★★
+// ★★★ 新增：渲染戰後報告 (含中文解釋版) ★★★
 function renderReview() {
     const list = document.getElementById('review-list');
     list.innerHTML = ""; // 清空舊內容
@@ -5658,9 +5659,22 @@ function renderReview() {
         // 根據對錯設定 class
         const userClass = log.isCorrect ? 'correct' : 'wrong';
         
+        // --- 1. 查找中文解釋 ---
+        let chineseMeaning = "--";
+        
+        // 嘗試從當前題庫中查找 (比對英文單字 或 句子)
+        if (typeof activeVocabList !== 'undefined') {
+            // 搜尋邏輯：正確答案 (log.correct) 等於 單字(en) 或 句子(sent)
+            const foundWord = activeVocabList.find(w => w.en === log.correct || w.sent === log.correct);
+            if (foundWord && foundWord.ch) {
+                chineseMeaning = foundWord.ch;
+            }
+        }
+
+        // --- 2. 生成 4 欄 HTML ---
         item.innerHTML = `
             <div class="review-turn">T-${log.turn}</div>
-            <div class="review-user ${userClass}">${log.user}</div>
+            <div style="color: #fbbf24; font-family: 'Noto Sans TC', sans-serif;">${chineseMeaning}</div> <div class="review-user ${userClass}">${log.user}</div>
             <div class="review-answer">${log.correct}</div>
         `;
         list.appendChild(item);
@@ -6354,6 +6368,7 @@ function speakText(text, element = null) {
 </div>
 </body>
 </html>
+
 
 
 
