@@ -21,33 +21,96 @@
         }
     </script>
     
-    <script type="module">
-      import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-      import { Keyboard } from '@capacitor/keyboard';
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getDatabase, ref, set, onValue, update, push, child, get, onDisconnect, off } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
-      import { getAuth, signInAnonymously, onAuthStateChanged, GoogleAuthProvider, OAuthProvider, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";;
-      
-      window.firebaseModules = { 
-          initializeApp, 
-          getDatabase, 
-          ref, 
-          set, 
-          onValue, 
-          update, 
-          push, 
-          child, 
-          get, 
-          getAuth, 
-          signInAnonymously, 
-          onAuthStateChanged,
-          onDisconnect,
-          off,
-          GoogleAuthProvider,
-          OAuthProvider,
-          signInWithPopup,
-          signOut
-      };
-    </script>
+    import { getAuth, signInAnonymously, onAuthStateChanged, GoogleAuthProvider, OAuthProvider, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyBdfTgb7FpkYdgjvrYWQ0jr-N-1fAaW9Q0",
+        authDomain: "vocabularyxdungeon.firebaseapp.com",
+        databaseURL: "https://vocabularyxdungeon-default-rtdb.asia-southeast1.firebasedatabase.app",
+        projectId: "vocabularyxdungeon",
+        storageBucket: "vocabularyxdungeon.appspot.com",
+        messagingSenderId: "834761939928",
+        appId: "1:834761939928:web:4591dcd9650ec99746f0ad"
+    };
+
+    // 初始化
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const auth = getAuth(app);
+
+    // 掛載到 window 供 onclick 使用
+    window.firebaseModules = { 
+        getDatabase, ref, set, onValue, update, push, child, get, onDisconnect, off,
+        getAuth, signInAnonymously, onAuthStateChanged, GoogleAuthProvider, OAuthProvider, signInWithPopup, signOut 
+    };
+    window.db = db;
+    window.auth = auth;
+
+    // --- 1. 登入狀態監聽 (包含 Guest 自動派名) ---
+    onAuthStateChanged(auth, (u) => {
+        const overlay = document.getElementById('login-overlay');
+        if (u) {
+            window.myPlayerId = u.uid;
+            const userRef = ref(db, 'users/' + u.uid);
+            get(userRef).then((snapshot) => {
+                if (snapshot.exists() && snapshot.val().displayName) {
+                    // 舊用戶
+                    const realName = snapshot.val().displayName;
+                    localStorage.setItem('battleship_username', realName);
+                    if(typeof updateHUD === 'function') updateHUD(realName);
+                    if(typeof showMainMenu === 'function') showMainMenu();
+                    if(overlay) overlay.style.display = 'none';
+                } else {
+                    // 新用戶
+                    if (u.isAnonymous) {
+                        // Guest 自動派名
+                        const autoName = window.generateGuestId ? window.generateGuestId() : "GUEST_" + u.uid.substring(0,4);
+                        update(ref(db, 'users/' + u.uid), { displayName: autoName, lastLogin: Date.now() }).then(() => {
+                            localStorage.setItem('battleship_username', autoName);
+                            if(typeof updateHUD === 'function') updateHUD(autoName);
+                            if(typeof showMainMenu === 'function') showMainMenu();
+                            if(overlay) overlay.style.display = 'none';
+                        });
+                    } else {
+                        // Google/Apple 新人
+                        if(overlay) overlay.style.display = 'none';
+                        const reg = document.getElementById('registration-modal');
+                        if(reg) reg.style.display = 'flex';
+                    }
+                }
+            });
+        } else {
+            if(overlay) overlay.style.display = 'none';
+            if(typeof switchHudPanel === 'function') switchHudPanel('login-panel');
+        }
+    });
+
+    // --- 2. 連線狀態監測 (紅綠燈) ---
+    const connectedRef = ref(db, ".info/connected");
+    onValue(connectedRef, (snap) => {
+        const el = document.getElementById('connection-status');
+        if (!el) return;
+        if (snap.val() === true) {
+            el.style.background = "#22c55e"; el.style.boxShadow = "0 0 5px #22c55e";
+        } else {
+            const splash = document.getElementById('splash-screen');
+            if ((splash && splash.style.display !== 'none') || window.ignoreConnectionAlert) return;
+            el.style.background = "#ef4444"; el.style.boxShadow = "0 0 5px #ef4444";
+            if (typeof showNotification === 'function') showNotification("CONNECTION LOST!", "error");
+        }
+    });
+
+    // --- 3. 遊戲初始化 (畫格子等) ---
+    if(typeof createGrid === 'function') {
+        createGrid('player-grid');
+        createGrid('enemy-grid');
+        if(window.placeEnemyShips) placeEnemyShips();
+        if(window.renderSidebar) renderSidebar();
+    }
+</script>
 
     <style>
 @import url('https://fonts.googleapis.com/css2?family=Black+Ops+One&family=Orbitron:wght@400;500;700;900&family=Roboto+Mono:wght@400;700&display=swap');
@@ -5447,159 +5510,6 @@ window.addEventListener('load', () => {
         console.log("🚀 FAST LOGIN: Found cached user -> " + cachedName);
         updateHUD(cachedName);
     }
-
-    // 3. 延遲啟動 Firebase (確保模組載入完成)
-    setTimeout(() => {
-        // ★★★ 關鍵修正 1：這裡加回 'update'，否則 Guest Login 會死機 ★★★
-        const { initializeApp, getDatabase, getAuth, onAuthStateChanged, ref, onValue, get, update } = window.firebaseModules;
-        
-        app = initializeApp(firebaseConfig);
-        db = getDatabase(app);
-        auth = getAuth(app);
-
-        // ★★★ Firebase 狀態監聽 ★★★
-        onAuthStateChanged(auth, u => {
-            // 獲取遮罩元素
-            const overlay = document.getElementById('login-overlay');
-
-            if (u) {
-                // --- 情況 A：已登入 (User Found) ---
-                myPlayerId = u.uid;
-                const disp = document.getElementById('player-id-display');
-                if(disp) disp.innerText = u.uid.substring(0,6).toUpperCase();
-
-                // 檢查 Database 確認真名
-                const userRef = ref(db, 'users/' + u.uid);
-                get(userRef).then((snapshot) => {
-                    if (snapshot.exists() && snapshot.val().displayName) {
-                        // 1. 舊人 (有記錄)：直接入 Game
-                        const realName = snapshot.val().displayName;
-                        localStorage.setItem('battleship_username', realName);
-                        updateHUD(realName);
-                        
-                        switchHudPanel('user-profile-panel');
-                        showMainMenu(); 
-                        
-                        // ★ 確保遮罩消失 (以防萬一)
-                        if(overlay) overlay.style.display = 'none';
-
-                    } else {
-                        // 2. 新人 (無名)：分 Guest 定 Google
-                        
-                        if (u.isAnonymous) {
-                            // ★★★ Guest 自動派名邏輯 (修正版) ★★★
-                            const autoName = window.generateGuestId(); 
-                            
-                            // 這裡現在有 'update' 了，應該可以順利執行！
-                            update(ref(db, 'users/' + u.uid), { 
-                                displayName: autoName,
-                                lastLogin: Date.now()
-                            }).then(() => {
-                                localStorage.setItem('battleship_username', autoName);
-                                updateHUD(autoName);
-                                
-                                // 直接入 Main Menu
-                                switchHudPanel('user-profile-panel');
-                                showMainMenu();
-                                
-                                playSound('deploy-sfx'); 
-                                console.log(`GUEST AUTO-LOGIN: ${autoName}`);
-
-                                // ★★★ 關鍵修正 2：Guest 登入成功後，手動關閉遮罩 ★★★
-                                if(overlay) overlay.style.display = 'none';
-
-                            }).catch(e => {
-                                console.error("Guest Update Error:", e);
-                                alert("Guest Error: " + e.message);
-                                if(overlay) overlay.style.display = 'none'; // 出錯都要閂遮罩
-                            });
-
-                        } else {
-                            // ★★★ Google 新人：依然要彈窗改名 ★★★
-                            switchHudPanel('user-profile-panel'); 
-                            
-                            // 先閂咗個 Authenticating 遮罩，因為要彈另一個註冊窗
-                            if(overlay) overlay.style.display = 'none';
-
-                            const regModal = document.getElementById('registration-modal');
-                            if(regModal) {
-                                regModal.style.display = 'flex';
-                                playSound('new-commander-sfx'); 
-                            }
-                        }
-                    }
-                });
-
-            } else {
-                // --- 情況 B：未登入 (No User) ---
-                if (cachedName) localStorage.removeItem('battleship_username');
-                
-                switchHudPanel('login-panel');
-                
-                // ★★★ 關鍵修正 3：登出時，強制關閉 Authenticating 遮罩 ★★★
-                if(overlay) overlay.style.display = 'none';
-            }
-        });
-
-        // 連線狀態監測 (保持之前的修正)
-       // 連線狀態監測 (已修復：加入入 Game 緩衝期)
-        const connectedRef = ref(db, ".info/connected");
-        onValue(connectedRef, (snap) => {
-            const el = document.getElementById('connection-status');
-            if (!el) return; 
-            
-            // 預設顯示狀態
-            el.style.display = 'block';
-            
-            if (snap.val() === true) {
-                // --- 綠燈：連線正常 ---
-                el.style.background = "#22c55e"; 
-                el.style.boxShadow = "0 0 5px #22c55e";
-            } else {
-                // --- 紅燈：斷線 ---
-                
-                // ★★★ 關鍵修正：檢查有無免死金牌 ★★★
-                // 1. 如果仲係 Tap To Start 畫面 -> 唔報警
-                const splash = document.getElementById('splash-screen');
-                const isSplashVisible = (splash && splash.style.display !== 'none');
-                
-                // 2. 如果啱啱入 Game (有免死金牌) -> 唔報警
-                if (isSplashVisible || window.ignoreConnectionAlert) {
-                    // 雖然斷線，但暫時扮沒事，費事嚇親玩家
-                    return; 
-                }
-
-                // 真係斷線先至報警
-                el.style.background = "#ef4444"; 
-                el.style.boxShadow = "0 0 5px #ef4444";
-                
-                // 彈出警告 + 播聲
-                if (typeof showNotification === 'function') {
-                    showNotification("CONNECTION LOST!", "error"); 
-                }
-            }
-        });
-        
-        // 遊戲初始化
-        createGrid('player-grid');
-        createGrid('enemy-grid');
-        placeEnemyShips(); 
-        renderSidebar();
-
-        // 音效監聽
-        const roomInput = document.getElementById('room-id-input');
-        if (roomInput) {
-            roomInput.addEventListener('input', (e) => {
-                if (e.inputType === 'deleteContentBackward' || e.inputType === 'deleteContentForward') {
-                    playSound('delete-sfx');
-                } else {
-                    playSound('enter-sfx'); // 改回用 enter-sfx
-                }
-            });
-        }
-
-    }, 500);
-});
     
 // 10. BGM 播放
 function playBgm() {
@@ -6448,6 +6358,7 @@ function speakText(text, element = null) {
 </div>
 </body>
 </html>
+
 
 
 
