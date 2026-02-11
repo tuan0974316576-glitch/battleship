@@ -5982,20 +5982,37 @@ function stopMatrixEffect() {
 window.onload = function() {
     console.log("System Initializing...");
 
-    // 1. 自動排序數據庫 (L1, L2... A-Z)
+    // 1. 初始化資料庫 (如果有)
     if(typeof sortDatabase === 'function') {
         sortDatabase();
     }
 
-    // 2. 生成背景特效 (十字星)
-    // 這裡確保了 body 已經存在，星星一定出到黎
+    // 2. 啟動背景星星特效
     if(typeof createTwinklingStars === 'function') {
         createTwinklingStars();
     }
 
-    // 3. 進入主選單
-    if(typeof showMainMenu === 'function') {
-        showMainMenu();
+    // 3. 確保預設狀態是「登入畫面」
+    // ★ 關鍵修正：原本這裡錯誤地直接呼叫了 showMainMenu()，導致登入畫面被跳過
+    // 現在我們強制先顯示 Login Panel，讓 Firebase 去決定下一步
+    switchHudPanel('login-panel');
+
+    // 確保主選單 Carousel 是隱藏的
+    const carousel = document.getElementById('main-menu-carousel');
+    if(carousel) {
+        carousel.style.display = 'none';
+    }
+
+    // 4. 讀取之前的音量設定
+    if(localStorage.getItem('setting_bgm')) {
+        gameVolume.bgm = parseFloat(localStorage.getItem('setting_bgm'));
+        gameVolume.sfx = parseFloat(localStorage.getItem('setting_sfx'));
+        gameVolume.voice = parseFloat(localStorage.getItem('setting_voice'));
+        
+        // 更新滑桿顯示 (如果滑桿存在)
+        if(document.getElementById('vol-bgm')) document.getElementById('vol-bgm').value = gameVolume.bgm;
+        if(document.getElementById('vol-sfx')) document.getElementById('vol-sfx').value = gameVolume.sfx;
+        if(document.getElementById('vol-voice')) document.getElementById('vol-voice').value = gameVolume.voice;
     }
 };
 function handleSkillBack() {
