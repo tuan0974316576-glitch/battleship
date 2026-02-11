@@ -23,7 +23,8 @@
     
     <script type="module">
       import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-      import { getDatabase, ref, set, onValue, update, push, child, get, onDisconnect, off } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+      import { Keyboard } from '@capacitor/keyboard';
+    import { getDatabase, ref, set, onValue, update, push, child, get, onDisconnect, off } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
       import { getAuth, signInAnonymously, onAuthStateChanged, GoogleAuthProvider, OAuthProvider, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";;
       
       window.firebaseModules = { 
@@ -5368,6 +5369,18 @@ function startExperience() {
     setTimeout(() => {
         window.ignoreConnectionAlert = false;
     }, 3000);
+    if (window.Capacitor) {
+        try {
+             // 1. 隱藏鍵盤上那條白色的 "Done" 列 (Accessory Bar)
+            const { Keyboard } = window.Capacitor.Plugins; // 獲取插件
+            if(Keyboard) {
+                Keyboard.setAccessoryBarVisible({ isVisible: false });
+                Keyboard.setScroll({ isDisabled: true }); // 防止畫面亂跳
+            }
+        } catch (e) {
+            console.log("Keyboard config error:", e);
+        }
+    }
     // 1. 播放音樂
     playBgm();
     
@@ -6416,6 +6429,7 @@ function speakText(text, element = null) {
 </div>
 </body>
 </html>
+
 
 
 
