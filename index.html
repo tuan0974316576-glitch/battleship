@@ -5429,7 +5429,7 @@ function showMainMenu() {
 
 // --- 新增：點擊開始遊戲 ---
 // --- 新增：點擊開始遊戲 (修正版：顯示大箱) ---
-function startExperience() {
+window.startExperience = function() {
     window.ignoreConnectionAlert = true;
     setTimeout(() => {
         window.ignoreConnectionAlert = false;
@@ -5510,6 +5510,7 @@ window.addEventListener('load', () => {
         console.log("🚀 FAST LOGIN: Found cached user -> " + cachedName);
         updateHUD(cachedName);
     }
+    });
     
 // 10. BGM 播放
 function playBgm() {
@@ -6358,6 +6359,7 @@ function speakText(text, element = null) {
 </div>
 </body>
 </html>
+
 
 
 
