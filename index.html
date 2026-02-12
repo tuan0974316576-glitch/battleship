@@ -3786,9 +3786,15 @@ function openLaunchModal(index) {
 
     // 4. ★ 關鍵：從手牌中移除這個字 (Splice)
     // 這樣下一回合就不會再抽中它，直到成副牌抽完
-    sessionDeck.splice(randIndex, 1);
-    
-    console.log(`Word drawn: ${currentVocab.en}. Remaining in deck: ${sessionDeck.length}`);
+sessionDeck.splice(randIndex, 1);
+
+    if (currentVocab.sents && currentVocab.sents.length > 0) {
+        const randSentIndex = Math.floor(Math.random() * currentVocab.sents.length);
+        currentVocab.sent = currentVocab.sents[randSentIndex];
+    } else if (!currentVocab.sent && currentVocab.en) {
+        // 如果連一句例句都無，就用個單字本身頂住先
+        currentVocab.sent = currentVocab.en;
+    }
     
     // 獲取介面元素
     const modal = document.getElementById('launch-modal');
@@ -6445,6 +6451,7 @@ function speakText(text, element = null) {
 </div>
 </body>
 </html>
+
 
 
 
