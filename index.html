@@ -3008,7 +3008,9 @@ const DAMAGED_IMAGES = [
    
 
     // 全局變數：當前使用的生字表
+    
     let activeVocabList = []; 
+    let sessionDeck = [];
     let selectedLevel = 'L1'; // 預設
     let tempGameMode = 'AI';  // 暫存模式選擇
 
@@ -3107,7 +3109,8 @@ function closeLevelScreen() {
 function selectLevel(level) {
     selectedLevel = level;
     activeVocabList = VOCAB_DB[level]; 
-    
+    sessionDeck = [...activeVocabList];
+    console.log(`Level ${level} selected. Deck size: ${sessionDeck.length}`);
     playSound('deploy-sfx');
     
     // ★★★ 關鍵修正：直接隱藏 Level 畫面，千萬不要呼叫 closeLevelScreen() ★★★
@@ -3763,12 +3766,29 @@ function openLaunchModal(index) {
         return;
     }
 
-    // 準備題目
-    if (activeVocabList.length === 0) {
-        alert("Vocab List Empty!");
-        return;
+// 準備題目 (抽卡機制)
+    
+    // 1. 如果「手牌」抽乾了，重新由原本的 List 補滿 (洗牌)
+    if (sessionDeck.length === 0) {
+        console.log("Deck empty! Reshuffling...");
+        if (activeVocabList.length === 0) {
+            alert("Error: Database is empty!");
+            return;
+        }
+        sessionDeck = [...activeVocabList]; // 重新複製
     }
-    currentVocab = activeVocabList[Math.floor(Math.random() * activeVocabList.length)];
+
+    // 2. 從剩餘的手牌中，隨機抽出一個 index
+    const randIndex = Math.floor(Math.random() * sessionDeck.length);
+    
+    // 3. 設定當前題目
+    currentVocab = sessionDeck[randIndex];
+
+    // 4. ★ 關鍵：從手牌中移除這個字 (Splice)
+    // 這樣下一回合就不會再抽中它，直到成副牌抽完
+    sessionDeck.splice(randIndex, 1);
+    
+    console.log(`Word drawn: ${currentVocab.en}. Remaining in deck: ${sessionDeck.length}`);
     
     // 獲取介面元素
     const modal = document.getElementById('launch-modal');
@@ -6425,6 +6445,7 @@ function speakText(text, element = null) {
 </div>
 </body>
 </html>
+
 
 
 
