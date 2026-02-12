@@ -2850,7 +2850,8 @@ body {
         </div>
     </div>
 
-    <div id="warning-overlay"></div>
+<div id="warning-overlay"></div>
+
 <div id="end-screen" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 300; background: rgba(0,0,0,0.95); flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(10px);">
     
     <h1 id="end-title" style="font-family: 'Black Ops One'; font-size: 60px; margin-bottom: 10px; text-shadow: 0 0 30px currentColor;">VICTORY</h1>
@@ -2859,18 +2860,31 @@ body {
     <div id="review-container" style="width: 90%; max-width: 600px; background: rgba(15, 23, 42, 0.8); border: 1px solid #334155; border-radius: 10px; padding: 15px; margin-bottom: 20px; display: flex; flex-direction: column;">
         <div style="font-family: 'Orbitron'; color: #0ea5e9; font-size: 16px; margin-bottom: 10px; text-align: center; letter-spacing: 2px;">>> MISSION DEBRIEF <<</div>
         
-<div style="display: grid; grid-template-columns: 0.5fr 0.8fr 1.2fr 1.5fr; border-bottom: 1px solid #475569; padding-bottom: 5px; margin-bottom: 10px; color: #94a3b8; font-size: 12px; font-weight: bold;">
-    <span>TURN</span>
-    <span>MEANING</span> 
-    <span>YOUR INPUT</span>
-    <span>CORRECT CODE</span>
-</div>
+        <div style="display: grid; grid-template-columns: 0.5fr 0.8fr 1.2fr 1.5fr; border-bottom: 1px solid #475569; padding-bottom: 5px; margin-bottom: 10px; color: #94a3b8; font-size: 12px; font-weight: bold;">
+            <span>TURN</span>
+            <span>MEANING</span> 
+            <span>YOUR INPUT</span>
+            <span>CORRECT CODE</span>
+        </div>
 
         <div id="review-list" style="overflow-y: auto; max-height: 300px; padding-right: 5px;">
             </div>
     </div>
 
+    <button id="view-map-btn" class="cyber-button" onclick="toggleMapReview()" style="margin-bottom: 15px; background: #475569; border-color: #94a3b8; width: 220px; color: #fff; padding: 10px; font-family: 'Orbitron', sans-serif; cursor: pointer; border-radius: 5px; border-width: 1px; border-style: solid;">
+        VIEW BATTLEFIELD
+    </button>
+
     <button class="start-btn-large" onclick="playSound('deploy-sfx'); resetGame()">RETURN TO BASE</button>
+</div>
+
+<div id="map-review-controls" style="display: none; position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); z-index: 10002; text-align: center;">
+    <div style="background: rgba(15, 23, 42, 0.9); padding: 10px 20px; border: 1px solid #0ea5e9; border-radius: 5px; box-shadow: 0 0 15px rgba(14, 165, 233, 0.5); backdrop-filter: blur(5px);">
+        <div style="color: #0ea5e9; font-family: 'Orbitron'; font-size: 12px; margin-bottom: 8px; letter-spacing: 2px;">TACTICAL REVIEW</div>
+        <button class="cyber-button" onclick="returnToDebrief()" style="padding: 8px 20px; font-size: 14px; background: #0ea5e9; border: none; color: #000; font-weight: bold; cursor: pointer; border-radius: 3px;">
+            BACK TO DEBRIEF
+        </button>
+    </div>
 </div>
 <div id="confirm-modal" class="tech-modal-overlay">
         <div class="tech-modal-box">
@@ -6546,6 +6560,7 @@ function revealEnemyFleet() {
 </div>
 </body>
 </html>
+
 
 
 
