@@ -2540,51 +2540,6 @@ body {
     accent-color: var(--primary);
     cursor: pointer;
 }
-/* =========================================
-   ★★★ 戰場回顧專用 CSS (簡化版) ★★★
-   ========================================= */
-
-/* 1. 統一的「打過」標記 (X) */
-/* 無論係 Hit 定 Miss，只要有呢個 class 就畫 X */
-.cell.review-marker::after {
-    content: '✖'; 
-    position: absolute;
-    top: 50%; left: 50%;
-    transform: translate(-50%, -50%);
-    
-    color: #94a3b8; /* 灰色 X，你可以改做紅色 #ef4444 */
-    font-size: 24px;
-    font-weight: bold;
-    text-shadow: 0 0 2px #000;
-    
-    z-index: 100; /* ★ 最重要：一定要高過船嘅圖層 */
-    opacity: 1;
-}
-
-/* 2. 船身現形 (基本設定) */
-.cell.enemy-revealed {
-    /* 這裡設定船的基本背景，如果你的 grid 已經有 data-bg 設定圖片，這裡可以不設背景 */
-    /* 或者用半透明白底突顯 */
-    background-color: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-}
-
-/* 3. 沉船樣式 (全軍覆沒) */
-.cell.ship-sunk-visual {
-    /* 你可以加紅色濾鏡，或者換 damaged 背景圖 */
-    filter: sepia(1) hue-rotate(-50deg) saturate(3); /* 變紅 */
-    opacity: 0.8;
-}
-
-/* 4. 活船樣式 (未死曬) */
-.cell.ship-alive-visual {
-    /* 保持原圖樣子，或者加亮 */
-    filter: brightness(1.2);
-    opacity: 1;
-    /* 如果原本格仔係透明，這裡可能要強制加番船嘅背景圖 (視乎你原本點 render 船) */
-    /* 簡單起見，加個邊框區分 */
-    border: 2px solid #0ea5e9 !important; /* 藍框代表活著 */
-}
     </style>
 
 </head>
@@ -2850,8 +2805,7 @@ body {
         </div>
     </div>
 
-<div id="warning-overlay"></div>
-
+    <div id="warning-overlay"></div>
 <div id="end-screen" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 300; background: rgba(0,0,0,0.95); flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(10px);">
     
     <h1 id="end-title" style="font-family: 'Black Ops One'; font-size: 60px; margin-bottom: 10px; text-shadow: 0 0 30px currentColor;">VICTORY</h1>
@@ -2860,31 +2814,18 @@ body {
     <div id="review-container" style="width: 90%; max-width: 600px; background: rgba(15, 23, 42, 0.8); border: 1px solid #334155; border-radius: 10px; padding: 15px; margin-bottom: 20px; display: flex; flex-direction: column;">
         <div style="font-family: 'Orbitron'; color: #0ea5e9; font-size: 16px; margin-bottom: 10px; text-align: center; letter-spacing: 2px;">>> MISSION DEBRIEF <<</div>
         
-        <div style="display: grid; grid-template-columns: 0.5fr 0.8fr 1.2fr 1.5fr; border-bottom: 1px solid #475569; padding-bottom: 5px; margin-bottom: 10px; color: #94a3b8; font-size: 12px; font-weight: bold;">
-            <span>TURN</span>
-            <span>MEANING</span> 
-            <span>YOUR INPUT</span>
-            <span>CORRECT CODE</span>
-        </div>
+<div style="display: grid; grid-template-columns: 0.5fr 0.8fr 1.2fr 1.5fr; border-bottom: 1px solid #475569; padding-bottom: 5px; margin-bottom: 10px; color: #94a3b8; font-size: 12px; font-weight: bold;">
+    <span>TURN</span>
+    <span>MEANING</span> 
+    <span>YOUR INPUT</span>
+    <span>CORRECT CODE</span>
+</div>
 
         <div id="review-list" style="overflow-y: auto; max-height: 300px; padding-right: 5px;">
             </div>
     </div>
 
-    <button id="view-map-btn" class="cyber-button" onclick="toggleMapReview()" style="margin-bottom: 15px; background: #475569; border-color: #94a3b8; width: 220px; color: #fff; padding: 10px; font-family: 'Orbitron', sans-serif; cursor: pointer; border-radius: 5px; border-width: 1px; border-style: solid;">
-        VIEW BATTLEFIELD
-    </button>
-
     <button class="start-btn-large" onclick="playSound('deploy-sfx'); resetGame()">RETURN TO BASE</button>
-</div>
-
-<div id="map-review-controls" style="display: none; position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); z-index: 10002; text-align: center;">
-    <div style="background: rgba(15, 23, 42, 0.9); padding: 10px 20px; border: 1px solid #0ea5e9; border-radius: 5px; box-shadow: 0 0 15px rgba(14, 165, 233, 0.5); backdrop-filter: blur(5px);">
-        <div style="color: #0ea5e9; font-family: 'Orbitron'; font-size: 12px; margin-bottom: 8px; letter-spacing: 2px;">TACTICAL REVIEW</div>
-        <button class="cyber-button" onclick="returnToDebrief()" style="padding: 8px 20px; font-size: 14px; background: #0ea5e9; border: none; color: #000; font-weight: bold; cursor: pointer; border-radius: 3px;">
-            BACK TO DEBRIEF
-        </button>
-    </div>
 </div>
 <div id="confirm-modal" class="tech-modal-overlay">
         <div class="tech-modal-box">
@@ -6392,82 +6333,6 @@ function speakText(text, element = null) {
     // 5. 正式發聲
     window.speechSynthesis.speak(utterance);
 }
-
-// =========================================
-// ★★★ 戰場回顧功能 (Review Mode Logic) ★★★
-// =========================================
-
-// 1. 切換去睇地圖
-function toggleMapReview() {
-    document.getElementById('end-screen').style.display = 'none';
-    document.getElementById('map-review-controls').style.display = 'block';
-    document.body.classList.add('review-mode');
-    
-    // 執行揭曉
-    revealEnemyFleet();
-}
-
-// 2. 返回戰後報告
-function returnToDebrief() {
-    document.getElementById('end-screen').style.display = 'flex'; 
-    document.getElementById('map-review-controls').style.display = 'none';
-    document.body.classList.remove('review-mode');
-}
-
-// 3. 揭開所有敵船位置 (最新暴力版：分生死、加 X)
-function revealEnemyFleet() {
-    const enemyGrid = document.getElementById('enemy-grid');
-    if (!enemyGrid) return;
-
-    // A. 處理「打過嘅位」 -> 全部加 X (無論中定唔中)
-    const allCells = enemyGrid.querySelectorAll('.cell, .grid-cell');
-    allCells.forEach(cell => {
-        if (cell.classList.contains('hit') || cell.classList.contains('miss')) {
-            cell.classList.add('review-marker'); // 呢個 class 負責畫 X
-        }
-    });
-
-    // B. 處理「船」 -> 顯示圖片 (分沈船同活船)
-    // 必須要有 enemyShips 陣列先做到
-    if (typeof enemyShips !== 'undefined' && Array.isArray(enemyShips)) {
-        enemyShips.forEach(ship => {
-            // 檢查呢隻船死透未？(全 hit = 死)
-            let isSunk = true;
-            ship.location.forEach(loc => {
-                // 注意：請確保你嘅 ID 格式係岩嘅，例如 enemy-cell-0-0
-                // 如果你用 object {x,y}，就要改做 loc.x, loc.y
-                let cellId = `enemy-cell-${loc[0]}-${loc[1]}`; 
-                let cell = document.getElementById(cellId);
-                if (cell && !cell.classList.contains('hit')) {
-                    isSunk = false; // 只要有一格未紅，就未死曬
-                }
-            });
-
-            // 根據生死，幫整條船嘅格仔加 class
-            ship.location.forEach(loc => {
-                let cellId = `enemy-cell-${loc[0]}-${loc[1]}`;
-                let cell = document.getElementById(cellId);
-                
-                if (cell) {
-                    // 1. 基本現形
-                    cell.classList.add('enemy-revealed');
-                    
-                    // 2. 分生死樣式
-                    if (isSunk) {
-                        cell.classList.add('ship-sunk-visual'); // 顯示爛圖/紅色
-                    } else {
-                        cell.classList.add('ship-alive-visual'); // 顯示原圖/藍框
-                    }
-                }
-            });
-        });
-    } else {
-        // 後備方案：如果無 enemyShips 陣列，就用舊方法齋現形
-        const hiddenShips = enemyGrid.querySelectorAll('.occupied:not(.hit)');
-        hiddenShips.forEach(cell => cell.classList.add('enemy-revealed'));
-    }
-}
-    
 </script>
 <div id="registration-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 9999; flex-direction: column; align-items: center; justify-content: center;">
     
@@ -6560,38 +6425,3 @@ function revealEnemyFleet() {
 </div>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
