@@ -296,6 +296,19 @@ body {
     }
 }
 
+/* 1. 定義綠色呼吸動畫 (VS AI 專用) */
+        @keyframes pulse-green {
+            0% {
+                box-shadow: 0 0 10px rgba(34, 197, 94, 0.6);
+                border-color: rgba(34, 197, 94, 0.8);
+            }
+            100% {
+                /* 最高只去到 20px，唔會太散 */
+                box-shadow: 0 0 20px rgba(34, 197, 94, 1); 
+                border-color: #4ade80;
+            }
+        }
+
         .start-btn-large {
             padding: 15px 40px;
             font-size: 24px;
@@ -305,15 +318,18 @@ body {
             font-family: 'Black Ops One';
             cursor: pointer;
             transition: all 0.3s;
-            box-shadow: 0 0 15px var(--success);
             text-transform: uppercase;
+            
+            /* ★ 新增：綠色呼吸燈 (2秒來回) ★ */
+            animation: pulse-green 2s infinite alternate ease-in-out;
         }
 
         .start-btn-large:hover {
             background: var(--success);
             color: #000;
             transform: scale(1.1);
-            box-shadow: 0 0 30px var(--success);
+            box-shadow: 0 0 30px var(--success); /* Hover 時可以爆光少少 */
+            animation: none; /* Hover 時暫停呼吸，保持最光 */
         }
 
         /* --- 遊戲介面 (Game UI) --- */
@@ -1083,32 +1099,35 @@ body {
         animation: pvpReadyPulse 1.5s infinite alternate;
     }
 
-    @keyframes pvpReadyPulse {
-        from {
-            box-shadow: 0 0 10px var(--warning);
-            text-shadow: 0 0 5px var(--warning);
+/* 2. 定義橙色呼吸動畫 (VS PLAYER 專用) */
+    @keyframes pulse-orange {
+        0% {
+            box-shadow: 0 0 10px rgba(245, 158, 11, 0.6);
+            border-color: rgba(245, 158, 11, 0.8);
         }
-        to {
-            box-shadow: 0 0 25px var(--warning), 0 0 10px var(--warning) inset;
-            text-shadow: 0 0 15px var(--warning);
+        100% {
+            box-shadow: 0 0 20px rgba(245, 158, 11, 1);
+            border-color: #fbbf24;
         }
     }
-        /* --- VS PLAYER 按鈕專屬樣式 --- */
+
+    /* --- VS PLAYER 按鈕專屬樣式 --- */
     .btn-pvp {
         border-color: var(--warning) !important;
         color: var(--warning) !important;
-        box-shadow: 0 0 15px var(--warning);
-        text-shadow: 0 0 5px var(--warning);
-        background: rgba(245, 158, 11, 0.1); /* 預設淡淡的橙色背景 */
+        background: rgba(245, 158, 11, 0.1);
+        
+        /* ★ 修正：改用統一的橙色呼吸動畫 ★ */
+        animation: pulse-orange 2s infinite alternate ease-in-out;
     }
 
-    /* ★ 修正重點：Hover 時中間變橙色，字變白色 ★ */
     .btn-pvp:hover {
         background: var(--warning) !important;
-        color: #fff !important; /* 文字變白色 */
+        color: #fff !important;
         transform: scale(1.1);
         box-shadow: 0 0 30px var(--warning);
-        text-shadow: none; /* 實色背景下不需要文字發光 */
+        text-shadow: none;
+        animation: none;
     }
 
     /* 保持你的呼吸燈動畫 */
@@ -1273,48 +1292,35 @@ body {
    ★★★ 最終修正版：紫色 Code List 按鈕 (跟足橙色 PvP 風格) ★★★
    ========================================= */
 
-/* 1. 紫色呼吸動畫：參考 PvP 邏輯，用 alternate 來回變色 */
+/* 3. 定義紫色呼吸動畫 (CODE LIST 專用) */
 @keyframes pulse-purple {
     0% {
-        /* 最暗嗰陣：保持 60% 光度，唔會消失 */
-        box-shadow: 0 0 15px rgba(217, 70, 239, 0.6); 
-        border-color: #d946ef; 
+        box-shadow: 0 0 10px rgba(217, 70, 239, 0.6);
+        border-color: rgba(217, 70, 239, 0.8);
     }
     100% {
-        /* 最光嗰陣：爆光 */
-        box-shadow: 0 0 30px rgba(217, 70, 239, 1); 
-        border-color: #f0abfc;
+        box-shadow: 0 0 20px rgba(217, 70, 239, 1);
+        border-color: #e879f9;
     }
 }
 
-/* 2. 按鈕本體設定 */
+/* --- CODE LIST 按鈕樣式 --- */
 .btn-code-list {
     border-color: #d946ef !important;
     color: #e879f9 !important;
-    
-    /* ★ 重點：加番 10% 紫色做底，唔好全透明，咁就唔會覺得「無咗舊嘢」 ★ */
     background: rgba(217, 70, 239, 0.1); 
     
-    /* 預設常駐發光 */
-    box-shadow: 0 0 15px #d946ef;
-    text-shadow: 0 0 5px #d946ef;
-    
-    transition: all 0.3s ease;
-    
-    /* 動畫：1.5秒 來回呼吸 (跟橙色掣一樣節奏) */
-    animation: pulse-purple 1.5s infinite alternate;
+    /* ★ 修正：改用統一的紫色呼吸動畫 ★ */
+    animation: pulse-purple 2s infinite alternate ease-in-out;
 }
 
-/* 3. Hover 設定 (滑鼠指埋去) */
 .btn-code-list:hover {
-    background: #d946ef !important; /* 變實心紫 */
-    color: #ffffff !important;      /* 變白字 */
-    
-    transform: scale(1.1);          /* ★ 跟橙色掣一樣：放大 1.1 倍 */
-    box-shadow: 0 0 40px #d946ef;   /* 超強紫光 */
-    text-shadow: none;              /* 實心底唔使文字發光 */
-    
-    animation: none; /* Hover 時暫停呼吸，保持最光狀態 */
+    background: #d946ef !important; 
+    color: #ffffff !important;      
+    transform: scale(1.1);          
+    box-shadow: 0 0 30px #d946ef;   
+    text-shadow: none;              
+    animation: none; 
 }
 /* --- AI 語音讀取中的特效 --- */
 @keyframes tech-speak-pulse {
@@ -6425,3 +6431,4 @@ function speakText(text, element = null) {
 </div>
 </body>
 </html>
+
