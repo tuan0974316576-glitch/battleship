@@ -3141,33 +3141,29 @@ function startEnemyTurn() {
     let enemyDamage = 0; // 敵人被打中幾多格 (我贏的進度)
     let unsubscribeRoom = null; // 用來儲存 Firebase 監聽器
 
-    // --- 5. 流程控制 ---
 function selectMode(mode) {
     tempGameMode = mode; 
     playSound('deploy-sfx');
     
+    // 1. 隱藏主選單介面
+    document.getElementById('main-menu-carousel').style.display = 'none';
+    document.getElementById('game-mode-selection').style.display = 'none';
+
     if (mode === 'PVP') {
-        // ★ 修復問題 2：隱藏整個標題畫面 (包括 Title 同 User Profile)
-        // 這樣就不會擋住 Lobby 的按鈕
+        // --- PVP 模式 ---
+        // 隱藏整個標題畫面
         document.getElementById('start-screen').style.display = 'none';
         
-        // ★ 修復問題 1：PVP 直接去 Lobby (跳過 Skill 選擇)
+        // 直接去 Lobby
         document.getElementById('lobby-screen').style.display = 'flex';
         
-        // 如果有刷新房間列表的邏輯，可以在這裡呼叫 (例如 refreshRoomList())
     } else {
-        // --- AI 模式 (保持原有流程：Menu -> Skill) ---
+        // --- AI 模式 ---
+        // ★★★ 修正重點：先去選 Level (level-screen)，唔好去 Skill 住 ★★★
+        document.getElementById('level-screen').style.display = 'flex';
         
-        // 只隱藏 Menu 按鈕，保留標題
-        document.getElementById('main-menu-carousel').style.display = 'none';
-        document.getElementById('game-mode-selection').style.display = 'none';
-        
-        // 顯示 Skill 選擇
-        document.getElementById('skill-screen').style.display = 'flex';
-        
-        // 確保 AI 模式見到 Speaking 按鈕
-        const speakBtn = document.getElementById('btn-skill-speaking');
-        if (speakBtn) speakBtn.style.display = 'flex';
+        // 確保 Skill 選擇頁係隱藏嘅
+        document.getElementById('skill-screen').style.display = 'none';
     }
 }
     
@@ -3191,62 +3187,39 @@ function closeLevelScreen() {
         document.getElementById('level-screen').style.display = 'flex';
     }
 
-// --- 修正版：選擇等級 (Level) ---
-// 這裡只負責選 Level 和初始化，載入錯字的動作會留到選 Skill 時才做
+// --- 修正版：選完 Level 後 -> 去選 Skill ---
 async function selectLevel(level) {
     console.log(`Selecting Level ${level}...`);
     selectedLevel = level;
     
-    // 1. 準備基礎資料
+    // 1. ★ 初始化生字表 (這一步最重要，之前就係缺了這步！) ★
     activeVocabList = VOCAB_DB[level]; 
     if (!activeVocabList) {
         console.error("No vocab found for level: " + level);
         return;
     }
 
-    // 2. 初始化兩個牌堆
-    sessionDeck = [...activeVocabList]; // 普通牌 (亂抽用)
-    priorityDeck = [];                  // 優先牌 (錯字用，會排頭位)
-
-    // ★ 關鍵改動：這裡【不要】載入錯字！
-    // 因為我們還不知道玩家會選什麼模式 (Reading/Listening)
-    // 錯字載入會推遲到 startGameWithMode() 或者 AI 模式啟動時才做
+    // 2. 初始化牌堆
+    sessionDeck = [...activeVocabList]; 
+    priorityDeck = []; 
 
     console.log(`Level ${level} ready. Waiting for Mode selection...`);
-
-    // 3. 播放音效
     playSound('deploy-sfx');
     
-    // 4. 處理 UI
+    // 3. ★ 隱藏 Level 畫面，轉去顯示 Skill 畫面 ★
     document.getElementById('level-screen').style.display = 'none';
+    document.getElementById('skill-screen').style.display = 'flex';
 
+    // 4. 根據模式調整按鈕顯示
+    const speakBtn = document.getElementById('btn-skill-speaking');
+    
     if (tempGameMode === 'AI') {
-        // --- AI 模式：Level -> Start Game ---
         gameMode = 'AI';
-        
-        // 確保 Skill Screen 也是隱藏的
-        document.getElementById('skill-screen').style.display = 'none';
-        
-        // ★ AI 模式默認設定 (這裡假設 AI 是 READING 模式)
-        // 如果你的 AI 模式也有 Listening，這裡邏輯要再調整
-        currentPracticeMode = 'READING'; 
-        
-        // ★ 立即載入 READING 模式的錯字
-        if(window.injectMissedWordsToDeck) {
-             console.log("AI Mode: Loading READING missed words...");
-             await window.injectMissedWordsToDeck(level, 'READING');
-        }
-        
-        // 直接進入遊戲介面
-        enterGameUI();
+        // AI 模式：顯示 Speaking 按鈕
+        if (speakBtn) speakBtn.style.display = 'flex';
     } else {
-        // --- PVP 模式：Level -> Skill Selection ---
-        // 顯示 Skill 選擇畫面，等玩家揀 Reading 定 Listening
-        document.getElementById('skill-screen').style.display = 'flex';
-        
-        // PVP 暫時隱藏 Speaking Mode (如需要)
-        const speakBtn = document.getElementById('btn-skill-speaking');
-        if (speakBtn) speakBtn.style.display = 'none';
+        // PVP 模式：暫時隱藏 Speaking
+        if (speakBtn) speakBtn.style.display = 'none'; 
     }
 }
 // --- 新增：專門俾 PVP Skill 按鈕呼叫的函數 ---
@@ -6633,6 +6606,7 @@ function speakText(text, element = null) {
 </div>
 </body>
 </html>
+
 
 
 
