@@ -5665,7 +5665,43 @@ function createTwinklingStars() {
         container.appendChild(star);
     }
 }
+    // ★★★ 新增：智能格式化工具 (幫 Input 補回空格同 Hyphen) ★★★
+function formatDisplayInput(userRaw, targetCorrect) {
+    // 防錯檢查
+    if (!userRaw || userRaw === "(TIMEOUT)") return userRaw;
+    if (!targetCorrect) return userRaw;
+
+    let result = "";
+    let rawIndex = 0;
     
+    // 遍歷正確答案的每一個字 (作為樣板)
+    for (let i = 0; i < targetCorrect.length; i++) {
+        const targetChar = targetCorrect[i];
+        
+        // 如果樣板是「符號」(空格, -, ')，直接加落去結果度
+        if (/[^a-zA-Z0-9]/.test(targetChar)) {
+            result += targetChar;
+            
+            // ★ 關鍵：如果玩家自己本身都有打個符號，就要消耗掉 (避免重複變 living  room)
+            if (rawIndex < userRaw.length && userRaw[rawIndex] === targetChar) {
+                rawIndex++;
+            }
+        } else {
+            // 如果樣板是「字母」，就由玩家輸入度拎一個字填落去
+            if (rawIndex < userRaw.length) {
+                result += userRaw[rawIndex];
+                rawIndex++;
+            }
+        }
+    }
+    
+    // 如果玩家打多咗字 (例如打錯)，將剩低嘅字加番係尾
+    if (rawIndex < userRaw.length) {
+        result += userRaw.substring(rawIndex);
+    }
+    
+    return result;
+}
 function renderReview() {
     const list = document.getElementById('review-list');
     list.innerHTML = ""; 
@@ -5685,10 +5721,11 @@ function renderReview() {
         }
 
         // ★ 修正 2：強制轉小寫 (除非係 TIMEOUT 字眼) ★
-        let displayUser = log.user;
-        if (displayUser !== "(TIMEOUT)") {
-            displayUser = displayUser.toLowerCase();
-        }
+let displayUser = log.user;
+if (displayUser !== "(TIMEOUT)") {
+    displayUser = displayUser.toLowerCase();
+    displayUser = formatDisplayInput(displayUser, log.correct);
+}
 
         // ★ 修正 1：套用 .review-meaning 樣式 ★
         item.innerHTML = `
@@ -6388,6 +6425,7 @@ function speakText(text, element = null) {
 </div>
 </body>
 </html>
+
 
 
 
