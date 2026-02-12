@@ -84,37 +84,38 @@
         }
     };
 
-    // 3. 注入錯字到牌堆 (開局時)
+// 3. 注入錯字 (更新版：放入優先隊列)
     window.injectMissedWordsToDeck = async function(level) {
         const user = window.auth.currentUser;
         if (!user) return;
 
         try {
+            // 根據 timestamp 排序 (這就解決了你「順序問」的要求)
+            // orderBy('timestamp', 'asc') = 最舊的錯字先問 (或者 desc 最新先問)
             const q = query(
                 collection(firestore, 'users', user.uid, 'missed_words'),
-                where('level', '==', level)
+                where('level', '==', level),
+                orderBy('timestamp', 'asc') 
             );
             const snapshot = await getDocs(q);
 
             if (!snapshot.empty) {
-                let missedCount = 0;
                 snapshot.forEach(docSnap => {
                     const missedWordEn = docSnap.data().word;
-                    // 在 VOCAB_DB 找回完整資料
                     const fullWordData = window.VOCAB_DB[level].find(w => w.en === missedWordEn);
                     
                     if (fullWordData) {
-                        // 加入全域的手牌 sessionDeck
-                        if (window.sessionDeck) {
-                            window.sessionDeck.push(fullWordData);
-                            missedCount++;
+                        // ★ 改動：放入 priorityDeck，而不是 sessionDeck
+                        if (window.priorityDeck) {
+                            window.priorityDeck.push(fullWordData);
                         }
                     }
                 });
-                console.log(`Injecting ${missedCount} missed words into the deck!`);
+                console.log(`Loaded ${priorityDeck.length} missed words into Priority Queue.`);
             }
         } catch (error) {
             console.error("Error loading missed words:", error);
+            // 如果報錯 (例如未建立 Index)，可能需要去 Firebase Console 點一下連結
         }
     };
     // --- 1. 登入狀態監聽 (包含 Guest 自動派名) ---
@@ -3079,6 +3080,7 @@ const DAMAGED_IMAGES = [
     
     let activeVocabList = []; 
     let sessionDeck = [];
+    let priorityDeck = [];
     let selectedLevel = 'L1'; // 預設
     let tempGameMode = 'AI';  // 暫存模式選擇
 
@@ -3174,15 +3176,41 @@ function closeLevelScreen() {
     }
 
 // --- 修正版：選擇等級 (PVP 改為去選 Skill) ---
-function selectLevel(level) {
+// ★ 改動 1: 加入 async 關鍵字，因為要等 Firebase 讀取錯字
+async function selectLevel(level) {
+    console.log(`Selecting Level ${level}...`);
     selectedLevel = level;
+    
+    // 1. 準備基礎資料
     activeVocabList = VOCAB_DB[level]; 
-    sessionDeck = [...activeVocabList];
-    console.log(`Level ${level} selected. Deck size: ${sessionDeck.length}`);
+    if (!activeVocabList) {
+        console.error("No vocab found for level: " + level);
+        return;
+    }
+
+    // 2. 初始化兩個牌堆
+    sessionDeck = [...activeVocabList]; // 普通牌 (亂抽用)
+    priorityDeck = [];                  // 優先牌 (錯字用，會排頭位)
+
+    // 3. ★ 關鍵：從 Firebase 讀取錯字，並放入 priorityDeck ★
+    // 確保只在 window.injectMissedWordsToDeck 存在時才執行
+    if (typeof window.injectMissedWordsToDeck === 'function') {
+        try {
+            // 這一步會去雲端下載錯字，並塞入 priorityDeck
+            // await 會確保下載完先開始遊戲，這樣錯字一定會排在第一位
+            await window.injectMissedWordsToDeck(level);
+        } catch (e) {
+            console.warn("Failed to load missed words:", e);
+        }
+    }
+    
+    console.log(`Level ${level} ready. Normal cards: ${sessionDeck.length}, Priority (Missed): ${priorityDeck.length}`);
+
+    // 4. 播放音效
     playSound('deploy-sfx');
     
+    // 5. 處理 UI (保留你原本的邏輯)
     // ★★★ 關鍵修正：直接隱藏 Level 畫面，千萬不要呼叫 closeLevelScreen() ★★★
-    // closeLevelScreen() 係俾「返回鍵」用的，它會錯誤地帶你返去上一頁 (Skill Screen)
     document.getElementById('level-screen').style.display = 'none';
 
     if (tempGameMode === 'AI') {
@@ -3192,6 +3220,7 @@ function selectLevel(level) {
         // 確保 Skill Screen 也是隱藏的 (雙重保險)
         document.getElementById('skill-screen').style.display = 'none';
         
+        // 直接進入遊戲介面
         enterGameUI();
     } else {
         // --- PVP 模式：Level -> Skill -> Lobby ---
@@ -3834,29 +3863,48 @@ function openLaunchModal(index) {
         return;
     }
 
-// 準備題目 (抽卡機制)
+    // ==========================================
+    // ★★★ 第四步：優先抽題邏輯 (Priority Queue) ★★★
+    // ==========================================
     
-    // 1. 如果「手牌」抽乾了，重新由原本的 List 補滿 (洗牌)
-    if (sessionDeck.length === 0) {
-        console.log("Deck empty! Reshuffling...");
-        if (activeVocabList.length === 0) {
-            alert("Error: Database is empty!");
-            return;
+    // 1. 檢查有無「優先錯字」要問先？
+    // (確保 priorityDeck 存在且有野)
+    if (typeof priorityDeck !== 'undefined' && priorityDeck.length > 0) {
+        
+        // ★ 有錯字！直接拿第一個 (Shift = 拿走排頭位的)
+        currentVocab = priorityDeck.shift();
+        console.log("🔥 Priority Word deployed (Missed):", currentVocab.en);
+        
+        // (Optional: 你可以加個特效話比玩家知呢個係重溫題)
+        // playSound('alert-sfx');
+
+    } else {
+        // 2. 無錯字了，才從普通牌堆 (Session Deck) 亂抽
+        
+        // 如果「手牌」抽乾了，重新由原本的 List 補滿 (洗牌)
+        if (sessionDeck.length === 0) {
+            console.log("Deck empty! Reshuffling...");
+            if (activeVocabList.length === 0) {
+                alert("Error: Database is empty!");
+                return;
+            }
+            sessionDeck = [...activeVocabList]; // 重新複製
         }
-        sessionDeck = [...activeVocabList]; // 重新複製
+
+        // 從剩餘的手牌中，隨機抽出一個 index
+        const randIndex = Math.floor(Math.random() * sessionDeck.length);
+        
+        // 設定當前題目
+        currentVocab = sessionDeck[randIndex];
+
+        // 從手牌中移除這個字 (Splice)
+        sessionDeck.splice(randIndex, 1);
+        
+        console.log(`Word drawn: ${currentVocab.en}. Remaining in deck: ${sessionDeck.length}`);
     }
-
-    // 2. 從剩餘的手牌中，隨機抽出一個 index
-    const randIndex = Math.floor(Math.random() * sessionDeck.length);
-    
-    // 3. 設定當前題目
-    currentVocab = sessionDeck[randIndex];
-
-    // 4. ★ 關鍵：從手牌中移除這個字 (Splice)
-    // 這樣下一回合就不會再抽中它，直到成副牌抽完
-    sessionDeck.splice(randIndex, 1);
-    
-    console.log(`Word drawn: ${currentVocab.en}. Remaining in deck: ${sessionDeck.length}`);
+    // ==========================================
+    // (抽題邏輯結束)
+    // ==========================================
     
     // 獲取介面元素
     const modal = document.getElementById('launch-modal');
@@ -3873,23 +3921,29 @@ function openLaunchModal(index) {
     // 清理舊的 Mic 按鈕 (防止重複)
     const oldMic = document.getElementById('mic-btn');
     if(oldMic) oldMic.remove();
+    
+    // 清理舊的 Speaker 按鈕 (防止重複)
+    const oldSpeaker = document.querySelector('.cyber-speaker-btn');
+    if(oldSpeaker) oldSpeaker.remove();
 
     // ★★★ 關鍵：先顯示視窗，再執行後面的 focus，確保鍵盤彈出 ★★★
     modal.style.display = "flex";
     startMatrixEffect();
 
     // ★★★ 核心：根據模式切換介面 ★★★
-if (currentPracticeMode === 'SPEAKING') {
-    const textToRead = currentVocab.sent ? currentVocab.sent : currentVocab.en;
-    qText.innerText = `READ: ${textToRead}`;
-    
-    // 字體縮細少少，因為句子比較長
-    qText.style.fontSize = "22px"; 
-    qText.style.lineHeight = "1.4"; // 增加行距，比較好讀
-    qText.style.cursor = "default";
-    qText.onclick = null;
+    if (currentPracticeMode === 'SPEAKING') {
+        // --- A. 口說模式 (Speaking) ---
+        // 優先讀句子，無句子讀單字
+        const textToRead = currentVocab.sent ? currentVocab.sent : currentVocab.en;
+        qText.innerText = `READ: ${textToRead}`;
+        
+        // 字體縮細少少，因為句子比較長
+        qText.style.fontSize = "22px"; 
+        qText.style.lineHeight = "1.4"; // 增加行距，比較好讀
+        qText.style.cursor = "default";
+        qText.onclick = null;
 
-    qDisplay.innerText = "(Tap Mic & Read Sentence)";
+        qDisplay.innerText = "(Tap Mic & Read Sentence)";
         qDisplay.style.color = "#94a3b8"; 
         
         input.style.display = 'none'; 
@@ -3900,19 +3954,32 @@ if (currentPracticeMode === 'SPEAKING') {
         micBtn.className = 'mic-btn'; 
         micBtn.onclick = startListening;
         
+        // 確保 micBtn 插入到正確位置 (qDisplay 的後面)
         const container = document.getElementById('timer-bar-container');
-        qDisplay.parentNode.insertBefore(micBtn, container);
+        if (qDisplay.parentNode) {
+            qDisplay.parentNode.insertBefore(micBtn, container);
+        }
 
     } else if (currentPracticeMode === 'LISTENING') {
         // --- B. 聽力模式 (Listening) ---
         fadeBgm(0.1, 800);
         let contentHTML = '';
+        
+        // 準備要讀的內容
+        const textToRead = currentVocab.sent ? currentVocab.sent : currentVocab.en;
+        const safeText = textToRead.replace(/'/g, "\\'"); // 防爆
 
         // 1. 顯示句子填空 (如果有句子)
         if (currentVocab.sent) {
+            // 使用正則表達式，忽略大小寫地將單字換成底線
             const regex = new RegExp(`\\b${currentVocab.en}\\b`, 'gi');
+            
             // 將目標字換成跟字數一樣長度的動態底線
-            const dynamicBlanks = generateSmartBlanks(currentVocab.en);
+            // 注意：這裡假設你有 generateSmartBlanks 函數，如果沒有就用 '_'.repeat(len)
+            const dynamicBlanks = (typeof generateSmartBlanks === 'function') 
+                                  ? generateSmartBlanks(currentVocab.en) 
+                                  : "______"; 
+                                  
             const displayHTML = currentVocab.sent.replace(regex, `<span class="listening-blank">${dynamicBlanks}</span>`);
             contentHTML += `<div class="sentence-container">${displayHTML}</div>`;
         } else {
@@ -3920,11 +3987,11 @@ if (currentPracticeMode === 'SPEAKING') {
         }
 
         // 2. 加入高科技喇叭掣 (使用你畫的 PNG)
-        const textToRead = currentVocab.sent ? currentVocab.sent : currentVocab.en;
-        const safeText = textToRead.replace(/'/g, "\\'");
-
+        // 這裡我們直接生成 HTML string
         contentHTML += `
-            <div class="cyber-speaker-btn" onclick="speakText('${safeText}')"></div>
+            <div class="cyber-speaker-btn" onclick="speakText('${safeText}')" 
+                 style="width:60px; height:60px; background:url('speaker_icon.png') no-repeat center/contain; margin:10px auto; cursor:pointer;">
+            </div>
             <div style="font-size:10px; color:#d946ef; margin-top:5px; opacity:0.8; font-family:'Orbitron';">TAP TO REPLAY</div>
         `;
         
@@ -3932,8 +3999,12 @@ if (currentPracticeMode === 'SPEAKING') {
         qText.style.cursor = "default"; 
         qText.onclick = null; 
 
-        // 3. 顯示智能底線
-        qDisplay.innerHTML = generateSmartBlanks(currentVocab.en);
+        // 3. 顯示智能底線 (輸入框上方提示)
+        if (typeof generateSmartBlanks === 'function') {
+            qDisplay.innerHTML = generateSmartBlanks(currentVocab.en);
+        } else {
+            qDisplay.innerHTML = "______";
+        }
         qDisplay.style.color = "var(--primary)";
         
         input.style.display = 'block';
@@ -3943,24 +4014,30 @@ if (currentPracticeMode === 'SPEAKING') {
         setTimeout(() => speakText(textToRead), 300);
 
     } else {
-        // --- C. 閱讀模式 (Reading) ---
+        // --- C. 閱讀模式 (Reading) - Default ---
         qText.innerText = currentVocab.ch;
         qText.style.fontSize = ""; 
         qText.style.cursor = "default";
         qText.onclick = null;
 
-        qDisplay.innerHTML = generateSmartBlanks(currentVocab.en);
+        if (typeof generateSmartBlanks === 'function') {
+            qDisplay.innerHTML = generateSmartBlanks(currentVocab.en);
+        } else {
+            qDisplay.innerHTML = "______";
+        }
         qDisplay.style.color = "var(--primary)";
         
         input.style.display = 'block';
         setTimeout(() => input.focus(), 10);
     }
 
-// --- 動畫與倒數 (修正版) ---
+    // --- 動畫與倒數 (修正版) ---
     // 1. 先重置條 Bar 做 100% (視覺上準備好)
-    timerBar.style.transition = 'none';
-    timerBar.style.width = '100%';
-    timerBar.offsetHeight; // Trigger reflow
+    if (timerBar) {
+        timerBar.style.transition = 'none';
+        timerBar.style.width = '100%';
+        timerBar.offsetHeight; // Trigger reflow
+    }
     
     // 2. 確保清除舊 Timer
     if (typeof timerInterval !== 'undefined' && timerInterval) {
@@ -3977,12 +4054,13 @@ if (currentPracticeMode === 'SPEAKING') {
         setTimeout(() => {
             // 確保視窗仲開緊先計時
             if (document.getElementById('launch-modal').style.display === 'flex') {
-                startCountdownTimer();
+                if (typeof startCountdownTimer === 'function') {
+                    startCountdownTimer();
+                }
             }
         }, 500);
     }
-
-} // <--- 記得保留這個函數結束括號
+}
 // --- 0. 語音預熱系統 (解決延遲) ---
 function warmUpVoiceEngine() {
     if ('speechSynthesis' in window) {
@@ -4144,21 +4222,20 @@ function handlePlayerTimeout() {
     // 為了兼容，將舊名 updateDisplay 指向新函數 updateSmartDisplay
     window.updateDisplay = updateSmartDisplay;
 
-// --- 修正版：核對答案 (智能無視符號) ---
 function checkAnswer() {
+    // 取得輸入框 (你原本用 hidden-input)
     const input = document.getElementById('hidden-input');
     
     // 1. 玩家輸入：轉大寫 + 移除所有空格同標點 (只留 A-Z 同 0-9)
-    // 例如輸入 "cup of tea" 或 "cupoftea" 都會變做 "CUPOFTEA"
     const cleanInput = input.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
     
     // 2. 正確答案：同樣處理
-    // 例如 "high-quality" 會變做 "HIGHQUALITY"
     const cleanTarget = currentVocab.en.toUpperCase().replace(/[^A-Z0-9]/g, '');
     
+    // 3. 判斷對錯
     const isCorrect = (cleanInput === cleanTarget);
 
-    // ★★★ 記錄 Log 邏輯 (保持不變) ★★★
+    // ★★★ 記錄 Log 邏輯 (保持你原本嘅代碼) ★★★
     if (typeof battleLog !== 'undefined') {
         const currentTurn = (typeof turnCounter !== 'undefined' ? turnCounter : 1);
         const existingLogIndex = battleLog.findIndex(log => log.turn === currentTurn);
@@ -4176,11 +4253,29 @@ function checkAnswer() {
         }
     }
 
-    // 結果處理
+    // ★★★ 結果處理 (加入 Firebase 錯字管理) ★★★
     if (isCorrect) { 
+        // 1. Firebase: 答對了！從錯字本移除 (如果有的話)
+        if (window.removeMissedWord) {
+            window.removeMissedWord(currentVocab.en);
+        }
+
+        // 2. 遊戲邏輯: 發射！
         playerFire(true);
+        
+        // 3. UI: 清空輸入框 (以防萬一)
+        input.value = '';
+
     } else {
+        // 1. Firebase: 答錯了！加入錯字本
+        if (window.saveMissedWord) {
+            window.saveMissedWord(currentVocab, selectedLevel);
+        }
+
+        // 2. 遊戲邏輯: 播放錯誤音效
         playSound('wrong-sfx');
+        
+        // 3. UI: 顯示錯誤訊息 & 變紅
         document.getElementById('msg-area').innerText = "CODE INVALID!";
         const d = document.getElementById('q-display');
         d.style.color = "var(--danger)";
@@ -6513,6 +6608,7 @@ function speakText(text, element = null) {
 </div>
 </body>
 </html>
+
 
 
 
