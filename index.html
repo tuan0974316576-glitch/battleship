@@ -1129,11 +1129,6 @@ body {
         text-shadow: none;
         animation: none;
     }
-
-    /* 保持你的呼吸燈動畫 */
-    .btn-pvp {
-        animation: pvpReadyPulse 1.5s infinite alternate;
-    }
 /* =========================================
    ★★★ DECRYPTION TABLE / CODE LIST 完整樣式 (紫色版) ★★★
    ========================================= */
@@ -5015,85 +5010,87 @@ updateEnemyIndicator(ship.shipId);
     }
 
 
-// ★ 最終修正版：顯示敵軍戰艦殘骸 (加入智能測量，解決 Guest 打人時殘骸移位) ★
-    function revealEnemyShip(ship) {
-        ship.revealed = true;
-        const board = document.getElementById('enemy-grid');
-        const container = document.getElementById('enemy-board'); // ★ 目標是敵人棋盤
+// ★ 最終修正版：顯示敵軍戰艦殘骸 (包含 T型船 橫向偏移修復) ★
+function revealEnemyShip(ship) {
+    ship.revealed = true;
+    const board = document.getElementById('enemy-grid');
+    const container = document.getElementById('enemy-board'); 
 
-        // 安全檢查
-        if (!ship.rootIndex && ship.rootIndex !== 0) return;
-        const startCell = board.children[ship.rootIndex];
-        if (!startCell) return;
+    // 安全檢查
+    if (!ship.rootIndex && ship.rootIndex !== 0) return;
+    const startCell = board.children[ship.rootIndex];
+    if (!startCell) return;
 
-        // --- 1. 智能測量 (Smart Measurement) ---
-        // 檢查敵人棋盤係咪顯示緊。如果不見了，就偷偷打開佢黎度位。
-        const isVisible = (container.offsetParent !== null);
-        let prevDisplay = '';
-        let prevVisibility = '';
+    // --- 1. 智能測量 (Smart Measurement) ---
+    const isVisible = (container.offsetParent !== null);
+    let prevDisplay = '';
+    let prevVisibility = '';
 
-        if (!isVisible) {
-            prevDisplay = container.style.display;
-            prevVisibility = container.style.visibility;
-            
-            container.style.visibility = 'hidden'; // 隱形
-            container.style.display = 'block';     // 佔位 (撐開 Grid)
-            // 絕不使用 position: absolute，以免寬度塌陷
-        }
-
-        // 2. 讀取真實座標 & 大細
-        const cellLeft = startCell.offsetLeft;
-        const cellTop = startCell.offsetTop;
-        const cellSize = startCell.offsetWidth; // ★ 改用動態讀取 (更準確)
-
-        // 3. 還原狀態
-        if (!isVisible) {
-            container.style.display = prevDisplay;
-            container.style.visibility = prevVisibility;
-        }
-
-        // --- 4. 建立圖片 ---
-        const img = document.createElement('img');
-        
-        // 圖片來源設定
-        if (typeof DAMAGED_IMAGES !== 'undefined' && DAMAGED_IMAGES[ship.shipId]) {
-            img.src = DAMAGED_IMAGES[ship.shipId];
-        } else {
-            img.src = ship.conf.img; 
-        }
-        
-        img.classList.add('enemy-ship-revealed'); 
-        
-        const conf = ship.conf;
-        // ★ 改用 cellSize 計算，確保同格仔一樣大 ★
-        const pW = cellSize * conf.width + 2 * (conf.width - 1);
-        const pH = cellSize * conf.height + 2 * (conf.height - 1);
-        
-        img.style.width = pW + 'px'; 
-        img.style.height = pH + 'px';
-        
-        // ★ 應用正確座標 ★
-        img.style.left = cellLeft + 'px';
-        img.style.top = cellTop + 'px';
-        
-        // Transform 修正
-        if (!ship.isVertical) {
-            const shift = (pH - pW) / 2;
-            img.style.transform = `translate(${shift}px, -${shift}px) rotate(-90deg)`;
-        } else {
-            img.style.transform = 'none';
-        }
-        
-        board.appendChild(img);
-        
-        playSound('destroy-sfx'); 
-        showNotification("ENEMY SHIP DESTROYED!", "success");
-        
-        // 如果有狀態欄，順便更新埋
-        if(typeof updateEnemyIndicator === 'function') {
-             updateEnemyIndicator(ship.shipId);
-        }
+    if (!isVisible) {
+        prevDisplay = container.style.display;
+        prevVisibility = container.style.visibility;
+        container.style.visibility = 'hidden'; 
+        container.style.display = 'block';     
     }
+
+    // 2. 讀取真實座標 & 大細
+    const cellLeft = startCell.offsetLeft;
+    const cellTop = startCell.offsetTop;
+    const cellSize = startCell.offsetWidth; 
+
+    // 3. 還原狀態
+    if (!isVisible) {
+        container.style.display = prevDisplay;
+        container.style.visibility = prevVisibility;
+    }
+
+    // --- 4. 建立圖片 ---
+    const img = document.createElement('img');
+    
+    // 圖片來源設定
+    if (typeof DAMAGED_IMAGES !== 'undefined' && DAMAGED_IMAGES[ship.shipId]) {
+        img.src = DAMAGED_IMAGES[ship.shipId];
+    } else {
+        img.src = ship.conf.img; 
+    }
+    
+    img.classList.add('enemy-ship-revealed'); 
+    
+    const conf = ship.conf;
+    const pW = cellSize * conf.width + 2 * (conf.width - 1);
+    const pH = cellSize * conf.height + 2 * (conf.height - 1);
+    
+    img.style.width = pW + 'px'; 
+    img.style.height = pH + 'px';
+    
+    // ★★★ 關鍵修正：針對 T型船 (Ship ID 2) 橫放時的偏移修正 ★★★
+    // 如果係 Spectre (ID 2) 並且係橫放 (!ship.isVertical)
+    // 因為它的起點 (Root) 係 (0,1) 而唔係 (0,0)，所以要將張圖移返左一格 (cellSize)
+    if (ship.shipId === 2 && !ship.isVertical) {
+        img.style.left = (cellLeft - cellSize - 2) + 'px'; // 減多 2px 係為了對齊邊框 gap
+    } else {
+        img.style.left = cellLeft + 'px';
+    }
+    
+    img.style.top = cellTop + 'px';
+    
+    // Transform 修正 (旋轉)
+    if (!ship.isVertical) {
+        const shift = (pH - pW) / 2;
+        img.style.transform = `translate(${shift}px, -${shift}px) rotate(-90deg)`;
+    } else {
+        img.style.transform = 'none';
+    }
+    
+    board.appendChild(img);
+    
+    playSound('destroy-sfx'); 
+    showNotification("ENEMY SHIP DESTROYED!", "success");
+    
+    if(typeof updateEnemyIndicator === 'function') {
+            updateEnemyIndicator(ship.shipId);
+    }
+}
 
 // 2. 關閉溫習表
 function closeVocabScreen() {
@@ -6431,4 +6428,5 @@ function speakText(text, element = null) {
 </div>
 </body>
 </html>
+
 
