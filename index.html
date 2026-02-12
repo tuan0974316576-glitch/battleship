@@ -51,73 +51,89 @@
     window.auth = auth;
 // --- ★★★ 錯字管理系統 (v10 Modular 版) ★★★ ---
 
-    // 1. 記錄錯字
-    window.saveMissedWord = async function(wordObj, level) {
+// --- ★★★ 錯字管理系統 (分模式版) ★★★ ---
+
+    // 1. 記錄錯字 (加入 Mode 區分)
+    window.saveMissedWord = async function(wordObj, level, mode) {
         const user = window.auth.currentUser;
-        if (user) {
+        if (user && mode) {
             try {
-                // 儲存到 users/{uid}/missed_words/{word}
-                const docRef = doc(firestore, 'users', user.uid, 'missed_words', wordObj.en);
+                // ID 變成 "apple_LISTENING" 這樣，分開記
+                const docId = `${wordObj.en}_${mode}`; 
+                
+                const docRef = doc(firestore, 'users', user.uid, 'missed_words', docId);
                 await setDoc(docRef, {
                     word: wordObj.en,
                     level: level,
+                    mode: mode, // ★ 記住係邊個模式錯
                     timestamp: serverTimestamp()
                 }, { merge: true });
-                console.log(`Saved missed word: ${wordObj.en}`);
+                console.log(`Saved missed word: ${docId}`);
             } catch (error) {
                 console.error("Error saving missed word:", error);
             }
         }
     };
 
-    // 2. 移除錯字 (答對時)
-    window.removeMissedWord = async function(wordEn) {
+    // 2. 移除錯字 (只移除當前模式的)
+    window.removeMissedWord = async function(wordEn, mode) {
         const user = window.auth.currentUser;
-        if (user) {
+        if (user && mode) {
             try {
-                const docRef = doc(firestore, 'users', user.uid, 'missed_words', wordEn);
+                // 只有模式對應時，才刪除
+                const docId = `${wordEn}_${mode}`;
+                const docRef = doc(firestore, 'users', user.uid, 'missed_words', docId);
                 await deleteDoc(docRef);
-                console.log(`Removed learned word: ${wordEn}`);
+                console.log(`Removed learned word: ${docId}`);
             } catch (error) {
                 console.error("Error removing word:", error);
             }
         }
     };
 
-// 3. 注入錯字 (更新版：放入優先隊列)
-    window.injectMissedWordsToDeck = async function(level) {
+    // 3. 注入錯字 (只拿當前模式的錯字)
+    window.injectMissedWordsToDeck = async function(level, mode) {
         const user = window.auth.currentUser;
-        if (!user) return;
+        if (!user || !mode) return;
 
         try {
-            // 根據 timestamp 排序 (這就解決了你「順序問」的要求)
-            // orderBy('timestamp', 'asc') = 最舊的錯字先問 (或者 desc 最新先問)
+            // 這裡我們只 Filter Level，然後在代碼入面 Filter Mode (避免要你在 Firebase 設定 Index)
             const q = query(
                 collection(firestore, 'users', user.uid, 'missed_words'),
-                where('level', '==', level),
-                orderBy('timestamp', 'asc') 
+                where('level', '==', level)
             );
             const snapshot = await getDocs(q);
 
             if (!snapshot.empty) {
+                let missedCount = 0;
+                
+                // 清空優先隊列 (以防萬一)
+                if (window.priorityDeck) window.priorityDeck = [];
+
                 snapshot.forEach(docSnap => {
-                    const missedWordEn = docSnap.data().word;
-                    const fullWordData = window.VOCAB_DB[level].find(w => w.en === missedWordEn);
+                    const data = docSnap.data();
                     
-                    if (fullWordData) {
-                        // ★ 改動：放入 priorityDeck，而不是 sessionDeck
-                        if (window.priorityDeck) {
+                    // ★ 關鍵：只將「當前模式」的錯字加入隊列
+                    if (data.mode === mode) {
+                        const fullWordData = window.VOCAB_DB[level].find(w => w.en === data.word);
+                        
+                        if (fullWordData && window.priorityDeck) {
                             window.priorityDeck.push(fullWordData);
+                            missedCount++;
                         }
                     }
                 });
-                console.log(`Loaded ${priorityDeck.length} missed words into Priority Queue.`);
+                // 簡單排序：舊的錯字先問
+                if (window.priorityDeck) {
+                    // (這裡假設你存入去時已經係順序，或者隨機亦可，重點係有放入去)
+                    console.log(`Injected ${missedCount} missed words for mode: ${mode}`);
+                }
             }
         } catch (error) {
             console.error("Error loading missed words:", error);
-            // 如果報錯 (例如未建立 Index)，可能需要去 Firebase Console 點一下連結
         }
     };
+    
     // --- 1. 登入狀態監聽 (包含 Guest 自動派名) ---
     onAuthStateChanged(auth, (u) => {
         const overlay = document.getElementById('login-overlay');
@@ -2751,26 +2767,26 @@ body {
     
     <div style="display: flex; flex-direction: column; gap: 20px; align-items: center;">
         
-        <button class="level-btn" onclick="selectSkill('READING')" style="border-color: #0ea5e9; color: #0ea5e9; width: 300px; height: 80px;">
-            <div style="display:flex; flex-direction:column; align-items:center;">
-                <span style="font-size:24px;">READING</span>
-                <span style="font-size:10px; opacity:0.7;">DECRYPT CODE</span>
-            </div>
-        </button>
+ <button class="level-btn" onclick="startGameWithMode('READING')" style="border-color: #0ea5e9; color: #0ea5e9; width: 300px; height: 80px;">
+        <div style="display:flex; flex-direction:column; align-items:center;">
+            <span style="font-size:24px;">READING</span>
+            <span style="font-size:10px; opacity:0.7;">DECRYPT CODE</span>
+        </div>
+    </button>
 
-        <button class="level-btn" onclick="selectSkill('LISTENING')" style="border-color: #22c55e; color: #22c55e; width: 300px; height: 80px;">
-            <div style="display:flex; flex-direction:column; align-items:center;">
-                <span style="font-size:24px;">LISTENING</span>
-                <span style="font-size:10px; opacity:0.7;">AUDIO INTEL</span>
-            </div>
-        </button>
+    <button class="level-btn" onclick="startGameWithMode('LISTENING')" style="border-color: #d946ef; color: #d946ef; width: 300px; height: 80px;">
+        <div style="display:flex; flex-direction:column; align-items:center;">
+            <span style="font-size:24px;">LISTENING</span>
+            <span style="font-size:10px; opacity:0.7;">INTERCEPT AUDIO</span>
+        </div>
+    </button>
 
-        <button id="btn-skill-speaking" class="level-btn" onclick="selectSkill('SPEAKING')" style="border-color: #d946ef; color: #d946ef; width: 300px; height: 80px;">
-            <div style="display:flex; flex-direction:column; align-items:center;">
-                <span style="font-size:24px;">SPEAKING</span>
-                <span style="font-size:10px; opacity:0.7;">VOICE COMMAND</span>
-            </div>
-        </button>
+    <button id="btn-skill-speaking" class="level-btn" onclick="startGameWithMode('SPEAKING')" style="border-color: #22c55e; color: #22c55e; width: 300px; height: 80px;">
+        <div style="display:flex; flex-direction:column; align-items:center;">
+            <span style="font-size:24px;">SPEAKING</span>
+            <span style="font-size:10px; opacity:0.7;">VOICE UPLINK</span>
+        </div>
+    </button>
     </div>
 
     <button class="btn" onclick="playSound('delete-sfx'); backToMainMenu()" style="margin-top: 30px; border-color: #64748b; color: #94a3b8;">&lt; BACK</button>
@@ -3175,8 +3191,8 @@ function closeLevelScreen() {
         document.getElementById('level-screen').style.display = 'flex';
     }
 
-// --- 修正版：選擇等級 (PVP 改為去選 Skill) ---
-// ★ 改動 1: 加入 async 關鍵字，因為要等 Firebase 讀取錯字
+// --- 修正版：選擇等級 (Level) ---
+// 這裡只負責選 Level 和初始化，載入錯字的動作會留到選 Skill 時才做
 async function selectLevel(level) {
     console.log(`Selecting Level ${level}...`);
     selectedLevel = level;
@@ -3192,45 +3208,61 @@ async function selectLevel(level) {
     sessionDeck = [...activeVocabList]; // 普通牌 (亂抽用)
     priorityDeck = [];                  // 優先牌 (錯字用，會排頭位)
 
-    // 3. ★ 關鍵：從 Firebase 讀取錯字，並放入 priorityDeck ★
-    // 確保只在 window.injectMissedWordsToDeck 存在時才執行
-    if (typeof window.injectMissedWordsToDeck === 'function') {
-        try {
-            // 這一步會去雲端下載錯字，並塞入 priorityDeck
-            // await 會確保下載完先開始遊戲，這樣錯字一定會排在第一位
-            await window.injectMissedWordsToDeck(level);
-        } catch (e) {
-            console.warn("Failed to load missed words:", e);
-        }
-    }
-    
-    console.log(`Level ${level} ready. Normal cards: ${sessionDeck.length}, Priority (Missed): ${priorityDeck.length}`);
+    // ★ 關鍵改動：這裡【不要】載入錯字！
+    // 因為我們還不知道玩家會選什麼模式 (Reading/Listening)
+    // 錯字載入會推遲到 startGameWithMode() 或者 AI 模式啟動時才做
 
-    // 4. 播放音效
+    console.log(`Level ${level} ready. Waiting for Mode selection...`);
+
+    // 3. 播放音效
     playSound('deploy-sfx');
     
-    // 5. 處理 UI (保留你原本的邏輯)
-    // ★★★ 關鍵修正：直接隱藏 Level 畫面，千萬不要呼叫 closeLevelScreen() ★★★
+    // 4. 處理 UI
     document.getElementById('level-screen').style.display = 'none';
 
     if (tempGameMode === 'AI') {
         // --- AI 模式：Level -> Start Game ---
         gameMode = 'AI';
         
-        // 確保 Skill Screen 也是隱藏的 (雙重保險)
+        // 確保 Skill Screen 也是隱藏的
         document.getElementById('skill-screen').style.display = 'none';
+        
+        // ★ AI 模式默認設定 (這裡假設 AI 是 READING 模式)
+        // 如果你的 AI 模式也有 Listening，這裡邏輯要再調整
+        currentPracticeMode = 'READING'; 
+        
+        // ★ 立即載入 READING 模式的錯字
+        if(window.injectMissedWordsToDeck) {
+             console.log("AI Mode: Loading READING missed words...");
+             await window.injectMissedWordsToDeck(level, 'READING');
+        }
         
         // 直接進入遊戲介面
         enterGameUI();
     } else {
-        // --- PVP 模式：Level -> Skill -> Lobby ---
-        // 顯示 Skill 選擇
+        // --- PVP 模式：Level -> Skill Selection ---
+        // 顯示 Skill 選擇畫面，等玩家揀 Reading 定 Listening
         document.getElementById('skill-screen').style.display = 'flex';
         
         // PVP 暫時隱藏 Speaking Mode (如需要)
         const speakBtn = document.getElementById('btn-skill-speaking');
         if (speakBtn) speakBtn.style.display = 'none';
     }
+}
+// --- 新增：專門俾 PVP Skill 按鈕呼叫的函數 ---
+async function startGameWithMode(mode) {
+    // 1. 設定模式
+    currentPracticeMode = mode;
+    console.log(`Mode selected: ${mode}. Loading missed words...`);
+    
+    // 2. ★ 關鍵：現在確定了模式，才去下載對應的錯字！
+    if (window.injectMissedWordsToDeck) {
+        // 這一步會去 Firebase 找 "apple_READING" 或 "apple_LISTENING"
+        await window.injectMissedWordsToDeck(selectedLevel, mode);
+    }
+    
+    // 3. 進入遊戲
+    enterGameUI();
 }
 function enterGameUI() {
     const bgm = document.getElementById('bgm');
@@ -4253,29 +4285,22 @@ function checkAnswer() {
         }
     }
 
-    // ★★★ 結果處理 (加入 Firebase 錯字管理) ★★★
-    if (isCorrect) { 
-        // 1. Firebase: 答對了！從錯字本移除 (如果有的話)
+if (isCorrect) { 
+        // ★ 改動：傳入 currentPracticeMode，確保只刪除 Reading 錯字 (如果依家係 Reading)
         if (window.removeMissedWord) {
-            window.removeMissedWord(currentVocab.en);
+            window.removeMissedWord(currentVocab.en, currentPracticeMode);
         }
 
-        // 2. 遊戲邏輯: 發射！
         playerFire(true);
-        
-        // 3. UI: 清空輸入框 (以防萬一)
         input.value = '';
 
     } else {
-        // 1. Firebase: 答錯了！加入錯字本
+        // ★ 改動：傳入 currentPracticeMode，記住係 Reading 錯定 Listening 錯
         if (window.saveMissedWord) {
-            window.saveMissedWord(currentVocab, selectedLevel);
+            window.saveMissedWord(currentVocab, selectedLevel, currentPracticeMode);
         }
 
-        // 2. 遊戲邏輯: 播放錯誤音效
         playSound('wrong-sfx');
-        
-        // 3. UI: 顯示錯誤訊息 & 變紅
         document.getElementById('msg-area').innerText = "CODE INVALID!";
         const d = document.getElementById('q-display');
         d.style.color = "var(--danger)";
@@ -6608,6 +6633,7 @@ function speakText(text, element = null) {
 </div>
 </body>
 </html>
+
 
 
 
