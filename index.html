@@ -2128,15 +2128,26 @@ body {
     50% { opacity: 0.7; transform: scale(1); } 
     100% { opacity: 0; transform: scale(0.3) rotate(45deg); }
 }
+        
 /* --- 戰後回顧樣式 --- */
 .review-item {
     display: grid;
-    grid-template-columns: 0.5fr 1fr 1fr 1fr; /* ★ 改為 4 欄，比例平均分配 */
+    grid-template-columns: 0.5fr 0.8fr 1.2fr 1.5fr; /* ★ 修正欄寬 */
     padding: 8px 0;
     border-bottom: 1px solid rgba(71, 85, 105, 0.3);
     font-family: 'Orbitron', sans-serif;
     font-size: 14px;
     align-items: center;
+}
+
+/* ★ 新增：Code List 風格的中文字特效 ★ */
+.review-meaning {
+    font-family: 'Noto Sans TC', sans-serif;
+    font-weight: 300; /* 幼身 */
+    font-size: 16px;  /* 稍微縮細以適應欄位 */
+    color: rgba(248, 250, 252, 0.9); /* 銀白 */
+    letter-spacing: 1px;
+    text-shadow: 0 0 5px rgba(255, 255, 255, 0.8), 0 0 15px rgba(14, 165, 233, 0.5); /* 藍白發光 */
 }
 
 .review-turn {
@@ -2803,7 +2814,7 @@ body {
     <div id="review-container" style="width: 90%; max-width: 600px; background: rgba(15, 23, 42, 0.8); border: 1px solid #334155; border-radius: 10px; padding: 15px; margin-bottom: 20px; display: flex; flex-direction: column;">
         <div style="font-family: 'Orbitron'; color: #0ea5e9; font-size: 16px; margin-bottom: 10px; text-align: center; letter-spacing: 2px;">>> MISSION DEBRIEF <<</div>
         
-<div style="display: grid; grid-template-columns: 0.5fr 1fr 1fr 1fr; border-bottom: 1px solid #475569; padding-bottom: 5px; margin-bottom: 10px; color: #94a3b8; font-size: 12px; font-weight: bold;">
+<div style="display: grid; grid-template-columns: 0.5fr 0.8fr 1.2fr 1.5fr; border-bottom: 1px solid #475569; padding-bottom: 5px; margin-bottom: 10px; color: #94a3b8; font-size: 12px; font-weight: bold;">
     <span>TURN</span>
     <span>MEANING</span> 
     <span>YOUR INPUT</span>
@@ -3900,10 +3911,8 @@ function warmUpVoiceEngine() {
     
 // --- 修正版：處理輸入超時 ---
 function handlePlayerTimeout() {
-    // 升番 BGM
     if(typeof fadeBgm === 'function') fadeBgm(0.5, 1000);
 
-    // 1. 介面清理
     if (typeof timerInterval !== 'undefined') clearInterval(timerInterval);
     document.getElementById('launch-modal').style.display = "none";
     playSound('timeout-sfx');
@@ -3915,24 +3924,25 @@ function handlePlayerTimeout() {
     status.innerHTML = `PHASE: <span style="color:var(--danger)">TIMEOUT - TURN LOST</span>`;
     document.getElementById('control-panel').style.borderColor = "var(--danger)";
     
-    // 2. 記錄入戰後報告 (Battle Log)
     if (typeof battleLog !== 'undefined' && typeof currentVocab !== 'undefined') {
         const lastLog = battleLog[battleLog.length - 1];
         const currentTurn = (typeof turnCounter !== 'undefined' ? turnCounter : 1);
         
-        // --- ★★★ 關鍵修正：Timeout 時都要分清楚係單字定句子 ★★★ ---
-        // 如果係 Speaking Mode，正確答案應該顯示句子
         let correctContent = currentVocab.en; 
         if (currentPracticeMode === 'SPEAKING' && currentVocab.sent) {
             correctContent = currentVocab.sent;
         }
 
-        // 避免重複記錄
+        // ★ 修正 3：嘗試獲取輸入框殘留的文字 ★
+        const inputRaw = document.getElementById('hidden-input').value.trim();
+        // 如果有字就顯示字，無字先顯示 (TIMEOUT)
+        const userDisplay = inputRaw.length > 0 ? inputRaw : "(TIMEOUT)";
+
         if (!lastLog || lastLog.turn !== currentTurn) {
             battleLog.push({
                 turn: currentTurn,
-                user: "(TIMEOUT)",    
-                correct: correctContent, // 這裡會顯示正確句子
+                user: userDisplay,    // ★ 使用殘留文字
+                correct: correctContent, 
                 isCorrect: false
             });
         }
@@ -3970,36 +3980,46 @@ function handlePlayerTimeout() {
         }
     }
 
-    // --- 2. 輸入監聽器 (核心：自動去符號 + 播放音效) ---
-    // 這裡改用 .oninput，確保舊嘅監聽器被覆蓋，唔會撞車
-    document.getElementById('hidden-input').oninput = (e) => {
-        // A. 攞玩家輸入，轉大寫
-        let rawVal = e.target.value.toUpperCase();
-        
-        // B. 即刻清走所有空格、Hyphen 同符號，只留 A-Z 同 0-9
-        // (例如玩家打 "WAKE UP"，這裡會變做 "WAKEUP")
-        let cleanVal = rawVal.replace(/[^A-Z0-9]/g, '');
+    // --- 2. 輸入監聽器 (修正版：容許符號顯示) ---
+document.getElementById('hidden-input').oninput = (e) => {
+    // A. 獲取原始輸入 (轉大寫)
+    let rawVal = e.target.value.toUpperCase();
+    
+    // ★ 修正 4：容許保留空格、連字符(-)、撇號(') ★
+    // 這裡改用新嘅 Regex，保留這些符號，讓 Debrief 顯示 "PART-TIME" 而不是 "PARTTIME"
+    let displayVal = rawVal.replace(/[^A-Z0-9\s\-\']/g, '');
 
-        // C. 計算正確答案有幾多個「有效字母」
-        // (例如 "wake up" 雖然係7個字，但有效字母係6個)
-        const targetClean = currentVocab.en.replace(/[^a-zA-Z0-9]/g, '');
+    // B. 更新輸入框的值 (顯示有符號的版本)
+    e.target.value = displayVal;
 
-        // D. 防止打爆格 (如果打得長過有效字母，就截斷)
-        if (cleanVal.length > targetClean.length) {
-            cleanVal = cleanVal.substring(0, targetClean.length);
-        }
+    // C. 生成「邏輯值」 (純字母數字，用於 updateSmartDisplay 填窿窿)
+    // 因為上面的 display 只有字母格，空格同符號係預設顯示咗，所以填格仔只填字母
+    let logicVal = displayVal.replace(/[^A-Z0-9]/g, '');
 
-        // E. 將處理過嘅乾淨字母塞番入去輸入框
-        e.target.value = cleanVal;
+    // D. 防止打爆格 (用邏輯長度去計，對應有效字母數量)
+    // 假設 currentVocab.en 係 "part-time"，targetClean 就係 "parttime" (8個字)
+    if (currentVocab && currentVocab.en) {
+         const targetClean = currentVocab.en.replace(/[^a-zA-Z0-9]/g, '');
+         if (logicVal.length > targetClean.length) {
+             // 如果打多咗，截斷 logicVal
+             logicVal = logicVal.substring(0, targetClean.length);
+             // 注意：這裡簡化處理，不截斷 displayVal 以免刪錯符號，
+             // 反正多出的字母不會填入格仔，玩家會聽到 enter-sfx 但看不到字
+         }
+    }
 
-        // F. 音效處理 (完全保留舊有功能)
-        if (e.inputType === 'deleteContentBackward') playSound('delete-sfx');
-        else playSound('enter-sfx');
+    // E. 音效
+    if (e.inputType === 'deleteContentBackward') {
+        if(typeof playSound === 'function') playSound('delete-sfx');
+    } else {
+        if(typeof playSound === 'function') playSound('enter-sfx');
+    }
 
-        // G. 更新畫面 (用下面個智能顯示函數)
-        updateSmartDisplay(cleanVal);
-    };
-
+    // F. 更新畫面 (傳入純字母去填窿窿)
+    if(typeof updateSmartDisplay === 'function') {
+        updateSmartDisplay(logicVal);
+    }
+};
     // --- 3. Enter 鍵監聽 (完全保留舊有功能) ---
     document.getElementById('hidden-input').onkeydown = (e) => {
         if (e.key === 'Enter') checkAnswer();
@@ -5647,34 +5667,36 @@ function createTwinklingStars() {
         container.appendChild(star);
     }
 }
-// ★★★ 新增：渲染戰後報告 (含中文解釋版) ★★★
+    
 function renderReview() {
     const list = document.getElementById('review-list');
-    list.innerHTML = ""; // 清空舊內容
+    list.innerHTML = ""; 
 
     battleLog.forEach(log => {
         const item = document.createElement('div');
         item.className = 'review-item';
         
-        // 根據對錯設定 class
         const userClass = log.isCorrect ? 'correct' : 'wrong';
         
-        // --- 1. 查找中文解釋 ---
         let chineseMeaning = "--";
-        
-        // 嘗試從當前題庫中查找 (比對英文單字 或 句子)
         if (typeof activeVocabList !== 'undefined') {
-            // 搜尋邏輯：正確答案 (log.correct) 等於 單字(en) 或 句子(sent)
             const foundWord = activeVocabList.find(w => w.en === log.correct || w.sent === log.correct);
             if (foundWord && foundWord.ch) {
                 chineseMeaning = foundWord.ch;
             }
         }
 
-        // --- 2. 生成 4 欄 HTML ---
+        // ★ 修正 2：強制轉小寫 (除非係 TIMEOUT 字眼) ★
+        let displayUser = log.user;
+        if (displayUser !== "(TIMEOUT)") {
+            displayUser = displayUser.toLowerCase();
+        }
+
+        // ★ 修正 1：套用 .review-meaning 樣式 ★
         item.innerHTML = `
             <div class="review-turn">T-${log.turn}</div>
-            <div style="color: #fbbf24; font-family: 'Noto Sans TC', sans-serif;">${chineseMeaning}</div> <div class="review-user ${userClass}">${log.user}</div>
+            <div class="review-meaning">${chineseMeaning}</div> 
+            <div class="review-user ${userClass}">${displayUser}</div>
             <div class="review-answer">${log.correct}</div>
         `;
         list.appendChild(item);
@@ -6368,6 +6390,7 @@ function speakText(text, element = null) {
 </div>
 </body>
 </html>
+
 
 
 
