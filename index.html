@@ -25,7 +25,7 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getDatabase, ref, set, onValue, update, push, child, get, onDisconnect, off } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
     import { getAuth, signInAnonymously, onAuthStateChanged, GoogleAuthProvider, OAuthProvider, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-
+    import { getFirestore, doc, setDoc, deleteDoc, getDoc, collection, getDocs, query, where, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
     const firebaseConfig = {
         apiKey: "AIzaSyBdfTgb7FpkYdgjvrYWQ0jr-N-1fAaW9Q0",
         authDomain: "vocabularyxdungeon.firebaseapp.com",
@@ -40,6 +40,7 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
     const auth = getAuth(app);
+    const firestore = getFirestore(app);
 
     // 掛載到 window 供 onclick 使用
     window.firebaseModules = { 
@@ -48,7 +49,74 @@
     };
     window.db = db;
     window.auth = auth;
+// --- ★★★ 錯字管理系統 (v10 Modular 版) ★★★ ---
 
+    // 1. 記錄錯字
+    window.saveMissedWord = async function(wordObj, level) {
+        const user = window.auth.currentUser;
+        if (user) {
+            try {
+                // 儲存到 users/{uid}/missed_words/{word}
+                const docRef = doc(firestore, 'users', user.uid, 'missed_words', wordObj.en);
+                await setDoc(docRef, {
+                    word: wordObj.en,
+                    level: level,
+                    timestamp: serverTimestamp()
+                }, { merge: true });
+                console.log(`Saved missed word: ${wordObj.en}`);
+            } catch (error) {
+                console.error("Error saving missed word:", error);
+            }
+        }
+    };
+
+    // 2. 移除錯字 (答對時)
+    window.removeMissedWord = async function(wordEn) {
+        const user = window.auth.currentUser;
+        if (user) {
+            try {
+                const docRef = doc(firestore, 'users', user.uid, 'missed_words', wordEn);
+                await deleteDoc(docRef);
+                console.log(`Removed learned word: ${wordEn}`);
+            } catch (error) {
+                console.error("Error removing word:", error);
+            }
+        }
+    };
+
+    // 3. 注入錯字到牌堆 (開局時)
+    window.injectMissedWordsToDeck = async function(level) {
+        const user = window.auth.currentUser;
+        if (!user) return;
+
+        try {
+            const q = query(
+                collection(firestore, 'users', user.uid, 'missed_words'),
+                where('level', '==', level)
+            );
+            const snapshot = await getDocs(q);
+
+            if (!snapshot.empty) {
+                let missedCount = 0;
+                snapshot.forEach(docSnap => {
+                    const missedWordEn = docSnap.data().word;
+                    // 在 VOCAB_DB 找回完整資料
+                    const fullWordData = window.VOCAB_DB[level].find(w => w.en === missedWordEn);
+                    
+                    if (fullWordData) {
+                        // 加入全域的手牌 sessionDeck
+                        if (window.sessionDeck) {
+                            window.sessionDeck.push(fullWordData);
+                            missedCount++;
+                        }
+                    }
+                });
+                console.log(`Injecting ${missedCount} missed words into the deck!`);
+            }
+        } catch (error) {
+            console.error("Error loading missed words:", error);
+        }
+    };
     // --- 1. 登入狀態監聽 (包含 Guest 自動派名) ---
     onAuthStateChanged(auth, (u) => {
         const overlay = document.getElementById('login-overlay');
