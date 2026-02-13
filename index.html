@@ -3133,8 +3133,8 @@ const DAMAGED_IMAGES = [
     // --- 3. 全局變數 ---
 let deploymentTimerInterval = null; // 佈陣倒數器
 let turnTimerInterval = null; // 用來計選位嗰 8 秒
-    let app, db, auth;
-    let myPlayerId = null, currentRoomId = null, gameMode = 'AI', playerRole = null;
+    var app, db, auth;
+    var myPlayerId = null, currentRoomId = null, gameMode = 'AI', playerRole = null;
     let myGrid = Array(GRID_SIZE*GRID_SIZE).fill(0);   
     let enemyGrid = Array(GRID_SIZE*GRID_SIZE).fill(0); 
     let enemyShots = []; 
@@ -6623,6 +6623,7 @@ function speakText(text, element = null) {
 </div>
 </body>
 </html>
+
 
 
 
