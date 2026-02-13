@@ -3105,35 +3105,61 @@ function closeLevelScreen() {
         document.getElementById('level-screen').style.display = 'flex';
     }
 
-// --- 修正版：選擇等級 (PVP 改為去選 Skill) ---
-function selectLevel(level) {
+// --- 最終修正版：AI 與 PVP 統一流程 (Step 3.2) ---
+async function selectLevel(level) {
+    console.log(`Selecting Level ${level}...`);
     selectedLevel = level;
+    
+    // 1. 初始化生字表
     activeVocabList = VOCAB_DB[level]; 
-    sessionDeck = [...activeVocabList];
-    console.log(`Level ${level} selected. Deck size: ${sessionDeck.length}`);
+    if (!activeVocabList) {
+        console.error("No vocab found for level: " + level);
+        return;
+    }
+
+    // 2. 初始化牌堆
+    sessionDeck = [...activeVocabList]; 
+    priorityDeck = []; 
+
+    console.log(`Level ${level} ready. Waiting for Mode selection...`);
     playSound('deploy-sfx');
     
-    // ★★★ 關鍵修正：直接隱藏 Level 畫面，千萬不要呼叫 closeLevelScreen() ★★★
-    // closeLevelScreen() 係俾「返回鍵」用的，它會錯誤地帶你返去上一頁 (Skill Screen)
+    // 3. 畫面切換：隱藏 Level，顯示 Skill 選擇
     document.getElementById('level-screen').style.display = 'none';
+    document.getElementById('skill-screen').style.display = 'flex';
 
+    // 4. 設定遊戲模式 & 按鈕顯示
+    const speakBtn = document.getElementById('btn-skill-speaking');
+    
     if (tempGameMode === 'AI') {
-        // --- AI 模式：Level -> Start Game ---
         gameMode = 'AI';
-        
-        // 確保 Skill Screen 也是隱藏的 (雙重保險)
-        document.getElementById('skill-screen').style.display = 'none';
-        
-        enterGameUI();
+        // AI 模式：允許玩 Speaking，所以顯示按鈕
+        if (speakBtn) speakBtn.style.display = 'flex';
     } else {
-        // --- PVP 模式：Level -> Skill -> Lobby ---
-        // 顯示 Skill 選擇
-        document.getElementById('skill-screen').style.display = 'flex';
-        
-        // PVP 暫時隱藏 Speaking Mode (如需要)
-        const speakBtn = document.getElementById('btn-skill-speaking');
-        if (speakBtn) speakBtn.style.display = 'none';
+        // PVP 模式：暫時隱藏 Speaking (視乎你 PVP 支不支援)
+        if (speakBtn) speakBtn.style.display = 'none'; 
     }
+
+    // ★ 注意：這裡不再自動呼叫 enterGameUI() 
+    // AI 和 PVP 現在都會停在 Skill 畫面，等待玩家點擊按鈕
+    // 按鈕點擊後會觸發 startGameWithMode()，那裡會負責載入錯字
+}
+// ★★★ 新增函數：PVP / Skill 按鈕專用 (Step 3.1) ★★★
+async function startGameWithMode(mode) {
+    // 1. 設定模式
+    currentPracticeMode = mode;
+    console.log(`Mode selected: ${mode}.`);
+    
+    // 2. ★ 關鍵：載入錯字！(Local Storage)
+    priorityDeck = []; // 先清空，以防萬一
+    
+    // 呼叫我們 Step 1 寫好的工具函數
+    if (typeof loadMissedWordsToPriorityDeck === 'function') {
+        loadMissedWordsToPriorityDeck(mode); 
+    }
+    
+    // 3. 進入遊戲
+    enterGameUI();
 }
 function enterGameUI() {
     const bgm = document.getElementById('bgm');
@@ -4138,21 +4164,18 @@ function handlePlayerTimeout() {
     // 為了兼容，將舊名 updateDisplay 指向新函數 updateSmartDisplay
     window.updateDisplay = updateSmartDisplay;
 
-// --- 修正版：核對答案 (智能無視符號) ---
 function checkAnswer() {
     const input = document.getElementById('hidden-input');
     
-    // 1. 玩家輸入：轉大寫 + 移除所有空格同標點 (只留 A-Z 同 0-9)
-    // 例如輸入 "cup of tea" 或 "cupoftea" 都會變做 "CUPOFTEA"
+    // 1. 玩家輸入處理
     const cleanInput = input.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
     
-    // 2. 正確答案：同樣處理
-    // 例如 "high-quality" 會變做 "HIGHQUALITY"
+    // 2. 正確答案處理
     const cleanTarget = currentVocab.en.toUpperCase().replace(/[^A-Z0-9]/g, '');
     
     const isCorrect = (cleanInput === cleanTarget);
 
-    // ★★★ 記錄 Log 邏輯 (保持不變) ★★★
+    // --- Battle Log 邏輯 (保持不變) ---
     if (typeof battleLog !== 'undefined') {
         const currentTurn = (typeof turnCounter !== 'undefined' ? turnCounter : 1);
         const existingLogIndex = battleLog.findIndex(log => log.turn === currentTurn);
@@ -4170,10 +4193,20 @@ function checkAnswer() {
         }
     }
 
-    // 結果處理
+    // --- 結果處理 (加入 Local Storage 邏輯) ---
     if (isCorrect) { 
+        // ★ 1. 答對了！從 Local Storage 移除 (該模式) ★
+        // 這樣下次就不會再優先問這個字
+        removeMissedWordLocal(currentVocab.en, currentPracticeMode);
+
         playerFire(true);
+        input.value = ''; // 清空輸入框
+
     } else {
+        // ★ 2. 答錯了！存入 Local Storage (該模式) ★
+        // 這樣下次玩同一個模式時，這個字會排第一
+        saveMissedWordLocal(currentVocab.en, currentPracticeMode);
+
         playSound('wrong-sfx');
         document.getElementById('msg-area').innerText = "CODE INVALID!";
         const d = document.getElementById('q-display');
@@ -6316,7 +6349,67 @@ function startCountdownTimer() {
         }
     }, 100);
 }
+// ==========================================
+// ★★★ Local Storage 錯字管理系統 ★★★
+// ==========================================
 
+// 1. 記錄錯字 (答錯時呼叫)
+function saveMissedWordLocal(wordEn, mode) {
+    // 讀取現有記錄 (如果無就開新物件)
+    let history = JSON.parse(localStorage.getItem('battleship_missed_words') || '{}');
+    
+    // 確保該模式的 Array 存在
+    if (!history[mode]) history[mode] = [];
+    
+    // 如果未記過呢個字，就加落去
+    if (!history[mode].includes(wordEn)) {
+        history[mode].push(wordEn);
+        localStorage.setItem('battleship_missed_words', JSON.stringify(history));
+        console.log(`[Local] Saved missed word: ${wordEn} (${mode})`);
+    }
+}
+
+// 2. 移除錯字 (答對時呼叫)
+function removeMissedWordLocal(wordEn, mode) {
+    let history = JSON.parse(localStorage.getItem('battleship_missed_words') || '{}');
+    
+    if (history[mode]) {
+        // 過濾走呢個字
+        const newList = history[mode].filter(w => w !== wordEn);
+        
+        // 如果長度有變，即係真係刪除咗，就更新 Save
+        if (newList.length !== history[mode].length) {
+            history[mode] = newList;
+            localStorage.setItem('battleship_missed_words', JSON.stringify(history));
+            console.log(`[Local] Removed learned word: ${wordEn} (${mode})`);
+        }
+    }
+}
+
+// 3. 載入錯字到優先隊列 (開局時呼叫)
+function loadMissedWordsToPriorityDeck(mode) {
+    let history = JSON.parse(localStorage.getItem('battleship_missed_words') || '{}');
+    let missedList = history[mode] || [];
+    
+    if (missedList.length > 0) {
+        // 確保 priorityDeck 已初始化
+        if (typeof priorityDeck === 'undefined') priorityDeck = [];
+        
+        let count = 0;
+        missedList.forEach(wordEn => {
+            // ★ 關鍵：檢查呢個錯字係咪屬於今次個 Level (activeVocabList)
+            // 因為錯字庫係記全 Level，但我哋今次只玩 Level 1，無理由出 Level 5 嘅錯字
+            const foundWord = activeVocabList.find(w => w.en === wordEn);
+            
+            if (foundWord) {
+                // 如果搵到，就放入優先隊列 (插隊)
+                priorityDeck.push(foundWord);
+                count++;
+            }
+        });
+        console.log(`[Local] Loaded ${count} missed words into Priority Queue for ${mode}`);
+    }
+}
 /* =========================================
    ★★★ ADVANCED VOICE ENGINE (Smart Timing) ★★★
    ========================================= */
@@ -6507,6 +6600,7 @@ function speakText(text, element = null) {
 </div>
 </body>
 </html>
+
 
 
 
