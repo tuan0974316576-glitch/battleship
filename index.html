@@ -42,8 +42,8 @@
     const auth = getAuth(app);
 
     // 掛載到 window 供 onclick 使用
-    window.firebaseModules = { 
-        getDatabase, ref, set, onValue, update, push, child, get, onDisconnect, off,
+window.firebaseModules = { 
+        initializeApp,getDatabase, ref, set, onValue, update, push, child, get, onDisconnect, off,
         getAuth, signInAnonymously, onAuthStateChanged, GoogleAuthProvider, OAuthProvider, signInWithPopup, signOut 
     };
     window.db = db;
@@ -6613,6 +6613,7 @@ function speakText(text, element = null) {
 </div>
 </body>
 </html>
+
 
 
 
