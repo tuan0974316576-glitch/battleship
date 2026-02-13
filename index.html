@@ -5621,9 +5621,17 @@ window.startExperience = function() {
     // 如果唔加呢句，因為大箱預設係 display: none，你會見到全黑畫面
     const gameWrapper = document.getElementById('game-content-wrapper');
     if (gameWrapper) {
-        gameWrapper.style.display = 'block'; 
+        gameWrapper.style.display = 'block';
         // 額外保險：確保 Login Screen 係 Active 嘅
         document.getElementById('start-screen').style.display = 'flex';
+    }
+
+    // ★ 極速登入：如果 localStorage 有 cached username，即刻跳去主選單
+    // 唔使等 Firebase get(userRef) 返嚟，避免 connecting panel 閃一閃
+    const cachedName = localStorage.getItem('battleship_username');
+    if (cachedName) {
+        if (typeof updateHUD === 'function') updateHUD(cachedName);
+        if (typeof showMainMenu === 'function') showMainMenu();
     }
 }
 
