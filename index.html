@@ -3070,18 +3070,14 @@ function selectMode(mode) {
         
         // 如果有刷新房間列表的邏輯，可以在這裡呼叫 (例如 refreshRoomList())
     } else {
-        // --- AI 模式 (保持原有流程：Menu -> Skill) ---
-        
+        // --- AI 模式 (新流程：Menu -> Level -> Skill) ---
+
         // 只隱藏 Menu 按鈕，保留標題
         document.getElementById('main-menu-carousel').style.display = 'none';
         document.getElementById('game-mode-selection').style.display = 'none';
-        
-        // 顯示 Skill 選擇
-        document.getElementById('skill-screen').style.display = 'flex';
-        
-        // 確保 AI 模式見到 Speaking 按鈕
-        const speakBtn = document.getElementById('btn-skill-speaking');
-        if (speakBtn) speakBtn.style.display = 'flex';
+
+        // 顯示 Level 選擇 (先揀 Level 再揀 Skill)
+        document.getElementById('level-screen').style.display = 'flex';
     }
 }
     
@@ -3089,13 +3085,12 @@ function closeLevelScreen() {
     playSound('delete-sfx');
     document.getElementById('level-screen').style.display = 'none';
 
-    // 邏輯判斷：如果是 AI 模式，按 Back 應該返回上一頁 (Skill 選擇)
-    // 如果你想直接回主頁，也可以改 call showMainMenu()
     if (tempGameMode === 'AI') {
-        document.getElementById('skill-screen').style.display = 'flex';
+        // AI 模式：Level 係第一步，Back 返回主選單
+        showMainMenu();
     } else {
-        // 如果是 PVP 建房時按 Back，也返回 Skill 或是主選單
-        document.getElementById('skill-screen').style.display = 'flex';
+        // PVP 建房時按 Back，返回 Lobby
+        document.getElementById('lobby-screen').style.display = 'flex';
     }
 }
 
@@ -3118,13 +3113,12 @@ function selectLevel(level) {
     document.getElementById('level-screen').style.display = 'none';
 
     if (tempGameMode === 'AI') {
-        // --- AI 模式：Level -> Start Game ---
-        gameMode = 'AI';
-        
-        // 確保 Skill Screen 也是隱藏的 (雙重保險)
-        document.getElementById('skill-screen').style.display = 'none';
-        
-        enterGameUI();
+        // --- AI 模式：Level -> Skill (新流程) ---
+        document.getElementById('skill-screen').style.display = 'flex';
+
+        // 確保 AI 模式見到 Speaking 按鈕
+        const speakBtn = document.getElementById('btn-skill-speaking');
+        if (speakBtn) speakBtn.style.display = 'flex';
     } else {
         // --- PVP 模式：Level -> Skill -> Lobby ---
         // 顯示 Skill 選擇
@@ -5796,8 +5790,9 @@ function selectSkill(skill) {
     document.getElementById('skill-screen').style.display = 'none';
 
     if (tempGameMode === 'AI') {
-        // AI: Skill -> Level (保持原有流程)
-        document.getElementById('level-screen').style.display = 'flex';
+        // AI 新流程：Skill -> Start Game (Level 已經揀咗)
+        gameMode = 'AI';
+        enterGameUI();
     } else {
         // ★ PVP 新流程：Skill -> Create Room (開始遊戲) ★
         gameMode = 'PVP';
@@ -5895,12 +5890,18 @@ function checkSpeakingResult(spokenText) {
     }
 }
 
-// 返回主選單 (Back 掣)
+// 返回上一頁 (Back 掣)
 function backToMainMenu() {
     playSound('delete-sfx');
     document.getElementById('skill-screen').style.display = 'none';
-    
-    showMainMenu();
+
+    if (tempGameMode === 'AI') {
+        // AI 模式：Skill 係第二步，Back 返回 Level 選擇
+        document.getElementById('level-screen').style.display = 'flex';
+    } else {
+        // 其他模式返回主選單
+        showMainMenu();
+    }
 }
 /* =========================================
    ★★★ CYBERPUNK MATRIX EFFECT (平衡版：清晰但不刺眼) ★★★
