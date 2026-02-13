@@ -5608,8 +5608,6 @@ function showMainMenu() {
     initCarouselControl();
 }
 
-// --- 新增：點擊開始遊戲 ---
-// --- 新增：點擊開始遊戲 (修正版：顯示大箱) ---
 window.startExperience = function() {
     window.ignoreConnectionAlert = true;
     setTimeout(() => {
@@ -5924,27 +5922,38 @@ function generateSmartBlanks(text) {
     }
     return html;
 }
-// --- 6. 技能選擇與導航 ---
-
-// --- 修正版：選擇技能 (PVP 最終站) ---
-function selectSkill(skill) {
+// --- 修正版：選擇技能 (包含 PVP 開房 + 錯字載入) ---
+async function selectSkill(skill) {
     currentPracticeMode = skill; 
     playSound('deploy-sfx');
 
+    // 1. 預熱語音引擎 (舊有邏輯)
     if (skill === 'LISTENING') {
         if (typeof warmUpVoiceEngine === 'function') warmUpVoiceEngine();
     }
 
-    // 隱藏 Skill 選單
+    // 2. ★ 新增：載入錯字 (Local Storage) ★
+    // 如果唔加呢段，錯字功能就會失效
+    if (typeof loadMissedWordsToPriorityDeck === 'function') {
+        loadMissedWordsToPriorityDeck(skill); 
+    }
+
+    // 3. 隱藏 Skill 選單
     document.getElementById('skill-screen').style.display = 'none';
 
+    // 4. 核心分流邏輯
     if (tempGameMode === 'AI') {
-        // AI 新流程：Skill -> Start Game (Level 已經揀咗)
+        // --- AI 模式：直接開始 ---
         gameMode = 'AI';
         enterGameUI();
     } else {
-        // ★ PVP 新流程：Skill -> Create Room (開始遊戲) ★
+        // --- PVP 模式：建立房間 ---
         gameMode = 'PVP';
+        
+        // 保險措施：確保 Lobby 畫面係開緊嘅
+        document.getElementById('lobby-screen').style.display = 'flex';
+        
+        // ★ 關鍵：呼叫開房函數！
         createRoom();
     }
 }
@@ -6607,5 +6616,6 @@ function speakText(text, element = null) {
 </div>
 </body>
 </html>
+
 
 
