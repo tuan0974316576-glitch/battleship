@@ -3134,6 +3134,7 @@ function setGameTimeout(callback, delay) {
 }
 
 function startEnemyTurn() {
+    if (currentPhase === 'GAME_OVER') return;
     currentPhase = 'ENEMY_TURN';
     switchScene('ENEMY');
     document.getElementById('warning-overlay').style.display = 'block';
@@ -4350,6 +4351,7 @@ function addSmartTargets(index) {
     });
 }
 function aiFire() {
+    if (currentPhase === 'GAME_OVER') return;
     playSound('laser-sfx');
     let t;
     
@@ -4411,6 +4413,7 @@ function aiFire() {
 }
 
 function startPlayerTurn() {
+        if (currentPhase === 'GAME_OVER') return;
         // ★ 新增：回合數 +1 ★
         turnCounter++;
         document.getElementById('turn-count').innerText = turnCounter;
@@ -4852,6 +4855,12 @@ function executeAbort() {
         // 1. 停止所有計時器 (費事背景仲倒數緊)
         if (turnTimerInterval) clearInterval(turnTimerInterval);
         if (timerInterval) clearInterval(timerInterval);
+
+        // ★ 關鍵修正：清除所有排隊中嘅 AI 動作 (startEnemyTurn / aiFire 等)
+        if (typeof gameTimeouts !== 'undefined') {
+            gameTimeouts.forEach(id => clearTimeout(id));
+            gameTimeouts = [];
+        }
         
         // 2. 生成戰後報告 (這就是你要的！)
         if(typeof renderReview === 'function') renderReview();
