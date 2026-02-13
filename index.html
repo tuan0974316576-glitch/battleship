@@ -53,17 +53,32 @@
     onAuthStateChanged(auth, (u) => {
         const overlay = document.getElementById('login-overlay');
         if (u) {
+            window.isFirebaseAuthenticated = true;
             window.myPlayerId = u.uid;
             // 登入後從 Firebase 載入錯字記錄
             if (typeof loadWrongWordsFromFirebase === 'function') loadWrongWordsFromFirebase();
+
+            // ★ 極速登入：如果 localStorage 有 cached username，即刻顯示主選單
+            // 唔使等 get(userRef) 回應，避免 connecting panel 閃一閃
+            const cachedName = localStorage.getItem('battleship_username');
+            if (cachedName) {
+                if(typeof updateHUD === 'function') updateHUD(cachedName);
+                if(typeof showMainMenu === 'function') showMainMenu();
+                if(overlay) overlay.style.display = 'none';
+            }
+
+            // 背景 fetch Firebase 數據 (更新名稱 / 處理新用戶)
             const userRef = ref(db, 'users/' + u.uid);
             get(userRef).then((snapshot) => {
                 if (snapshot.exists() && snapshot.val().displayName) {
-                    // 舊用戶
+                    // 舊用戶 — 更新名稱 (可能 Firebase 上改過名)
                     const realName = snapshot.val().displayName;
                     localStorage.setItem('battleship_username', realName);
                     if(typeof updateHUD === 'function') updateHUD(realName);
-                    if(typeof showMainMenu === 'function') showMainMenu();
+                    // 如果之前已經用 cached name 顯示咗主選單，就唔使再 call
+                    if (!cachedName) {
+                        if(typeof showMainMenu === 'function') showMainMenu();
+                    }
                     if(overlay) overlay.style.display = 'none';
                 } else {
                     // 新用戶
@@ -85,8 +100,16 @@
                 }
             });
         } else {
+            window.isFirebaseAuthenticated = false;
+            // ★ 清除可能殘留嘅 cached username (確保下次唔會誤跳主選單)
+            localStorage.removeItem('battleship_username');
             if(overlay) overlay.style.display = 'none';
             if(typeof switchHudPanel === 'function') switchHudPanel('login-panel');
+            // ★ 確保主選單元素都隱藏 (防止之前 showMainMenu 留低嘅狀態)
+            const carousel = document.getElementById('main-menu-carousel');
+            const gameModeSelect = document.getElementById('game-mode-selection');
+            if (carousel) carousel.style.display = 'none';
+            if (gameModeSelect) gameModeSelect.style.display = 'none';
         }
     });
 
@@ -5622,17 +5645,11 @@ window.startExperience = function() {
     const gameWrapper = document.getElementById('game-content-wrapper');
     if (gameWrapper) {
         gameWrapper.style.display = 'block';
-        // 額外保險：確保 Login Screen 係 Active 嘅
         document.getElementById('start-screen').style.display = 'flex';
     }
-
-    // ★ 極速登入：如果 localStorage 有 cached username，即刻跳去主選單
-    // 唔使等 Firebase get(userRef) 返嚟，避免 connecting panel 閃一閃
-    const cachedName = localStorage.getItem('battleship_username');
-    if (cachedName) {
-        if (typeof updateHUD === 'function') updateHUD(cachedName);
-        if (typeof showMainMenu === 'function') showMainMenu();
-    }
+    // 注意：Auth 邏輯全部由 onAuthStateChanged 處理
+    // 佢會喺 page load 時已經設定好正確嘅 panel 狀態
+    // startExperience() 只負責顯示 game-content-wrapper，唔做 auth 決策
 }
 
 // 輔助函數：切換 HUD 面板
