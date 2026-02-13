@@ -22,9 +22,9 @@
     </script>
     
 <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getDatabase, ref, set, onValue, update, push, child, get, onDisconnect, off } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
-    import { getAuth, signInAnonymously, onAuthStateChanged, GoogleAuthProvider, OAuthProvider, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  import { getDatabase, ref, set, onValue, update, push, child, get, onDisconnect, off } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+  import { getAuth, signInAnonymously, onAuthStateChanged, GoogleAuthProvider, OAuthProvider, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyBdfTgb7FpkYdgjvrYWQ0jr-N-1fAaW9Q0",
@@ -42,13 +42,14 @@
     const auth = getAuth(app);
 
     // 掛載到 window 供 onclick 使用
-    window.firebaseModules = { 
-        getDatabase, ref, set, onValue, update, push, child, get, onDisconnect, off,
-        getAuth, signInAnonymously, onAuthStateChanged, GoogleAuthProvider, OAuthProvider, signInWithPopup, signOut 
-    };
+window.firebaseModules = {
+      initializeApp,
+      getDatabase, ref, set, onValue, update, push, child, get, onDisconnect, off,
+      getAuth, signInAnonymously, onAuthStateChanged, GoogleAuthProvider, OAuthProvider, signInWithPopup, signOut
+  };
     window.db = db;
     window.auth = auth;
-
+console.log("Firebase Modules Loaded Successfully");
     // --- 1. 登入狀態監聽 (包含 Guest 自動派名) ---
     onAuthStateChanged(auth, (u) => {
         const overlay = document.getElementById('login-overlay');
@@ -5922,23 +5923,24 @@ function generateSmartBlanks(text) {
     }
     return html;
 }
-// --- 修正版：選擇技能 (包含 PVP 開房 + 錯字載入) ---
+// --- 最終修正版：選擇技能 (PVP 救星) ---
 async function selectSkill(skill) {
+    console.log("Skill Selected:", skill);
     currentPracticeMode = skill; 
     playSound('deploy-sfx');
 
-    // 1. 預熱語音引擎 (舊有邏輯)
+    // 1. 預熱語音 (Listening 專用)
     if (skill === 'LISTENING') {
         if (typeof warmUpVoiceEngine === 'function') warmUpVoiceEngine();
     }
 
-    // 2. ★ 新增：載入錯字 (Local Storage) ★
-    // 如果唔加呢段，錯字功能就會失效
+    // 2. ★ 載入錯字 (Local Storage) ★
+    // 確保錯字功能運作
     if (typeof loadMissedWordsToPriorityDeck === 'function') {
         loadMissedWordsToPriorityDeck(skill); 
     }
 
-    // 3. 隱藏 Skill 選單
+    // 3. 隱藏 Skill 畫面
     document.getElementById('skill-screen').style.display = 'none';
 
     // 4. 核心分流邏輯
@@ -5947,14 +5949,19 @@ async function selectSkill(skill) {
         gameMode = 'AI';
         enterGameUI();
     } else {
-        // --- PVP 模式：建立房間 ---
+        // --- PVP 模式：執行開房！ ---
         gameMode = 'PVP';
         
-        // 保險措施：確保 Lobby 畫面係開緊嘅
+        // ★ 保險措施：確保 Lobby 畫面係開緊嘅 (避免黑畫面)
         document.getElementById('lobby-screen').style.display = 'flex';
         
         // ★ 關鍵：呼叫開房函數！
-        createRoom();
+        if (typeof createRoom === 'function') {
+            createRoom();
+        } else {
+            console.error("createRoom function not found!");
+            alert("Error: createRoom function missing.");
+        }
     }
 }
 
@@ -6616,6 +6623,7 @@ function speakText(text, element = null) {
 </div>
 </body>
 </html>
+
 
 
 
