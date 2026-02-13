@@ -54,6 +54,8 @@
         const overlay = document.getElementById('login-overlay');
         if (u) {
             window.myPlayerId = u.uid;
+            // 登入後從 Firebase 載入錯字記錄
+            if (typeof loadWrongWordsFromFirebase === 'function') loadWrongWordsFromFirebase();
             const userRef = ref(db, 'users/' + u.uid);
             get(userRef).then((snapshot) => {
                 if (snapshot.exists() && snapshot.val().displayName) {
@@ -2945,6 +2947,94 @@ let battleLog = [];
     sortDatabase();
     // ★★★ 排序代碼結束 ★★★
 
+    // =========================================
+    // ★★★ 錯字記錄系統 (Wrong Words Tracker) ★★★
+    // Firebase 為主 (登入用戶)，localStorage 為 fallback (Guest/離線)
+    // =========================================
+
+    const WRONG_WORDS_LS_KEY = 'battleship_wrongWords';
+
+    // 從 localStorage 載入錯字記錄
+    function loadWrongWordsFromLocal() {
+        try {
+            const data = localStorage.getItem(WRONG_WORDS_LS_KEY);
+            if (data) wrongWordsDB = JSON.parse(data);
+        } catch (e) {
+            console.warn('loadWrongWordsFromLocal error:', e);
+        }
+    }
+
+    // 儲存錯字記錄到 localStorage
+    function saveWrongWordsToLocal() {
+        try {
+            localStorage.setItem(WRONG_WORDS_LS_KEY, JSON.stringify(wrongWordsDB));
+        } catch (e) {
+            console.warn('saveWrongWordsToLocal error:', e);
+        }
+    }
+
+    // 從 Firebase 載入錯字記錄 (登入用戶)
+    function loadWrongWordsFromFirebase() {
+        if (!window.myPlayerId || !window.db) return;
+        const { ref, get } = window.firebaseModules;
+        const wrongRef = ref(window.db, 'users/' + window.myPlayerId + '/wrongWords');
+        get(wrongRef).then((snapshot) => {
+            if (snapshot.exists()) {
+                wrongWordsDB = snapshot.val();
+                saveWrongWordsToLocal(); // 同步到 localStorage 做 backup
+                console.log('Loaded wrong words from Firebase:', wrongWordsDB);
+            }
+        }).catch(e => console.warn('loadWrongWordsFromFirebase error:', e));
+    }
+
+    // 同步錯字記錄到 Firebase
+    function syncWrongWordsToFirebase() {
+        if (!window.myPlayerId || !window.db) return;
+        const { ref, set } = window.firebaseModules;
+        const wrongRef = ref(window.db, 'users/' + window.myPlayerId + '/wrongWords');
+        set(wrongRef, wrongWordsDB).catch(e => console.warn('syncWrongWordsToFirebase error:', e));
+    }
+
+    // 記錄一個錯字
+    function saveWrongWord(skill, level, wordEn) {
+        if (!wrongWordsDB[skill]) wrongWordsDB[skill] = {};
+        if (!wrongWordsDB[skill][level]) wrongWordsDB[skill][level] = {};
+        if (!wrongWordsDB[skill][level][wordEn]) {
+            wrongWordsDB[skill][level][wordEn] = 1;
+        } else {
+            wrongWordsDB[skill][level][wordEn]++;
+        }
+        saveWrongWordsToLocal();
+        syncWrongWordsToFirebase();
+    }
+
+    // 移除一個錯字 (答啱咗)
+    function removeWrongWord(skill, level, wordEn) {
+        if (wrongWordsDB[skill] && wrongWordsDB[skill][level] && wrongWordsDB[skill][level][wordEn]) {
+            delete wrongWordsDB[skill][level][wordEn];
+            // 清理空物件
+            if (Object.keys(wrongWordsDB[skill][level]).length === 0) delete wrongWordsDB[skill][level];
+            if (Object.keys(wrongWordsDB[skill]).length === 0) delete wrongWordsDB[skill];
+            saveWrongWordsToLocal();
+            syncWrongWordsToFirebase();
+        }
+    }
+
+    // 獲取當前 skill+level 的錯字 vocab 物件列表
+    function getWrongWordsForSession(skill, level) {
+        if (!wrongWordsDB[skill] || !wrongWordsDB[skill][level]) return [];
+        const wrongKeys = Object.keys(wrongWordsDB[skill][level]);
+        if (wrongKeys.length === 0) return [];
+        const levelVocab = VOCAB_DB[level];
+        if (!levelVocab) return [];
+        return levelVocab.filter(v => wrongKeys.includes(v.en));
+    }
+
+    // 初始化：先從 localStorage 載入
+    loadWrongWordsFromLocal();
+
+    // ★★★ 錯字記錄系統結束 ★★★
+
 
     // ... 下面接回你原本的代碼 ...
     let lastProcessedTimestamp = 0; // ★ 新增：防止重複處理同一手棋
@@ -3009,8 +3099,10 @@ const DAMAGED_IMAGES = [
 
     // 全局變數：當前使用的生字表
     
-    let activeVocabList = []; 
+    let activeVocabList = [];
     let sessionDeck = [];
+    let wrongWordsDeck = []; // 優先出錯字 deck
+    let wrongWordsDB = {};   // { READING: { L1: { "apple": 1 }, ... }, LISTENING: {...}, SPEAKING: {...} }
     let selectedLevel = 'L1'; // 預設
     let tempGameMode = 'AI';  // 暫存模式選擇
 
@@ -3133,13 +3225,19 @@ function enterGameUI() {
     const bgm = document.getElementById('bgm');
     if (bgm) { bgm.volume = 0.5; bgm.play().then(()=>isMusicPlaying=true).catch(e=>{}); }
 
+    // ★ 初始化錯字優先 deck：將之前錯過的字排先出
+    wrongWordsDeck = getWrongWordsForSession(currentPracticeMode, selectedLevel);
+    if (wrongWordsDeck.length > 0) {
+        console.log(`[Wrong Words] ${wrongWordsDeck.length} words to review for ${currentPracticeMode}/${selectedLevel}`);
+    }
+
     document.getElementById('start-screen').style.display = 'none';
     document.getElementById('lobby-screen').style.display = 'none';
-    
+
     const gameUI = document.getElementById('game-ui');
     gameUI.style.display = 'flex';
     setTimeout(() => { gameUI.style.opacity = '1'; }, 50);
-    
+
     startDeploymentTimer();
     
     // 刪除了 global-back-btn 的控制碼
@@ -3760,27 +3858,34 @@ function openLaunchModal(index) {
         return;
     }
 
-// 準備題目 (抽卡機制)
-    
-    // 1. 如果「手牌」抽乾了，重新由原本的 List 補滿 (洗牌)
-    if (sessionDeck.length === 0) {
-        console.log("Deck empty! Reshuffling...");
-        if (activeVocabList.length === 0) {
-            alert("Error: Database is empty!");
-            return;
+// 準備題目 (抽卡機制 + 錯字優先)
+
+    // 0. 優先出錯字：如果 wrongWordsDeck 有字，先出錯字
+    if (wrongWordsDeck.length > 0) {
+        const wIdx = Math.floor(Math.random() * wrongWordsDeck.length);
+        currentVocab = wrongWordsDeck[wIdx];
+        wrongWordsDeck.splice(wIdx, 1);
+        console.log(`[Wrong Words] Prioritizing: ${currentVocab.en} (${wrongWordsDeck.length} remaining)`);
+    } else {
+        // 1. 如果「手牌」抽乾了，重新由原本的 List 補滿 (洗牌)
+        if (sessionDeck.length === 0) {
+            console.log("Deck empty! Reshuffling...");
+            if (activeVocabList.length === 0) {
+                alert("Error: Database is empty!");
+                return;
+            }
+            sessionDeck = [...activeVocabList]; // 重新複製
         }
-        sessionDeck = [...activeVocabList]; // 重新複製
+
+        // 2. 從剩餘的手牌中，隨機抽出一個 index
+        const randIndex = Math.floor(Math.random() * sessionDeck.length);
+
+        // 3. 設定當前題目
+        currentVocab = sessionDeck[randIndex];
+
+        // 4. ★ 關鍵：從手牌中移除這個字 (Splice)
+        sessionDeck.splice(randIndex, 1);
     }
-
-    // 2. 從剩餘的手牌中，隨機抽出一個 index
-    const randIndex = Math.floor(Math.random() * sessionDeck.length);
-    
-    // 3. 設定當前題目
-    currentVocab = sessionDeck[randIndex];
-
-    // 4. ★ 關鍵：從手牌中移除這個字 (Splice)
-    // 這樣下一回合就不會再抽中它，直到成副牌抽完
-sessionDeck.splice(randIndex, 1);
 
     if (currentVocab.sents && currentVocab.sents.length > 0) {
         const randSentIndex = Math.floor(Math.random() * currentVocab.sents.length);
@@ -3960,10 +4065,13 @@ function handlePlayerTimeout() {
             battleLog.push({
                 turn: currentTurn,
                 user: userDisplay,    // ★ 使用殘留文字
-                correct: correctContent, 
+                correct: correctContent,
                 isCorrect: false
             });
         }
+
+        // ★ 錯字記錄：Timeout 都算答錯
+        saveWrongWord(currentPracticeMode, selectedLevel, currentVocab.en);
     }
 
     // 3. 邏輯分支 (保持不變)
@@ -4108,8 +4216,15 @@ function checkAnswer() {
         }
     }
 
+    // ★ 錯字記錄：答啱就移除，答錯就記錄
+    if (isCorrect) {
+        removeWrongWord(currentPracticeMode, selectedLevel, currentVocab.en);
+    } else {
+        saveWrongWord(currentPracticeMode, selectedLevel, currentVocab.en);
+    }
+
     // 結果處理
-    if (isCorrect) { 
+    if (isCorrect) {
         playerFire(true);
     } else {
         playSound('wrong-sfx');
@@ -5871,18 +5986,24 @@ function checkSpeakingResult(spokenText) {
             });
         }
 
+        // ★ 錯字記錄：答啱就移除
+        removeWrongWord(currentPracticeMode, selectedLevel, currentVocab.en);
+
         // UI 顯示
         const scorePercent = Math.floor(similarity * 100);
         document.getElementById('msg-area').innerText = `ACCURACY: ${scorePercent}% // MATCH CONFIRMED!`;
         document.getElementById('msg-area').style.color = "var(--success)";
-        
-        playSound('enter-sfx'); 
-        
+
+        playSound('enter-sfx');
+
         // 延遲 1 秒發射
         setTimeout(() => playerFire(true), 1000);
 
     } else {
         // --- 讀錯 ---
+        // ★ 錯字記錄：答錯就記錄
+        saveWrongWord(currentPracticeMode, selectedLevel, currentVocab.en);
+
         const scorePercent = Math.floor(similarity * 100);
         document.getElementById('msg-area').innerText = `ACCURACY: ${scorePercent}% // TOO LOW - TRY AGAIN`;
         document.getElementById('msg-area').style.color = "var(--danger)";
