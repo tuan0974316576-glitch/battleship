@@ -42,8 +42,8 @@
     const auth = getAuth(app);
 
     // 掛載到 window 供 onclick 使用
-window.firebaseModules = { 
-        initializeApp,getDatabase, ref, set, onValue, update, push, child, get, onDisconnect, off,
+    window.firebaseModules = { 
+        getDatabase, ref, set, onValue, update, push, child, get, onDisconnect, off,
         getAuth, signInAnonymously, onAuthStateChanged, GoogleAuthProvider, OAuthProvider, signInWithPopup, signOut 
     };
     window.db = db;
@@ -3176,32 +3176,24 @@ function selectMode(mode) {
     tempGameMode = mode; 
     playSound('deploy-sfx');
     
-    // 1. 隱藏主選單 (確保首頁個 Menu 消失)
-    const menu = document.getElementById('main-menu-carousel');
-    if (menu) menu.style.display = 'none';
-    
-    const modeSelect = document.getElementById('game-mode-selection');
-    if (modeSelect) modeSelect.style.display = 'none';
-
     if (mode === 'PVP') {
-        // --- PVP 模式 ---
-        // 隱藏標題畫面，顯示大廳 (Lobby)
+        // ★ 修復問題 2：隱藏整個標題畫面 (包括 Title 同 User Profile)
+        // 這樣就不會擋住 Lobby 的按鈕
         document.getElementById('start-screen').style.display = 'none';
+        
+        // ★ 修復問題 1：PVP 直接去 Lobby (跳過 Skill 選擇)
         document.getElementById('lobby-screen').style.display = 'flex';
         
-        // 顯示 Player ID (如果有)
-        const pidEl = document.getElementById('player-id-display');
-        if (pidEl && window.myPlayerId) {
-            const savedName = localStorage.getItem('battleship_username');
-            pidEl.innerText = savedName || window.myPlayerId.substring(0, 8);
-        }
+        // 如果有刷新房間列表的邏輯，可以在這裡呼叫 (例如 refreshRoomList())
     } else {
-        // --- AI 模式 ---
-        // 直接去選 Level (跳過 Lobby)
+        // --- AI 模式 (新流程：Menu -> Level -> Skill) ---
+
+        // 只隱藏 Menu 按鈕，保留標題
+        document.getElementById('main-menu-carousel').style.display = 'none';
+        document.getElementById('game-mode-selection').style.display = 'none';
+
+        // 顯示 Level 選擇 (先揀 Level 再揀 Skill)
         document.getElementById('level-screen').style.display = 'flex';
-        
-        // 確保 Skill 畫面係隱藏嘅
-        document.getElementById('skill-screen').style.display = 'none';
     }
 }
     
@@ -3251,33 +3243,6 @@ function selectLevel(level) {
         // PVP 暫時隱藏 Speaking Mode (如需要)
         const speakBtn = document.getElementById('btn-skill-speaking');
         if (speakBtn) speakBtn.style.display = 'none';
-    }
-}
-// ★★★ 核心修復：處理 Skill 按鈕點擊 ★★★
-async function startGameWithMode(mode) {
-    currentPracticeMode = mode;
-    console.log(`Mode selected: ${mode} | Game Type: ${tempGameMode}`);
-    playSound('deploy-sfx');
-
-    // 1. 載入錯字 (如果有這個功能)
-    if (typeof loadMissedWordsToPriorityDeck === 'function') {
-        loadMissedWordsToPriorityDeck(mode); 
-    }
-
-    // 2. 隱藏 Skill 畫面
-    document.getElementById('skill-screen').style.display = 'none';
-
-    // 3. 分流處理
-    if (tempGameMode === 'PVP') {
-        // ★★★ PVP 關鍵：執行開房！ ★★★
-        // 這裡會呼叫 createRoom，生成 4位數 ID 並顯示在 Lobby
-        document.getElementById('lobby-screen').style.display = 'flex'; 
-        gameMode = 'PVP';
-        createRoom(); 
-    } else {
-        // ★★★ AI 關鍵：直接開始遊戲 ★★★
-        gameMode = 'AI';
-        enterGameUI();
     }
 }
 function enterGameUI() {
@@ -5978,10 +5943,8 @@ function selectSkill(skill) {
         gameMode = 'AI';
         enterGameUI();
     } else {
-        // ★ PVP 新流程：Skill -> Create Room -> 返回 Lobby 等人加入 ★
+        // ★ PVP 新流程：Skill -> Create Room (開始遊戲) ★
         gameMode = 'PVP';
-        // 確保 lobby-screen 顯示（之前被 level/skill screen 遮住）
-        document.getElementById('lobby-screen').style.display = 'flex';
         createRoom();
     }
 }
@@ -6644,8 +6607,5 @@ function speakText(text, element = null) {
 </div>
 </body>
 </html>
-
-
-
 
 
