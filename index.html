@@ -3180,11 +3180,15 @@ function selectMode(mode) {
         // ★ 修復問題 2：隱藏整個標題畫面 (包括 Title 同 User Profile)
         // 這樣就不會擋住 Lobby 的按鈕
         document.getElementById('start-screen').style.display = 'none';
-        
+
         // ★ 修復問題 1：PVP 直接去 Lobby (跳過 Skill 選擇)
         document.getElementById('lobby-screen').style.display = 'flex';
-        
-        // 如果有刷新房間列表的邏輯，可以在這裡呼叫 (例如 refreshRoomList())
+
+        // ★ 顯示玩家 ID
+        const pidEl = document.getElementById('player-id-display');
+        if (pidEl && window.myPlayerId) {
+            pidEl.innerText = localStorage.getItem('battleship_username') || window.myPlayerId.substring(0, 8);
+        }
     } else {
         // --- AI 模式 (新流程：Menu -> Level -> Skill) ---
 
@@ -5943,8 +5947,10 @@ function selectSkill(skill) {
         gameMode = 'AI';
         enterGameUI();
     } else {
-        // ★ PVP 新流程：Skill -> Create Room (開始遊戲) ★
+        // ★ PVP 新流程：Skill -> Create Room -> 返回 Lobby 等人加入 ★
         gameMode = 'PVP';
+        // 確保 lobby-screen 顯示（之前被 level/skill screen 遮住）
+        document.getElementById('lobby-screen').style.display = 'flex';
         createRoom();
     }
 }
