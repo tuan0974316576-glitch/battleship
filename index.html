@@ -5671,11 +5671,12 @@ function switchHudPanel(panelId) {
     }
 }
 
-// 9. 核心監聽器 (修正版：修復 Guest Login 同 Logout 卡死問題)
+// 9. 核心監聽器 (已修復 ID 顯示 + PVP 變數問題 + 完整整合版)
 window.addEventListener('load', () => {
-    createTwinklingStars();
+    // 1. 建立背景星星
+    if(typeof createTwinklingStars === 'function') createTwinklingStars();
     
-    // ★ 1. 確保隨機名生成器存在 (如果未有，就在這裡定義)
+    // 2. 確保隨機名生成器存在
     if (typeof generateGuestId !== 'function') {
         window.generateGuestId = function() {
             const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -5686,13 +5687,148 @@ window.addEventListener('load', () => {
         };
     }
 
-    // 2. 極速登入檢查 (Cache Check)
+    // 3. 極速登入檢查 (Cache Check)
     const cachedName = localStorage.getItem('battleship_username');
     if (cachedName) {
         console.log("🚀 FAST LOGIN: Found cached user -> " + cachedName);
         updateHUD(cachedName);
     }
-    });
+
+    // 4. 延遲啟動 Firebase (確保模組載入完成)
+    setTimeout(() => {
+        const { initializeApp, getDatabase, getAuth, onAuthStateChanged, ref, onValue, get, update } = window.firebaseModules;
+        
+        // 初始化 Firebase (記得之前改過 let app/db 做 var 嗎？這裡會用到)
+        app = initializeApp(firebaseConfig);
+        db = getDatabase(app);
+        auth = getAuth(app);
+
+        // ★★★ Firebase 狀態監聽 (ID 顯示就在這裡！) ★★★
+        onAuthStateChanged(auth, u => {
+            const overlay = document.getElementById('login-overlay');
+
+            if (u) {
+                // --- 情況 A：已登入 (User Found) ---
+                myPlayerId = u.uid;
+                
+                // ★★★★★ 就在這裡！加番顯示 ID 的代碼 ★★★★★
+                const disp = document.getElementById('player-id-display');
+                if(disp) {
+                    // 攞 UID 前 6 個字，轉大寫，變綠色
+                    disp.innerText = u.uid.substring(0,6).toUpperCase(); 
+                    disp.style.color = "var(--success)"; 
+                }
+                // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+
+                // 檢查 Database 確認真名
+                const userRef = ref(db, 'users/' + u.uid);
+                get(userRef).then((snapshot) => {
+                    if (snapshot.exists() && snapshot.val().displayName) {
+                        // 1. 舊人 (有記錄)：直接入 Game
+                        const realName = snapshot.val().displayName;
+                        localStorage.setItem('battleship_username', realName);
+                        updateHUD(realName);
+                        
+                        switchHudPanel('user-profile-panel');
+                        showMainMenu(); 
+                        
+                        if(overlay) overlay.style.display = 'none';
+
+                    } else {
+                        // 2. 新人 (無名)：分 Guest 定 Google
+                        if (u.isAnonymous) {
+                            // Guest 自動派名
+                            const autoName = window.generateGuestId(); 
+                            update(ref(db, 'users/' + u.uid), { 
+                                displayName: autoName,
+                                lastLogin: Date.now()
+                            }).then(() => {
+                                localStorage.setItem('battleship_username', autoName);
+                                updateHUD(autoName);
+                                
+                                switchHudPanel('user-profile-panel');
+                                showMainMenu();
+                                
+                                playSound('deploy-sfx'); 
+                                console.log(`GUEST AUTO-LOGIN: ${autoName}`);
+
+                                if(overlay) overlay.style.display = 'none';
+                            }).catch(e => {
+                                console.error("Guest Update Error:", e);
+                                if(overlay) overlay.style.display = 'none';
+                            });
+
+                        } else {
+                            // Google 新人：彈窗改名
+                            switchHudPanel('user-profile-panel'); 
+                            if(overlay) overlay.style.display = 'none';
+
+                            const regModal = document.getElementById('registration-modal');
+                            if(regModal) {
+                                regModal.style.display = 'flex';
+                                playSound('new-commander-sfx'); 
+                            }
+                        }
+                    }
+                });
+
+            } else {
+                // --- 情況 B：未登入 (No User) ---
+                if (cachedName) localStorage.removeItem('battleship_username');
+                
+                switchHudPanel('login-panel');
+                if(overlay) overlay.style.display = 'none';
+            }
+        });
+
+        // 連線狀態監測
+        const connectedRef = ref(db, ".info/connected");
+        onValue(connectedRef, (snap) => {
+            const el = document.getElementById('connection-status');
+            if (!el) return; 
+            
+            el.style.display = 'block';
+            
+            if (snap.val() === true) {
+                el.style.background = "#22c55e"; 
+                el.style.boxShadow = "0 0 5px #22c55e";
+            } else {
+                const splash = document.getElementById('splash-screen');
+                const isSplashVisible = (splash && splash.style.display !== 'none');
+                
+                if (isSplashVisible || window.ignoreConnectionAlert) {
+                    return; 
+                }
+
+                el.style.background = "#ef4444"; 
+                el.style.boxShadow = "0 0 5px #ef4444";
+                
+                if (typeof showNotification === 'function') {
+                    showNotification("CONNECTION LOST!", "error"); 
+                }
+            }
+        });
+        
+        // 遊戲初始化
+        createGrid('player-grid');
+        createGrid('enemy-grid');
+        placeEnemyShips(); 
+        renderSidebar();
+
+        // 音效監聽 (輸入框)
+        const roomInput = document.getElementById('room-id-input');
+        if (roomInput) {
+            roomInput.addEventListener('input', (e) => {
+                if (e.inputType === 'deleteContentBackward' || e.inputType === 'deleteContentForward') {
+                    playSound('delete-sfx');
+                } else {
+                    playSound('enter-sfx'); 
+                }
+            });
+        }
+
+    }, 500); // 延遲 500ms 啟動
+});
     
 // 10. BGM 播放
 function playBgm() {
