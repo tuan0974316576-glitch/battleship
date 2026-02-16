@@ -3362,117 +3362,125 @@ function joinRoom() {
     }
 
 function initPVPListeners() {
-        const { ref, onValue, off } = window.firebaseModules;
+    const { ref, onValue, off } = window.firebaseModules;
+    
+    // 1. 先移除舊的監聽 (防止累積)
+    const roomRef = ref(db, 'rooms/' + currentRoomId);
+    off(roomRef); 
+
+    // 2. 啟動新監聽 (這個監聽器在部署階段已經開始運作！)
+    onValue(roomRef, (snapshot) => {
+        const data = snapshot.val();
+
+        // ★★★ 新增：即時斷線偵測 (Deployment 階段都生效) ★★★
         
-        // 1. 先移除舊的監聽 (防止累積)
-        const roomRef = ref(db, 'rooms/' + currentRoomId);
-        off(roomRef); 
+        // Case A: 房間被刪除 (Host 走了)
+        // 如果 data 變成 null，代表 Host 已經解散房間
+        if (!data) {
+            // 防止 Game Over 後重複觸發
+            if (currentPhase === 'GAME_OVER') return; 
+            
+            showNotification("CONNECTION LOST (HOST LEFT)", "error");
+            playSound('wrong-sfx');
+            
+            // 延遲 1.5 秒讓玩家看清楚訊息，然後彈回大廳
+            setTimeout(() => resetGame(), 1500);
+            return; 
+        }
 
-        // 2. 啟動新監聽
-        onValue(roomRef, (snapshot) => {
-            const data = snapshot.val();
-            if (!data) return;
+        // Case B: Guest 離開 (Host 視角)
+        // 如果我是 Host，但見到 guest 欄位變回 null
+        if (playerRole === 'host' && !data.guest) {
+            if (currentPhase === 'GAME_OVER') return;
 
-            // --- 勝利/失敗 判斷 ---
-            if (data.winner) {
-                if (currentPhase === 'GAME_OVER') return; // 如果已經完咗就唔好再彈
+            showNotification("OPPONENT DISCONNECTED", "error");
+            playSound('wrong-sfx');
+            
+            setTimeout(() => resetGame(), 1500);
+            return;
+        }
+        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+
+        // --- 勝利/失敗 判斷 (保持不變) ---
+        if (data.winner) {
+            if (currentPhase === 'GAME_OVER') return; 
+            
+            if (data.winner === playerRole) {
+                renderReview();
+                document.getElementById('end-title').innerText = "VICTORY";
+                document.getElementById('end-title').style.color = "var(--success)";
+                document.getElementById('end-title').style.textShadow = "0 0 30px var(--success)";
                 
-                if (data.winner === playerRole) {
-                    renderReview();
-                    document.getElementById('end-title').innerText = "VICTORY";
-                    document.getElementById('end-title').style.color = "var(--success)";
-                    document.getElementById('end-title').style.textShadow = "0 0 30px var(--success)";
-                    
-                    const reason = data.endReason === 'disconnected' ? "CONNECTION LOST" : 
-                                   data.endReason === 'surrendered' ? "SURRENDERED" : "DESTROYED";
-                    document.getElementById('end-msg').innerText = `ENEMY ${reason}`;
-                    
-                    document.getElementById('end-screen').style.display = "flex";
-                    playSound('victory-sfx'); 
+                const reason = data.endReason === 'disconnected' ? "CONNECTION LOST" : 
+                               data.endReason === 'surrendered' ? "SURRENDERED" : "DESTROYED";
+                document.getElementById('end-msg').innerText = `ENEMY ${reason}`;
+                
+                document.getElementById('end-screen').style.display = "flex";
+                playSound('victory-sfx'); 
+            } else {
+                renderReview();
+                document.getElementById('end-title').innerText = "DEFEAT";
+                document.getElementById('end-title').style.color = "var(--warning)";
+                document.getElementById('end-title').style.textShadow = "0 0 30px var(--warning)";
+                document.getElementById('end-msg').innerText = "FLEET DESTROYED";
+                
+                document.getElementById('end-screen').style.display = "flex";
+                playSound('lose-sfx');
+            }
+            currentPhase = 'GAME_OVER';
+            return; 
+        }
+
+        // --- 戰鬥邏輯 (保持不變) ---
+        if (!data.lastMove) return;
+        const move = data.lastMove;
+        
+        if (move.timestamp <= lastProcessedTimestamp) return;
+        
+        if (move.attacker !== playerRole) {
+            lastProcessedTimestamp = move.timestamp;
+
+            if (move.index === -1) {
+                const status = document.getElementById('game-status');
+                status.innerHTML = `OPPONENT TIMED OUT!`;
+                status.style.color = "var(--success)";
+                playSound('time_out'); 
+                setGameTimeout(startPlayerTurn, 1500);
+                return;
+            }
+
+            const idx = move.index;
+            const cell = document.getElementById('player-grid').children[idx];
+            
+            if (cell.classList.contains('revealed')) return;
+
+            cell.classList.add('revealed');
+            playSound('laser-sfx');
+            triggerAnimation(cell, 'blue');
+            
+            setGameTimeout(() => {
+                if (myGrid[idx] === 1) {
+                    cell.classList.add('hit');
+                    playSound('hit-sfx');
+                    playUnderAttackAlert(); 
+                    triggerAnimation(cell, 'orange');
+                    myDamage++;
+                    checkMyShipDestruction(idx); 
+                    if (checkGameOver()) return;
                 } else {
-                    renderReview();
-                    document.getElementById('end-title').innerText = "DEFEAT";
-                    document.getElementById('end-title').style.color = "var(--warning)";
-                    document.getElementById('end-title').style.textShadow = "0 0 30px var(--warning)";
-                    document.getElementById('end-msg').innerText = "FLEET DESTROYED";
-                    
-                    document.getElementById('end-screen').style.display = "flex";
-                    playSound('lose-sfx');
+                    cell.classList.add('miss');
+                    cell.innerText = "X";
                 }
-                currentPhase = 'GAME_OVER';
-                return; 
-            }
-
-            // --- 戰鬥邏輯 ---
-            if (!data.lastMove) return;
-            const move = data.lastMove;
+            }, 500);
             
-            // ★ 關鍵修正 1：檢查 Timestamp，防止重複處理同一手棋 ★
-            if (move.timestamp <= lastProcessedTimestamp) {
-                return; // 已經處理過呢一手，忽略！
-            }
-            
-            // 如果這一手唔係我打嘅，即係對手打過嚟
-            if (move.attacker !== playerRole) {
-                
-                // 更新時間戳記
-                lastProcessedTimestamp = move.timestamp;
-
-                // 對手超時
-                if (move.index === -1) {
-                    const status = document.getElementById('game-status');
-                    status.innerHTML = `OPPONENT TIMED OUT!`;
-                    status.style.color = "var(--success)";
-                    playSound('time_out'); // 修正音效名 (請確保檔案名正確，例如 'time_out.mp3')
-                    setGameTimeout(startPlayerTurn, 1500);
-                    return;
+            setGameTimeout(() => {
+                if (currentPhase !== 'GAME_OVER') {
+                    startPlayerTurn();
                 }
-
-                const idx = move.index;
-                const cell = document.getElementById('player-grid').children[idx];
-                
-                // 如果該格已經開過，都要忽略 (雙重保險)
-                if (cell.classList.contains('revealed')) return;
-
-                // 執行被擊中動畫
-                cell.classList.add('revealed');
-                playSound('laser-sfx');
-                triggerAnimation(cell, 'blue');
-                
-                // 延遲顯示結果
-                setGameTimeout(() => {
-                    if (myGrid[idx] === 1) {
-                        // --- 擊中邏輯 ---
-                        cell.classList.add('hit');
-                        playSound('hit-sfx');
-                        
-                        // ★★★ 加在這裡：播放警報聲 (每8秒一次) ★★★
-                        playUnderAttackAlert(); 
-
-                        triggerAnimation(cell, 'orange');
-                        
-                        myDamage++;
-                        
-                        // 檢查自己有無船沉咗
-                        checkMyShipDestruction(idx); 
-
-                        if (checkGameOver()) return;
-                    } else {
-                        // --- 打失邏輯 ---
-                        cell.classList.add('miss');
-                        cell.innerText = "X";
-                    }
-                }, 500);
-                
-                // ★ 關鍵修正 2：確保只呼叫一次 startPlayerTurn ★
-                setGameTimeout(() => {
-                    if (currentPhase !== 'GAME_OVER') {
-                        startPlayerTurn();
-                    }
-                }, 1200);
-            }
-        });
-    }
+            }, 1200);
+        }
+    });
+}
     // --- 7. 佈陣邏輯 ---
     function createGrid(elementId) {
         const board = document.getElementById(elementId);
@@ -6667,6 +6675,7 @@ function speakText(text, element = null) {
 </div>
 </body>
 </html>
+
 
 
 
