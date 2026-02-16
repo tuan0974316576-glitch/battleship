@@ -23,7 +23,7 @@
     
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-  import { getDatabase, ref, set, onValue, update, push, child, get, onDisconnect, off } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+  import { getDatabase, ref, set, onValue, update, push, child, get, onDisconnect, off, remove } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
   import { getAuth, signInAnonymously, onAuthStateChanged, GoogleAuthProvider, OAuthProvider, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
     const firebaseConfig = {
@@ -44,7 +44,7 @@
     // 掛載到 window 供 onclick 使用
 window.firebaseModules = {
       initializeApp,
-      getDatabase, ref, set, onValue, update, push, child, get, onDisconnect, off,
+      getDatabase, ref, set, onValue, update, push, child, get, onDisconnect, off, remove, // <--- 加在這裡！
       getAuth, signInAnonymously, onAuthStateChanged, GoogleAuthProvider, OAuthProvider, signInWithPopup, signOut
   };
     window.db = db;
@@ -3287,7 +3287,8 @@ set(ref(db, 'rooms/' + roomId), {
             turn: 'host',
             level: selectedLevel // ★ 新增：儲存等級設定 ★
         });
-        
+const { onDisconnect, remove } = window.firebaseModules; // 確保拿到工具
+    onDisconnect(ref(db, 'rooms/' + roomId)).remove();        
         const msg = document.getElementById('lobby-msg');
         msg.innerText = `ROOM: ${roomId} - WAITING...`; 
         msg.style.color = "var(--success)";
@@ -4912,11 +4913,23 @@ function resetGame() {
         exitBtn.innerText = "EXIT";
     }
     // 1. 斷開 Firebase 連線
-    if (unsubscribeRoom) { unsubscribeRoom(); unsubscribeRoom = null; }
+if (unsubscribeRoom) { unsubscribeRoom(); unsubscribeRoom = null; }
     if (battleUnsubscribe) { battleUnsubscribe(); battleUnsubscribe = null; }
+    
     if (currentRoomId) {
-            const { ref, off } = window.firebaseModules;
-            off(ref(db, 'rooms/' + currentRoomId));
+        // 獲取 remove 工具
+        const { ref, off, remove } = window.firebaseModules;
+        
+        // 停止監聽
+        off(ref(db, 'rooms/' + currentRoomId));
+
+        // ★★★ 關鍵修復：如果是 Host 離開，必須徹底刪除房間！ ★★★
+        if (playerRole === 'host') {
+            console.log("Host leaving -> Removing Room: " + currentRoomId);
+            remove(ref(db, 'rooms/' + currentRoomId));
+        }
+        
+        // (如果是 Guest 離開，可以選擇只將 guest 設為 null，或者甚麼都不做由 Host 處理)
     }
 
     // 2. 清除所有計時器
@@ -6623,6 +6636,7 @@ function speakText(text, element = null) {
 </div>
 </body>
 </html>
+
 
 
 
