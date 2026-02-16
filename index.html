@@ -4907,31 +4907,44 @@ function executeAbort() {
 
 function resetGame() {
     battleLog = [];
-    // ★★★ 新增：將 SURRENDER 改返做 EXIT ★★★
+    
+    // UI 重置：將 SURRENDER 改返做 EXIT
     const exitBtn = document.getElementById('game-exit-btn');
-    if(exitBtn) {
-        exitBtn.innerText = "EXIT";
-    }
-    // 1. 斷開 Firebase 連線
-if (unsubscribeRoom) { unsubscribeRoom(); unsubscribeRoom = null; }
+    if(exitBtn) { exitBtn.innerText = "EXIT"; }
+
+    // ★★★ 新增：清空 Lobby 介面上的舊資訊 ★★★
+    const lobbyMsg = document.getElementById('lobby-msg');
+    if (lobbyMsg) lobbyMsg.innerText = ""; // 清空 "ROOM: XXXX..."
+    
+    const roomInput = document.getElementById('room-id-input');
+    if (roomInput) roomInput.value = ""; // 清空輸入框
+    
+    // --- 1. 斷開 Firebase 連線 & 清理房間 ---
+    if (unsubscribeRoom) { unsubscribeRoom(); unsubscribeRoom = null; }
     if (battleUnsubscribe) { battleUnsubscribe(); battleUnsubscribe = null; }
     
     if (currentRoomId) {
-        // 獲取 remove 工具
+        // 獲取 remove 工具 (確保你 window.firebaseModules 有加 remove)
         const { ref, off, remove } = window.firebaseModules;
         
         // 停止監聽
         off(ref(db, 'rooms/' + currentRoomId));
 
-        // ★★★ 關鍵修復：如果是 Host 離開，必須徹底刪除房間！ ★★★
+        // 如果是 Host，徹底刪除房間 (保持你 TEST 1/2 的成功邏輯)
         if (playerRole === 'host') {
             console.log("Host leaving -> Removing Room: " + currentRoomId);
-            remove(ref(db, 'rooms/' + currentRoomId));
+            // 檢查 remove 是否存在，防止報錯
+            if (typeof remove === 'function') {
+                remove(ref(db, 'rooms/' + currentRoomId));
+            }
         }
-        
-        // (如果是 Guest 離開，可以選擇只將 guest 設為 null，或者甚麼都不做由 Host 處理)
     }
+    
+    // ★★★ 關鍵：重置 currentRoomId 變數，防止殘留 ★★★
+    currentRoomId = null;
+    playerRole = null;
 
+    // --- (以下保持不變) ---
     // 2. 清除所有計時器
     if (turnTimerInterval) clearInterval(turnTimerInterval);
     if (timerInterval) clearInterval(timerInterval);
@@ -4943,9 +4956,6 @@ if (unsubscribeRoom) { unsubscribeRoom(); unsubscribeRoom = null; }
 
     // 3. 隱藏 UI 元件
     document.getElementById('turn-timer-container').style.display = 'none';
-    
-    // 之前已經刪除咗 global-back-btn，所以這裡不需要任何 back-btn 代碼
-
     document.getElementById('end-screen').style.display = 'none';
     document.getElementById('game-ui').style.display = 'none';
     document.getElementById('lobby-screen').style.display = 'none'; 
@@ -4957,10 +4967,8 @@ if (unsubscribeRoom) { unsubscribeRoom(); unsubscribeRoom = null; }
     // 5. 重置變數
     myGrid.fill(0);
     enemyGrid.fill(0);
-    
     enemyShots = [];
     aiTargetStack = []; 
-    
     deployIndex = 0;
     currentPhase = 'DEPLOY';
     myDamage = 0;
@@ -4991,10 +4999,9 @@ if (unsubscribeRoom) { unsubscribeRoom(); unsubscribeRoom = null; }
     document.getElementById('game-status').innerHTML = `PHASE: <span style="color: var(--warning);">DEPLOYMENT</span>`;
     document.getElementById('control-panel').style.borderColor = "var(--primary)";
     
-    // ★★★ 修改重點：重置時，隱藏 START 掣 ★★★
     const sBtn = document.getElementById('start-btn');
-    sBtn.style.display = 'none'; // 隱藏
-    sBtn.disabled = true;        // 鎖定
+    sBtn.style.display = 'none'; 
+    sBtn.disabled = true;        
     
     // 8. 重置艦隊設定
     FLEET.forEach(ship => {
@@ -6636,6 +6643,7 @@ function speakText(text, element = null) {
 </div>
 </body>
 </html>
+
 
 
 
