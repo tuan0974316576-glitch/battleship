@@ -3685,66 +3685,88 @@ function getShipIndices(idx, conf, v) {
 
     // --- 8. 戰鬥流程 ---
 function startBattle() {
-        if (deploymentTimerInterval) clearInterval(deploymentTimerInterval);
-        document.getElementById('turn-timer-container').style.display = 'none';
+    if (deploymentTimerInterval) clearInterval(deploymentTimerInterval);
+    document.getElementById('turn-timer-container').style.display = 'none';
+    
     const exitBtn = document.getElementById('game-exit-btn');
     if(exitBtn) {
         exitBtn.innerText = "SURRENDER";
-        exitBtn.style.borderColor = "var(--danger)"; // 確保係紅色
+        exitBtn.style.borderColor = "var(--danger)";
     }
-        document.getElementById('deploy-controls').style.display = 'none';
-        document.getElementById('fleet-sidebar').style.display = 'none'; 
-initEnemyFleetIndicator();
-        playSound('deploy-sfx');
-
-        if (gameMode === 'AI') {
-            startPlayerTurn();
-        } else {
-            const { ref, update, onValue } = window.firebaseModules;
-            const updates = {};
-            const field = (playerRole === 'host') ? 'hostBoard' : 'guestBoard';
-            updates[field] = myGrid;
-            
-            // ★ 新增：發送我的艦隊位置給對手 (傳送 shipId) ★
-            const myShipsForSending = FLEET.map((s, index) => ({
-                shipId: index, // 重要：告訴對手這是第幾號船
-                indices: s.indices,
-                width: s.width,
-                height: s.height,
-                isVertical: s.isVertical
-            }));
-            updates[field + 'Ships'] = myShipsForSending;
-            
-            updates[playerRole + 'Ready'] = true;
-            
-            update(ref(db, 'rooms/' + currentRoomId), updates);
-            document.getElementById('game-status').innerHTML = "WAITING FOR OPPONENT...";
-
-battleUnsubscribe = onValue(ref(db, 'rooms/' + currentRoomId), (snapshot) => {
-    const data = snapshot.val();
-    if (!data) return;
     
-    // 當雙方都準備好
-    if (data.hostReady && data.guestReady) {
-        if (battleUnsubscribe) {
-            battleUnsubscribe(); // ★ 關鍵：一旦進入戰鬥，停止監聽準備狀態，防止重複觸發
-            battleUnsubscribe = null;
-        }
+    document.getElementById('deploy-controls').style.display = 'none';
+    document.getElementById('fleet-sidebar').style.display = 'none'; 
+    initEnemyFleetIndicator();
+    playSound('deploy-sfx');
+
+    if (gameMode === 'AI') {
+        startPlayerTurn();
+    } else {
+        const { ref, update, onValue, off } = window.firebaseModules;
+        const updates = {};
+        const field = (playerRole === 'host') ? 'hostBoard' : 'guestBoard';
+        updates[field] = myGrid;
         
-        if (playerRole === 'host') {
-            enemyGrid = data.guestBoard;
-            processEnemyFleetData(data.guestBoardShips);
-            startPlayerTurn();
-        } else {
-            enemyGrid = data.hostBoard;
-            processEnemyFleetData(data.hostBoardShips);
-            currentPhase = 'ENEMY_TURN';
-            document.getElementById('game-status').innerHTML = "OPPONENT'S TURN";
-            switchScene('ENEMY');
-        }
+        const myShipsForSending = FLEET.map((s, index) => ({
+            shipId: index,
+            indices: s.indices,
+            width: s.width,
+            height: s.height,
+            isVertical: s.isVertical
+        }));
+        updates[field + 'Ships'] = myShipsForSending;
+        updates[playerRole + 'Ready'] = true;
+        
+        update(ref(db, 'rooms/' + currentRoomId), updates);
+        document.getElementById('game-status').innerHTML = "WAITING FOR OPPONENT...";
+
+        // 防止重複監聽
+        if (battleUnsubscribe) battleUnsubscribe();
+
+        battleUnsubscribe = onValue(ref(db, 'rooms/' + currentRoomId), (snapshot) => {
+            const data = snapshot.val();
+            
+            // ★★★ 新增：檢測房間是否被刪除 (Host 走了) ★★★
+            if (!data) {
+                if (battleUnsubscribe) battleUnsubscribe(); // 停止監聽
+                showNotification("CONNECTION LOST (HOST LEFT)", "error");
+                playSound('wrong-sfx');
+                // 延遲 2 秒後彈回大廳，讓玩家看清楚訊息
+                setTimeout(() => resetGame(), 2000);
+                return;
+            }
+
+            // ★★★ 新增：檢測 Guest 是否離開 (Host 視角) ★★★
+            if (playerRole === 'host' && !data.guest) {
+                if (battleUnsubscribe) battleUnsubscribe();
+                showNotification("OPPONENT DISCONNECTED", "error");
+                playSound('wrong-sfx');
+                setTimeout(() => resetGame(), 2000);
+                return;
+            }
+            
+            // 當雙方都準備好
+            if (data.hostReady && data.guestReady) {
+                if (battleUnsubscribe) {
+                    battleUnsubscribe(); // 停止監聽 Ready 狀態
+                    battleUnsubscribe = null;
+                }
+                
+                if (playerRole === 'host') {
+                    enemyGrid = data.guestBoard;
+                    processEnemyFleetData(data.guestBoardShips);
+                    startPlayerTurn();
+                } else {
+                    enemyGrid = data.hostBoard;
+                    processEnemyFleetData(data.hostBoardShips);
+                    currentPhase = 'ENEMY_TURN';
+                    document.getElementById('game-status').innerHTML = "OPPONENT'S TURN";
+                    switchScene('ENEMY');
+                }
+            }
+        });
     }
-});
-        }
+}
     }    function switchScene(sceneName) {
         document.getElementById('player-board').classList.remove('active');
         document.getElementById('enemy-board').classList.remove('active');
@@ -4908,44 +4930,51 @@ function executeAbort() {
 function resetGame() {
     battleLog = [];
     
-    // UI 重置：將 SURRENDER 改返做 EXIT
+    // UI 重置
     const exitBtn = document.getElementById('game-exit-btn');
     if(exitBtn) { exitBtn.innerText = "EXIT"; }
 
-    // ★★★ 新增：清空 Lobby 介面上的舊資訊 ★★★
     const lobbyMsg = document.getElementById('lobby-msg');
-    if (lobbyMsg) lobbyMsg.innerText = ""; // 清空 "ROOM: XXXX..."
+    if (lobbyMsg) lobbyMsg.innerText = "";
     
     const roomInput = document.getElementById('room-id-input');
-    if (roomInput) roomInput.value = ""; // 清空輸入框
+    if (roomInput) roomInput.value = ""; 
     
     // --- 1. 斷開 Firebase 連線 & 清理房間 ---
     if (unsubscribeRoom) { unsubscribeRoom(); unsubscribeRoom = null; }
     if (battleUnsubscribe) { battleUnsubscribe(); battleUnsubscribe = null; }
     
     if (currentRoomId) {
-        // 獲取 remove 工具 (確保你 window.firebaseModules 有加 remove)
-        const { ref, off, remove } = window.firebaseModules;
+        const { ref, off, remove, update } = window.firebaseModules;
         
         // 停止監聽
         off(ref(db, 'rooms/' + currentRoomId));
 
-        // 如果是 Host，徹底刪除房間 (保持你 TEST 1/2 的成功邏輯)
         if (playerRole === 'host') {
+            // Host 離開 -> 刪除整間房 (大家一齊斷)
             console.log("Host leaving -> Removing Room: " + currentRoomId);
-            // 檢查 remove 是否存在，防止報錯
             if (typeof remove === 'function') {
                 remove(ref(db, 'rooms/' + currentRoomId));
+            }
+        } else if (playerRole === 'guest') {
+            // ★★★ 新增：Guest 離開 -> 將 guest 欄位變回 null (通知 Host 我走了) ★★★
+            console.log("Guest leaving -> Updating Room Status");
+            if (typeof update === 'function') {
+                update(ref(db, 'rooms/' + currentRoomId), {
+                    guest: null,
+                    status: 'waiting', // 變回 waiting 狀態
+                    guestReady: null,  // 清除準備狀態
+                    guestBoard: null
+                });
             }
         }
     }
     
-    // ★★★ 關鍵：重置 currentRoomId 變數，防止殘留 ★★★
+    // 重置變數
     currentRoomId = null;
     playerRole = null;
 
     // --- (以下保持不變) ---
-    // 2. 清除所有計時器
     if (turnTimerInterval) clearInterval(turnTimerInterval);
     if (timerInterval) clearInterval(timerInterval);
     if (deploymentTimerInterval) clearInterval(deploymentTimerInterval);
@@ -4954,17 +4983,14 @@ function resetGame() {
             gameTimeouts = [];
     }
 
-    // 3. 隱藏 UI 元件
     document.getElementById('turn-timer-container').style.display = 'none';
     document.getElementById('end-screen').style.display = 'none';
     document.getElementById('game-ui').style.display = 'none';
     document.getElementById('lobby-screen').style.display = 'none'; 
     
-    // 4. 顯示 Start Screen
     document.getElementById('start-screen').style.display = 'flex';
     document.getElementById('start-screen').style.opacity = '1';
 
-    // 5. 重置變數
     myGrid.fill(0);
     enemyGrid.fill(0);
     enemyShots = [];
@@ -4981,7 +5007,6 @@ function resetGame() {
         if(turnDisplay) turnDisplay.innerText = "1"; 
     }
 
-    // 6. 重置 棋盤 & 側邊欄
     createGrid('player-grid');
     createGrid('enemy-grid');
     
@@ -4995,7 +5020,6 @@ function resetGame() {
     renderSidebar(); 
     document.getElementById('rotate-btn').style.display = 'inline-block';
     
-    // 7. 重置文字 & 按鈕
     document.getElementById('game-status').innerHTML = `PHASE: <span style="color: var(--warning);">DEPLOYMENT</span>`;
     document.getElementById('control-panel').style.borderColor = "var(--primary)";
     
@@ -5003,7 +5027,6 @@ function resetGame() {
     sBtn.style.display = 'none'; 
     sBtn.disabled = true;        
     
-    // 8. 重置艦隊設定
     FLEET.forEach(ship => {
         ship.indices = null;
         ship.revealed = false; 
@@ -6643,6 +6666,7 @@ function speakText(text, element = null) {
 </div>
 </body>
 </html>
+
 
 
 
