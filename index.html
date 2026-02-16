@@ -2889,6 +2889,7 @@ body {
 <audio id="ship-voice-2"><source src="ship_2_dreadnought.mp3" type="audio/mpeg"></audio>
 <audio id="ship-voice-3"><source src="ship_3_destroyer.mp3" type="audio/mpeg"></audio>
 <audio id="ship-voice-4"><source src="ship_4_spectre.mp3" type="audio/mpeg"></audio>
+    <audio id="unit-lost-sfx"><source src="unit_lost.mp3" type="audio/mpeg"></audio>
 </div>
 <script src="vocab_data.js"></script>
 
@@ -3460,14 +3461,25 @@ function initPVPListeners() {
             
             setGameTimeout(() => {
                 if (myGrid[idx] === 1) {
+                    // --- Hit Logic ---
                     cell.classList.add('hit');
                     playSound('hit-sfx');
-                    playUnderAttackAlert(); 
                     triggerAnimation(cell, 'orange');
                     myDamage++;
-                    checkMyShipDestruction(idx); 
+                    
+                    // ★★★ 關鍵修改：先檢查有無爆船，再決定播邊個聲 ★★★
+                    // checkMyShipDestruction 會回傳 true (如果爆咗)
+                    const isDestroyed = checkMyShipDestruction(idx); 
+                    
+                    if (isDestroyed) {
+                        playSound('unit-lost-sfx'); // 爆船：播 Unit Lost
+                    } else {
+                        playUnderAttackAlert();     // 未爆：播 Under Attack
+                    }
+                    
                     if (checkGameOver()) return;
                 } else {
+                    // --- Miss Logic ---
                     cell.classList.add('miss');
                     cell.innerText = "X";
                 }
@@ -4406,7 +4418,6 @@ function addSmartTargets(index) {
     });
 }
 function aiFire() {
-    if (currentPhase === 'GAME_OVER') return;
     playSound('laser-sfx');
     let t;
     
@@ -4441,21 +4452,27 @@ function aiFire() {
             cell.classList.add('hit');
             playSound('hit-sfx');
             triggerAnimation(cell, 'orange');
-            playUnderAttackAlert();
-            
             myDamage++;
             
-            // ★★★ 關鍵新增 1：AI 變聰明了！加入周圍格仔入 Stack ★★★
+            // 加入智能追擊
             addSmartTargets(t);
             
-            // ★★★ 關鍵新增 2：檢查我有無船沉咗 (顯示紅色殘骸) ★★★
-            checkMyShipDestruction(t); 
+            // ★★★ 關鍵邏輯：先檢查有無爆船，再決定播邊個聲 ★★★
+            // checkMyShipDestruction 必須要回傳 true/false 先有效
+            const isDestroyed = checkMyShipDestruction(t); 
+
+            if (isDestroyed) {
+                playSound('unit-lost-sfx'); // 爆船：播 Unit Lost
+            } else {
+                playUnderAttackAlert();     // 未爆：播 Under Attack
+            }
 
             if (checkGameOver()) {
                 isGameOver = true; 
             }
         } else {
-            cell.classList.add('miss'); // 打失
+            // 打失
+            cell.classList.add('miss'); 
             cell.innerText = "X";
         }
 
@@ -4504,33 +4521,32 @@ function startPlayerTurn() {
         }, 100);
     }
 
-    // --- Helper Functions ---
-// ★ 新增：檢查我自己邊隻船沉咗 (受害者視角) ★
-    function checkMyShipDestruction(hitIdx) {
-        // 1. 搵出被打中嗰格屬於邊隻船
-        let targetShip = null;
-        let targetIndex = -1;
-        
-        FLEET.forEach((ship, index) => {
-            if (ship.indices && ship.indices.includes(hitIdx)) {
-                targetShip = ship;
-                targetIndex = index;
-            }
-        });
-        
-        if (!targetShip || targetShip.revealed) return; // 搵唔到或者已經爆咗
-
-        // 2. 檢查嗰隻船係咪每一格都俾人打中咗
-        const allHit = targetShip.indices.every(idx => {
-            // 檢查自己個棋盤 (player-grid) 嘅格仔有無 'hit' class
-            const cell = document.getElementById('player-grid').children[idx];
-            return cell.classList.contains('hit');
-        });
-
-        if (allHit) {
-            revealMyShip(targetShip, targetIndex);
+function checkMyShipDestruction(hitIdx) {
+    let targetShip = null;
+    let targetIndex = -1;
+    
+    FLEET.forEach((ship, index) => {
+        if (ship.indices && ship.indices.includes(hitIdx)) {
+            targetShip = ship;
+            targetIndex = index;
         }
+    });
+    
+    // 如果搵唔到船，或者隻船已經爆過，回傳 false
+    if (!targetShip || targetShip.revealed) return false; 
+
+    // 檢查全船是否被打中
+    const allHit = targetShip.indices.every(idx => {
+        const cell = document.getElementById('player-grid').children[idx];
+        return cell.classList.contains('hit');
+    });
+
+    if (allHit) {
+        revealMyShip(targetShip, targetIndex);
+        return true; // ★ 改動：爆船，回傳 true
     }
+    return false; // ★ 改動：未爆，回傳 false
+}
 
  // ★ 最終修復版：顯示我自己嘅戰艦殘骸 (移除 absolute，加入智能檢測) ★
     // ★ 修正版：顯示我自己嘅戰艦殘骸 (並隱藏原本完好嘅船) ★
@@ -6675,6 +6691,7 @@ function speakText(text, element = null) {
 </div>
 </body>
 </html>
+
 
 
 
