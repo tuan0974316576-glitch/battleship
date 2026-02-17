@@ -5060,30 +5060,36 @@ function resetGame() {
 }
     
 function handleTurnTimeout() {
-        document.getElementById('turn-timer-container').style.display = 'none';
-        playSound('timeout-sfx');
-        
-        const status = document.getElementById('game-status');
-        status.innerHTML = `PHASE: <span style="color:var(--danger)">TOO SLOW! TURN SKIPPED</span>`;
-        document.getElementById('control-panel').style.borderColor = "var(--danger)";
+    // ★★★ 關鍵修正：一超時即刻鎖死狀態，防止玩家在轉場期間偷雞再打 ★★★
+    currentPhase = 'TIMEOUT_LOCKED'; 
 
-        if (gameMode === 'PVP') {
-            const { ref, update } = window.firebaseModules;
-            update(ref(db, 'rooms/' + currentRoomId), {
-                lastMove: { attacker: playerRole, index: -1, timestamp: Date.now() }
-            });
-            
-            currentPhase = 'ENEMY_TURN';
-            // ★ 改用 setGameTimeout ★
-            setGameTimeout(() => {
-                document.getElementById('game-status').innerHTML = "OPPONENT'S TURN";
-                switchScene('ENEMY');
-            }, 1500);
-        } else {
-            // ★ 改用 setGameTimeout ★
-            setGameTimeout(startEnemyTurn, 1500);
-        }
+    document.getElementById('turn-timer-container').style.display = 'none';
+    playSound('timeout-sfx');
+    
+    const status = document.getElementById('game-status');
+    status.innerHTML = `PHASE: <span style="color:var(--danger)">TOO SLOW! TURN SKIPPED</span>`;
+    document.getElementById('control-panel').style.borderColor = "var(--danger)";
+
+    if (gameMode === 'PVP') {
+        const { ref, update } = window.firebaseModules;
+        // 通知對手我 Skip 咗
+        update(ref(db, 'rooms/' + currentRoomId), {
+            lastMove: { attacker: playerRole, index: -1, timestamp: Date.now() }
+        });
+        
+        setGameTimeout(() => {
+            currentPhase = 'ENEMY_TURN'; // 轉場完成，正式交更
+            document.getElementById('game-status').innerHTML = "OPPONENT'S TURN";
+            switchScene('ENEMY');
+        }, 1500);
+    } else {
+        // AI 模式
+        setGameTimeout(() => {
+            // startEnemyTurn 裡面會將 phase 設定為 ENEMY_TURN
+            startEnemyTurn(); 
+        }, 1500);
     }
+}
 function startDeploymentTimer() {
         const barContainer = document.getElementById('turn-timer-container');
         const bar = document.getElementById('turn-timer-bar');
@@ -6691,6 +6697,7 @@ function speakText(text, element = null) {
 </div>
 </body>
 </html>
+
 
 
 
