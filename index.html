@@ -3365,57 +3365,41 @@ function joinRoom() {
 function initPVPListeners() {
     const { ref, onValue, off } = window.firebaseModules;
     
-    // 1. 先移除舊的監聽 (防止累積)
+    // 1. 先移除舊的監聽
     const roomRef = ref(db, 'rooms/' + currentRoomId);
     off(roomRef); 
 
-    // 2. 啟動新監聽 (這個監聽器在部署階段已經開始運作！)
+    // 2. 啟動新監聽
     onValue(roomRef, (snapshot) => {
         const data = snapshot.val();
 
-        // ★★★ 新增：即時斷線偵測 (Deployment 階段都生效) ★★★
-        
-        // Case A: 房間被刪除 (Host 走了)
-        // 如果 data 變成 null，代表 Host 已經解散房間
+        // --- 斷線偵測邏輯 (保持之前嘅寫法) ---
         if (!data) {
-            // 防止 Game Over 後重複觸發
             if (currentPhase === 'GAME_OVER') return; 
-            
             showNotification("CONNECTION LOST (HOST LEFT)", "error");
             playSound('wrong-sfx');
-            
-            // 延遲 1.5 秒讓玩家看清楚訊息，然後彈回大廳
             setTimeout(() => resetGame(), 1500);
             return; 
         }
-
-        // Case B: Guest 離開 (Host 視角)
-        // 如果我是 Host，但見到 guest 欄位變回 null
         if (playerRole === 'host' && !data.guest) {
             if (currentPhase === 'GAME_OVER') return;
-
             showNotification("OPPONENT DISCONNECTED", "error");
             playSound('wrong-sfx');
-            
             setTimeout(() => resetGame(), 1500);
             return;
         }
-        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
 
         // --- 勝利/失敗 判斷 (保持不變) ---
         if (data.winner) {
             if (currentPhase === 'GAME_OVER') return; 
-            
             if (data.winner === playerRole) {
                 renderReview();
                 document.getElementById('end-title').innerText = "VICTORY";
                 document.getElementById('end-title').style.color = "var(--success)";
                 document.getElementById('end-title').style.textShadow = "0 0 30px var(--success)";
-                
                 const reason = data.endReason === 'disconnected' ? "CONNECTION LOST" : 
                                data.endReason === 'surrendered' ? "SURRENDERED" : "DESTROYED";
                 document.getElementById('end-msg').innerText = `ENEMY ${reason}`;
-                
                 document.getElementById('end-screen').style.display = "flex";
                 playSound('victory-sfx'); 
             } else {
@@ -3424,7 +3408,6 @@ function initPVPListeners() {
                 document.getElementById('end-title').style.color = "var(--warning)";
                 document.getElementById('end-title').style.textShadow = "0 0 30px var(--warning)";
                 document.getElementById('end-msg').innerText = "FLEET DESTROYED";
-                
                 document.getElementById('end-screen').style.display = "flex";
                 playSound('lose-sfx');
             }
@@ -3432,12 +3415,13 @@ function initPVPListeners() {
             return; 
         }
 
-        // --- 戰鬥邏輯 (保持不變) ---
+        // --- 戰鬥邏輯 ---
         if (!data.lastMove) return;
         const move = data.lastMove;
         
         if (move.timestamp <= lastProcessedTimestamp) return;
         
+        // 如果係對手打過嚟
         if (move.attacker !== playerRole) {
             lastProcessedTimestamp = move.timestamp;
 
@@ -3467,8 +3451,7 @@ function initPVPListeners() {
                     triggerAnimation(cell, 'orange');
                     myDamage++;
                     
-                    // ★★★ 關鍵修改：先檢查有無爆船，再決定播邊個聲 ★★★
-                    // checkMyShipDestruction 會回傳 true (如果爆咗)
+                    // ★★★ PVP 關鍵修改：先檢查有無爆船，再決定播邊個聲 ★★★
                     const isDestroyed = checkMyShipDestruction(idx); 
                     
                     if (isDestroyed) {
@@ -4532,7 +4515,6 @@ function checkMyShipDestruction(hitIdx) {
         }
     });
     
-    // 如果搵唔到船，或者隻船已經爆過，回傳 false
     if (!targetShip || targetShip.revealed) return false; 
 
     // 檢查全船是否被打中
@@ -4543,9 +4525,9 @@ function checkMyShipDestruction(hitIdx) {
 
     if (allHit) {
         revealMyShip(targetShip, targetIndex);
-        return true; // ★ 改動：爆船，回傳 true
+        return true; // ★ 關鍵：爆船回傳 true
     }
-    return false; // ★ 改動：未爆，回傳 false
+    return false; // ★ 關鍵：未爆回傳 false
 }
 
  // ★ 最終修復版：顯示我自己嘅戰艦殘骸 (移除 absolute，加入智能檢測) ★
@@ -6697,6 +6679,7 @@ function speakText(text, element = null) {
 </div>
 </body>
 </html>
+
 
 
 
