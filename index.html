@@ -5466,17 +5466,14 @@ window.loginWithGoogle = function() {
     // 獲取遮罩元素
     const overlay = document.getElementById('login-overlay');
     
-    // 開啟遮罩
+    // 顯示遮罩 (轉圈圈)
     if(overlay) overlay.style.display = 'flex';
     
-    // 播放背景音樂 (如果未播)
     if(typeof playBgm === 'function') playBgm();
     
     signInWithPopup(getAuth(), new GoogleAuthProvider())
     .then((result) => {
-        // 登入成功！
-        // 這裡不需要手動關閉遮罩
-        // 因為 onAuthStateChanged 會偵測到登入，並自動切換畫面
+        // 登入成功，onAuthStateChanged 會處理轉場，這裡不用做什麼
     })
     .catch(e => {
         // ★★★ 關鍵修復 1：無論失敗定係取消，必須即刻移除遮罩！ ★★★
@@ -5485,60 +5482,50 @@ window.loginWithGoogle = function() {
         // ★★★ 關鍵修復 2：特判「用戶自己閂窗」的情況 ★★★
         // 如果係用戶取消，就當無事發生，唔好彈錯誤視窗嚇親人
         if (e.code === 'auth/popup-closed-by-user' || e.code === 'auth/cancelled-popup-request') {
-            console.log("User cancelled login.");
+            console.log("User cancelled Google login.");
             return; 
         }
         
         // 其他真正的錯誤才彈 Alert
         if (e.code === 'auth/unauthorized-domain') {
-            alert("System Error: Unauthorized Domain (Check Firebase Console)");
+            alert("System Error: Unauthorized Domain");
         } else {
             alert("LOGIN FAILED: " + e.message);
         }
     });
 }
 window.loginWithApple = function() {
-    // ★ 注意：這裡要解構出 OAuthProvider (這是 Apple 專用的)
     const { getAuth, OAuthProvider, signInWithPopup } = window.firebaseModules;
     
     if(typeof playSound === 'function') playSound('deploy-sfx');
     
-    // 獲取遮罩元素 (跟 Google 一樣)
     const overlay = document.getElementById('login-overlay');
     
-    // 開啟遮罩
+    // 顯示遮罩
     if(overlay) overlay.style.display = 'flex';
     
-    // 播放背景音樂
     if(typeof playBgm === 'function') playBgm();
     
-    // ★ 設定 Apple Provider
     const provider = new OAuthProvider('apple.com');
     provider.addScope('email');
     provider.addScope('name');
 
-    // 執行登入
     signInWithPopup(getAuth(), provider)
     .then((result) => {
-        // 登入成功！
-        // 這裡不需要手動關閉遮罩
-        // 因為 onAuthStateChanged 會偵測到登入，並自動切換畫面
         console.log("Apple Login Success");
     })
     .catch(e => {
-        // ★★★ 關鍵修復 1：無論失敗定係取消，必須即刻移除遮罩！ ★★★
+        // ★★★ 關鍵修復 1：強制移除遮罩 ★★★
         if(overlay) overlay.style.display = 'none';
         
-        // ★★★ 關鍵修復 2：特判「用戶自己閂窗」的情況 ★★★
-        // Apple 登入視窗被關閉時，也會噴這些 code，我們忽略它
+        // ★★★ 關鍵修復 2：忽略用戶取消的錯誤 ★★★
         if (e.code === 'auth/popup-closed-by-user' || e.code === 'auth/cancelled-popup-request') {
             console.log("User cancelled Apple login.");
             return; 
         }
         
-        // 其他真正的錯誤才彈 Alert
         if (e.code === 'auth/unauthorized-domain') {
-            alert("System Error: Unauthorized Domain (Check Firebase Console)");
+            alert("System Error: Unauthorized Domain");
         } else {
             alert("APPLE LOGIN FAILED: " + e.message);
         }
@@ -6679,6 +6666,7 @@ function speakText(text, element = null) {
 </div>
 </body>
 </html>
+
 
 
 
