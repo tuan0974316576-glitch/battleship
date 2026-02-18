@@ -52,6 +52,8 @@
     // --- 1. 登入狀態監聽 (包含 Guest 自動派名) ---
     onAuthStateChanged(auth, (u) => {
         const overlay = document.getElementById('login-overlay');
+        // 清除 auth overlay timeout (如果有)
+        if (window.authOverlayTimeout) { clearTimeout(window.authOverlayTimeout); window.authOverlayTimeout = null; }
         if (u) {
             window.isFirebaseAuthenticated = true;
             window.myPlayerId = u.uid;
@@ -2613,9 +2615,10 @@ body {
                &gt; BYPASS SECURITY (GUEST MODE)
             </button>
 
-            <div id="login-overlay">
+            <div id="login-overlay" onclick="cancelAuthOverlay()">
                 <div class="login-spinner"></div>
                 <div class="login-loading-text">AUTHENTICATING...</div>
+                <div style="margin-top: 15px; color: #64748b; font-family: 'Orbitron'; font-size: 10px; letter-spacing: 2px; opacity: 0.7;">TAP TO CANCEL</div>
             </div>
         </div>
 
@@ -5387,6 +5390,25 @@ function openVocabScreen() {
    ★★★ CYBERPUNK HUD LOGIN SYSTEM (FINAL FIXED) ★★★
    ========================================= */
 
+// 0. 取消 AUTHENTICATING 遮罩 (安全網：防止 signInWithPopup 唔觸發 catch)
+let authOverlayTimeout = null;
+window.cancelAuthOverlay = function() {
+    const overlay = document.getElementById('login-overlay');
+    if(overlay) overlay.style.display = 'none';
+    if(authOverlayTimeout) { clearTimeout(authOverlayTimeout); authOverlayTimeout = null; }
+    if(typeof playSound === 'function') playSound('delete-sfx');
+}
+function startAuthOverlayTimeout() {
+    if(authOverlayTimeout) clearTimeout(authOverlayTimeout);
+    authOverlayTimeout = setTimeout(() => {
+        const overlay = document.getElementById('login-overlay');
+        if(overlay && overlay.style.display !== 'none') {
+            overlay.style.display = 'none';
+            console.log("Auth overlay auto-dismissed (timeout)");
+        }
+    }, 15000); // 15 秒後自動關閉
+}
+
 // 1. 訪客登入
 window.playAsGuest = function() {
     const { getAuth, signInAnonymously } = window.firebaseModules;
@@ -5394,14 +5416,15 @@ window.playAsGuest = function() {
     
     // ★ 開啟鎖定遮罩 ★
     document.getElementById('login-overlay').style.display = 'flex';
-    
+    startAuthOverlayTimeout();
+
     playBgm();
-    
+
     // 這裡只負責登入，登入成功後 onAuthStateChanged 會自動處理轉場
     signInAnonymously(getAuth()).catch(e => {
         alert(e.message);
         // 失敗要關閉遮罩，讓玩家重試
-        document.getElementById('login-overlay').style.display = 'none';
+        cancelAuthOverlay();
     });
 }
 
@@ -5409,33 +5432,32 @@ window.playAsGuest = function() {
 window.loginWithGoogle = function() {
     const { getAuth, GoogleAuthProvider, signInWithPopup } = window.firebaseModules;
     if(typeof playSound === 'function') playSound('deploy-sfx');
-    
+
     // 獲取遮罩元素
     const overlay = document.getElementById('login-overlay');
-    
+
     // 開啟遮罩
     if(overlay) overlay.style.display = 'flex';
-    
+    startAuthOverlayTimeout();
+
     // 播放背景音樂 (如果未播)
     if(typeof playBgm === 'function') playBgm();
-    
+
     signInWithPopup(getAuth(), new GoogleAuthProvider())
     .then((result) => {
-        // 登入成功！
-        // 這裡不需要手動關閉遮罩
-        // 因為 onAuthStateChanged 會偵測到登入，並自動切換畫面
+        // 登入成功！onAuthStateChanged 會自動處理轉場
+        if(authOverlayTimeout) { clearTimeout(authOverlayTimeout); authOverlayTimeout = null; }
     })
     .catch(e => {
-        // ★★★ 關鍵修復 1：無論失敗定係取消，必須即刻移除遮罩！ ★★★
-        if(overlay) overlay.style.display = 'none';
-        
-        // ★★★ 關鍵修復 2：特判「用戶自己閂窗」的情況 ★★★
-        // 如果係用戶取消，就當無事發生，唔好彈錯誤視窗嚇親人
+        // ★★★ 無論失敗定係取消，必須即刻移除遮罩！ ★★★
+        cancelAuthOverlay();
+
+        // 如果係用戶自己閂窗，就當無事發生
         if (e.code === 'auth/popup-closed-by-user' || e.code === 'auth/cancelled-popup-request') {
             console.log("User cancelled login.");
-            return; 
+            return;
         }
-        
+
         // 其他真正的錯誤才彈 Alert
         if (e.code === 'auth/unauthorized-domain') {
             alert("System Error: Unauthorized Domain (Check Firebase Console)");
@@ -5445,44 +5467,40 @@ window.loginWithGoogle = function() {
     });
 }
 window.loginWithApple = function() {
-    // ★ 注意：這裡要解構出 OAuthProvider (這是 Apple 專用的)
     const { getAuth, OAuthProvider, signInWithPopup } = window.firebaseModules;
-    
+
     if(typeof playSound === 'function') playSound('deploy-sfx');
-    
-    // 獲取遮罩元素 (跟 Google 一樣)
+
     const overlay = document.getElementById('login-overlay');
-    
+
     // 開啟遮罩
     if(overlay) overlay.style.display = 'flex';
-    
+    startAuthOverlayTimeout();
+
     // 播放背景音樂
     if(typeof playBgm === 'function') playBgm();
-    
-    // ★ 設定 Apple Provider
+
+    // Apple Provider
     const provider = new OAuthProvider('apple.com');
     provider.addScope('email');
     provider.addScope('name');
 
-    // 執行登入
     signInWithPopup(getAuth(), provider)
     .then((result) => {
-        // 登入成功！
-        // 這裡不需要手動關閉遮罩
-        // 因為 onAuthStateChanged 會偵測到登入，並自動切換畫面
+        // 登入成功！onAuthStateChanged 會自動處理轉場
+        if(authOverlayTimeout) { clearTimeout(authOverlayTimeout); authOverlayTimeout = null; }
         console.log("Apple Login Success");
     })
     .catch(e => {
-        // ★★★ 關鍵修復 1：無論失敗定係取消，必須即刻移除遮罩！ ★★★
-        if(overlay) overlay.style.display = 'none';
-        
-        // ★★★ 關鍵修復 2：特判「用戶自己閂窗」的情況 ★★★
-        // Apple 登入視窗被關閉時，也會噴這些 code，我們忽略它
+        // ★★★ 無論失敗定係取消，必須即刻移除遮罩！ ★★★
+        cancelAuthOverlay();
+
+        // 如果係用戶自己閂窗，就當無事發生
         if (e.code === 'auth/popup-closed-by-user' || e.code === 'auth/cancelled-popup-request') {
             console.log("User cancelled Apple login.");
-            return; 
+            return;
         }
-        
+
         // 其他真正的錯誤才彈 Alert
         if (e.code === 'auth/unauthorized-domain') {
             alert("System Error: Unauthorized Domain (Check Firebase Console)");
@@ -5696,6 +5714,26 @@ window.addEventListener('load', () => {
     if (cachedName) {
         console.log("🚀 FAST LOGIN: Found cached user -> " + cachedName);
         updateHUD(cachedName);
+    }
+
+    // 3. ★★★ 關鍵修復：同步 Module Scope 嘅 Firebase 變數到 Regular Script Scope ★★★
+    // Module <script type="module"> 入面嘅 const db, auth 同 Regular Script 入面嘅 let db, auth 係兩個唔同嘅變數！
+    // Module 已經初始化咗 Firebase 並放咗入 window.db / window.auth
+    // 呢度將佢地 sync 返入 let-scoped 變數，等 createRoom() / joinRoom() 等函數用得到
+    db = window.db;
+    auth = window.auth;
+    myPlayerId = window.myPlayerId || null;
+
+    // 4. 同步 myPlayerId (因為 onAuthStateChanged 可能仲未 fire)
+    // 加一個輕量級 listener 確保 let-scoped myPlayerId 永遠同步
+    if (window.firebaseModules && auth) {
+        window.firebaseModules.onAuthStateChanged(auth, (u) => {
+            if (u) {
+                myPlayerId = u.uid;
+            } else {
+                myPlayerId = null;
+            }
+        });
     }
     });
     
