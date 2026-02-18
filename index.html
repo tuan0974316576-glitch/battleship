@@ -3188,8 +3188,20 @@ function selectMode(mode) {
         
         // ★ 修復問題 1：PVP 直接去 Lobby (跳過 Skill 選擇)
         document.getElementById('lobby-screen').style.display = 'flex';
-        
-        // 如果有刷新房間列表的邏輯，可以在這裡呼叫 (例如 refreshRoomList())
+
+        // ★ 顯示玩家 ID (使用多重來源確保顯示)
+        const pidEl = document.getElementById('player-id-display');
+        if (pidEl) {
+            const playerId = myPlayerId || window.myPlayerId;
+            const displayName = localStorage.getItem('battleship_username');
+            if (displayName) {
+                pidEl.innerText = displayName;
+            } else if (playerId) {
+                pidEl.innerText = playerId.substring(0, 8).toUpperCase();
+            } else {
+                pidEl.innerText = 'LOADING...';
+            }
+        }
     } else {
         // --- AI 模式 (新流程：Menu -> Level -> Skill) ---
 
@@ -5781,6 +5793,12 @@ window.addEventListener('load', () => {
         window.firebaseModules.onAuthStateChanged(auth, (u) => {
             if (u) {
                 myPlayerId = u.uid;
+                // 同步更新 player-id-display (如果存在)
+                const pidEl = document.getElementById('player-id-display');
+                if (pidEl) {
+                    const displayName = localStorage.getItem('battleship_username');
+                    pidEl.innerText = displayName || u.uid.substring(0, 8).toUpperCase();
+                }
             } else {
                 myPlayerId = null;
             }
