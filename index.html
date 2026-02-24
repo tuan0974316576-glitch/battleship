@@ -1393,13 +1393,62 @@ body {
 }
 
 .btn-code-list:hover {
-    background: #d946ef !important; 
-    color: #ffffff !important;      
-    transform: scale(1.1);          
-    box-shadow: 0 0 30px #d946ef;   
-    text-shadow: none;              
-    animation: none; 
+    background: #d946ef !important;
+    color: #ffffff !important;
+    transform: scale(1.1);
+    box-shadow: 0 0 30px #d946ef;
+    text-shadow: none;
+    animation: none;
 }
+
+.btn-ranking {
+    border-color: #ffffff !important;
+    color: #ffffff !important;
+    background: rgba(255, 255, 255, 0.05);
+    animation: pulse-white 2s infinite alternate ease-in-out;
+}
+
+.btn-ranking:hover {
+    background: rgba(255, 255, 255, 0.15) !important;
+    color: #ffffff !important;
+    transform: scale(1.1);
+    box-shadow: 0 0 30px rgba(255, 255, 255, 0.5);
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+    animation: none;
+}
+
+@keyframes pulse-white {
+    0% { box-shadow: 0 0 10px rgba(255, 255, 255, 0.2); }
+    100% { box-shadow: 0 0 20px rgba(255, 255, 255, 0.4); }
+}
+
+/* ★★★ RANKING TAB STYLES ★★★ */
+.ranking-tab {
+    padding: 12px 24px;
+    background: rgba(15, 23, 42, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #94a3b8;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 12px;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: all 0.3s;
+    border-radius: 3px;
+}
+
+.ranking-tab:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+    border-color: rgba(255, 255, 255, 0.4);
+}
+
+.ranking-tab.active {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: #ffffff;
+    color: #ffffff;
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
+}
+
 /* --- AI 語音讀取中的特效 --- */
 @keyframes tech-speak-pulse {
     0% { color: #e879f9; text-shadow: 0 0 5px #e879f9; }
@@ -2804,7 +2853,11 @@ body {
         <button class="start-btn-large btn-code-list carousel-item" onclick="openVocabScreen()">
             <div class="mode-title">CODE LIST</div>
         </button>
-        
+
+        <button class="start-btn-large btn-ranking carousel-item" onclick="openRankingScreen()">
+            <div class="mode-title">RANKING</div>
+        </button>
+
     </div>
 
     <button class="nav-arrow right" onclick="scrollMenu(1)">
@@ -2846,6 +2899,37 @@ body {
 
     <button class="btn" onclick="closeVocabScreen()" style="margin-top: 20px; width: 150px;">&lt; BACK</button>
 </div>
+
+<!-- ★★★ RANKING SCREEN ★★★ -->
+<div id="ranking-screen" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 250; background: rgba(0,0,0,0.95); flex-direction: column; align-items: center; justify-content: flex-start; backdrop-filter: blur(5px); overflow-y: auto; padding: 40px 20px;">
+    <div class="tech-header" style="margin-bottom: 20px;">
+        <h2 class="tech-title">GLOBAL RANKING</h2>
+        <div class="tech-subtitle">OPERATOR LEADERBOARD SYSTEM</div>
+    </div>
+
+    <!-- Tab System -->
+    <div class="ranking-tabs" style="display: flex; gap: 10px; margin-bottom: 20px;">
+        <button id="tab-total-xp" class="ranking-tab active" onclick="switchRankingTab('total-xp')">
+            TOTAL EXP RANKING
+        </button>
+        <button id="tab-pvp-winrate" class="ranking-tab" onclick="switchRankingTab('pvp-winrate')">
+            PVP WIN RATE RANKING
+        </button>
+    </div>
+
+    <!-- Ranking List Container -->
+    <div style="width: 100%; max-width: 700px; background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 5px; padding: 20px;">
+        <div id="ranking-list" style="display: flex; flex-direction: column; gap: 10px;">
+            <!-- Ranking entries will be populated here -->
+            <div style="text-align: center; color: #64748b; padding: 40px; font-family: 'Orbitron'; font-size: 12px;">
+                LOADING RANKING DATA...
+            </div>
+        </div>
+    </div>
+
+    <button class="btn" onclick="closeRankingScreen()" style="margin-top: 30px; width: 150px; border-color: #64748b; color: #94a3b8;">&lt; BACK</button>
+</div>
+
 <div id="skill-screen" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 250; background: rgba(0,0,0,0.9); flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(5px);">
     <h2 style="font-family: 'Black Ops One'; color: var(--primary); font-size: 40px; margin-bottom: 30px; text-shadow: 0 0 20px var(--primary);">SELECT TRAINING MODULE</h2>
 
@@ -3351,16 +3435,19 @@ let deploymentTimerInterval = null; // 佈陣倒數器
 let turnTimerInterval = null; // 用來計選位嗰 8 秒
     var app, db, auth;
     var myPlayerId = null, currentRoomId = null, gameMode = 'AI', playerRole = null;
-    let myGrid = Array(GRID_SIZE*GRID_SIZE).fill(0);   
-    let enemyGrid = Array(GRID_SIZE*GRID_SIZE).fill(0); 
-    let enemyShots = []; 
+    let myGrid = Array(GRID_SIZE*GRID_SIZE).fill(0);
+    let enemyGrid = Array(GRID_SIZE*GRID_SIZE).fill(0);
+    let enemyShots = [];
     let aiTargetStack = [];
-    let currentPhase = 'DEPLOY'; 
+    let currentPhase = 'DEPLOY';
     let deployIndex = 0;
     let isVertical = true;
     let currentTargetIndex = null, timerInterval = null, currentVocab = null;
     let isMusicPlaying = false;
-let gameTimeouts = [];
+    let gameTimeouts = [];
+
+    // ★★★ PVP ANTI-FARMING: Track turn count ★★★
+    let currentTurnCount = 0;
 
 // ★ 這是之前漏咗嘅函數，必須要有佢，VS AI 先唔會死機 ★
 function setGameTimeout(callback, delay) {
@@ -3661,6 +3748,9 @@ function enterGameUI() {
 
     // ★ PHASE 5: Reset session XP counter
     sessionAnsweringXP = 0;
+
+    // ★★★ ANTI-FARMING: Reset turn count ★★★
+    currentTurnCount = 0;
 
     // ★ 初始化錯字優先 deck：將之前錯過的字排先出
     wrongWordsDeck = getWrongWordsForSession(currentPracticeMode, selectedLevel);
@@ -4812,14 +4902,18 @@ function playerFire(success) {
     clearInterval(timerInterval);
     document.getElementById('launch-modal').style.display = "none";
     stopMatrixEffect();
-    
+
     if (success) {
         // ============================
         // ★ 分支 A：PVP 對戰模式 ★
         // ============================
         if (gameMode === 'PVP') {
             const { ref, update } = window.firebaseModules;
-            
+
+            // ★★★ ANTI-FARMING: Increment turn count ★★★
+            currentTurnCount++;
+            console.log(`[PVP] Turn count: ${currentTurnCount}`);
+
             // 1. 計算下一位係邊個
             const nextTurn = (playerRole === 'host') ? 'guest' : 'host';
 
@@ -4834,7 +4928,7 @@ function playerFire(success) {
             cell.classList.add('revealed');
             playSound('laser-sfx');
             triggerAnimation(cell, 'blue');
-            
+
             // 4. 延遲 0.5秒 顯示結果 (等發射動畫播一陣)
             setGameTimeout(() => {
                 if (enemyGrid[currentTargetIndex] === 1) {
@@ -5335,6 +5429,10 @@ function calculateAndDisplaySettlement(isVictory, isSurrender = false) {
     // Calculate total session XP
     const totalSessionXP = sessionAnsweringXP + matchBonus;
 
+    // ★★★ ANTI-FARMING: Check if match is valid (15+ turns) ★★★
+    const isValidMatch = currentTurnCount >= 15;
+    console.log(`[Settlement] Turn count: ${currentTurnCount}, Valid match: ${isValidMatch}`);
+
     // Update UI
     const resultEl = document.getElementById('settlement-result');
     const answeringXpEl = document.getElementById('settlement-answering-xp');
@@ -5365,14 +5463,57 @@ function calculateAndDisplaySettlement(isVictory, isSurrender = false) {
 
     // Sync to Firebase
     if (window.myPlayerId && window.db) {
-        const { ref, update } = window.firebaseModules;
-        update(ref(window.db, 'users/' + window.myPlayerId), {
-            xp: userTotalXP
-        }).then(() => {
-            console.log(`[Settlement] Synced final XP: ${userTotalXP} (Bonus: +${matchBonus})`);
-        }).catch(e => {
-            console.warn('[Settlement] Firebase sync failed:', e);
-        });
+        const { ref, get, update } = window.firebaseModules;
+
+        // ★★★ PVP STATS TRACKING WITH ANTI-FARMING ★★★
+        if (gameMode === 'PVP' && isValidMatch) {
+            // Valid PVP match (15+ turns): Update stats
+            const userRef = ref(window.db, 'users/' + window.myPlayerId);
+            get(userRef).then(snapshot => {
+                const userData = snapshot.val() || {};
+                const currentPvpWins = userData.pvpWins || 0;
+                const currentPvpLosses = userData.pvpLosses || 0;
+                const currentPvpTotalMatches = userData.pvpTotalMatches || 0;
+
+                const updates = {
+                    xp: userTotalXP,
+                    pvpTotalMatches: currentPvpTotalMatches + 1
+                };
+
+                if (isVictory && !isSurrender) {
+                    updates.pvpWins = currentPvpWins + 1;
+                    console.log(`[PVP Stats] Win recorded. Total wins: ${currentPvpWins + 1}`);
+                } else if (!isVictory && !isSurrender) {
+                    updates.pvpLosses = currentPvpLosses + 1;
+                    console.log(`[PVP Stats] Loss recorded. Total losses: ${currentPvpLosses + 1}`);
+                }
+
+                return update(userRef, updates);
+            }).then(() => {
+                console.log(`[Settlement] PVP stats and XP synced: ${userTotalXP}`);
+            }).catch(e => {
+                console.warn('[Settlement] Firebase sync failed:', e);
+            });
+        } else if (gameMode === 'PVP' && !isValidMatch) {
+            // Invalid PVP match (< 15 turns): Only sync XP, no stats
+            console.log(`[Settlement] Match too short (${currentTurnCount} turns). PVP stats NOT updated.`);
+            update(ref(window.db, 'users/' + window.myPlayerId), {
+                xp: userTotalXP
+            }).then(() => {
+                console.log(`[Settlement] XP synced (no PVP stats): ${userTotalXP}`);
+            }).catch(e => {
+                console.warn('[Settlement] Firebase sync failed:', e);
+            });
+        } else {
+            // AI mode: Only sync XP
+            update(ref(window.db, 'users/' + window.myPlayerId), {
+                xp: userTotalXP
+            }).then(() => {
+                console.log(`[Settlement] Synced final XP: ${userTotalXP} (Bonus: +${matchBonus})`);
+            }).catch(e => {
+                console.warn('[Settlement] Firebase sync failed:', e);
+            });
+        }
     }
 
     // Update HUD to reflect new rank
@@ -5922,6 +6063,212 @@ function closeVocabScreen() {
     playSound('delete-sfx');
     document.getElementById('vocab-screen').style.display = 'none';
     document.getElementById('start-screen').style.display = 'flex';
+}
+
+// ★★★ RANKING SCREEN FUNCTIONS ★★★
+// ★★★ RANKING SCREEN FUNCTIONS ★★★
+let currentRankingTab = 'total-xp'; // Default tab
+
+function openRankingScreen() {
+    playSound('deploy-sfx');
+    document.getElementById('start-screen').style.display = 'none';
+    document.getElementById('ranking-screen').style.display = 'flex';
+    currentRankingTab = 'total-xp';
+    switchRankingTab('total-xp');
+}
+
+function closeRankingScreen() {
+    playSound('delete-sfx');
+    document.getElementById('ranking-screen').style.display = 'none';
+    document.getElementById('start-screen').style.display = 'flex';
+}
+
+function switchRankingTab(tabName) {
+    currentRankingTab = tabName;
+
+    // Update tab UI
+    document.getElementById('tab-total-xp').classList.toggle('active', tabName === 'total-xp');
+    document.getElementById('tab-pvp-winrate').classList.toggle('active', tabName === 'pvp-winrate');
+
+    // Load corresponding data
+    if (tabName === 'total-xp') {
+        loadTotalXPRanking();
+    } else {
+        loadPVPWinRateRanking();
+    }
+}
+
+async function loadTotalXPRanking() {
+    const rankingList = document.getElementById('ranking-list');
+    if (!rankingList) return;
+
+    rankingList.innerHTML = '<div style="text-align: center; color: #64748b; padding: 40px; font-family: \'Orbitron\'; font-size: 12px;">LOADING RANKING DATA...</div>';
+
+    try {
+        const usersRef = window.db.ref('users');
+        const snapshot = await usersRef.once('value');
+        const users = snapshot.val();
+
+        if (!users) {
+            rankingList.innerHTML = '<div style="text-align: center; color: #64748b; padding: 40px; font-family: \'Orbitron\'; font-size: 12px;">NO RANKING DATA AVAILABLE</div>';
+            return;
+        }
+
+        // Convert to array and sort by totalXP
+        const userArray = Object.keys(users).map(uid => ({
+            uid,
+            name: users[uid].name || 'UNKNOWN',
+            totalXP: users[uid].totalXP || 0
+        }));
+
+        userArray.sort((a, b) => b.totalXP - a.totalXP);
+
+        // Take top 100
+        const top100 = userArray.slice(0, 100);
+
+        // Render ranking list
+        let html = '';
+        top100.forEach((user, index) => {
+            const rank = index + 1;
+            const rankData = getRankForXP(user.totalXP);
+            const isCurrentUser = user.uid === myPlayerId;
+
+            let rankColor = '#94a3b8';
+            let rankIcon = '';
+            if (rank === 1) {
+                rankColor = '#fbbf24';
+                rankIcon = '👑';
+            } else if (rank === 2) {
+                rankColor = '#c0c0c0';
+                rankIcon = '🥈';
+            } else if (rank === 3) {
+                rankColor = '#cd7f32';
+                rankIcon = '🥉';
+            }
+
+            html += `
+                <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px 15px; background: ${isCurrentUser ? 'rgba(255, 255, 255, 0.1)' : 'rgba(15, 23, 42, 0.5)'}; border: 1px solid ${isCurrentUser ? 'rgba(255, 255, 255, 0.4)' : 'rgba(100, 116, 139, 0.2)'}; border-radius: 3px;">
+                    <div style="display: flex; align-items: center; gap: 15px; flex: 1;">
+                        <div style="font-family: 'Black Ops One'; font-size: 16px; color: ${rankColor}; min-width: 50px; text-align: center;">
+                            ${rankIcon} #${rank}
+                        </div>
+                        <div style="flex: 1;">
+                            <div style="font-family: 'Orbitron'; font-size: 14px; color: ${isCurrentUser ? '#ffffff' : '#e2e8f0'}; font-weight: ${isCurrentUser ? 'bold' : 'normal'};">
+                                ${user.name} ${isCurrentUser ? '(YOU)' : ''}
+                            </div>
+                            <div style="font-size: 10px; color: #94a3b8; font-family: 'Orbitron'; margin-top: 2px;">
+                                ${rankData.name}
+                            </div>
+                        </div>
+                    </div>
+                    <div style="font-family: 'Orbitron'; font-size: 14px; color: #ffffff; font-weight: bold;">
+                        ${user.totalXP.toLocaleString()} XP
+                    </div>
+                </div>
+            `;
+        });
+
+        rankingList.innerHTML = html;
+
+    } catch (error) {
+        console.error('[Ranking] Error loading total XP data:', error);
+        rankingList.innerHTML = '<div style="text-align: center; color: #ff4444; padding: 40px; font-family: \'Orbitron\'; font-size: 12px;">ERROR LOADING RANKING DATA</div>';
+    }
+}
+
+async function loadPVPWinRateRanking() {
+    const rankingList = document.getElementById('ranking-list');
+    if (!rankingList) return;
+
+    rankingList.innerHTML = '<div style="text-align: center; color: #64748b; padding: 40px; font-family: \'Orbitron\'; font-size: 12px;">LOADING PVP RANKING DATA...</div>';
+
+    try {
+        const usersRef = window.db.ref('users');
+        const snapshot = await usersRef.once('value');
+        const users = snapshot.val();
+
+        if (!users) {
+            rankingList.innerHTML = '<div style="text-align: center; color: #64748b; padding: 40px; font-family: \'Orbitron\'; font-size: 12px;">NO RANKING DATA AVAILABLE</div>';
+            return;
+        }
+
+        // Convert to array and filter users with at least 10 PVP wins
+        const userArray = Object.keys(users)
+            .map(uid => ({
+                uid,
+                name: users[uid].name || 'UNKNOWN',
+                totalXP: users[uid].totalXP || 0,
+                pvpWins: users[uid].pvpWins || 0,
+                pvpLosses: users[uid].pvpLosses || 0,
+                pvpTotalMatches: users[uid].pvpTotalMatches || 0
+            }))
+            .filter(user => user.pvpWins >= 10); // Only users with 10+ wins
+
+        // Calculate win rate and sort
+        userArray.forEach(user => {
+            user.winRate = user.pvpTotalMatches > 0
+                ? (user.pvpWins / user.pvpTotalMatches * 100)
+                : 0;
+        });
+
+        userArray.sort((a, b) => b.winRate - a.winRate);
+
+        if (userArray.length === 0) {
+            rankingList.innerHTML = '<div style="text-align: center; color: #64748b; padding: 40px; font-family: \'Orbitron\'; font-size: 12px;">NO QUALIFIED PLAYERS<br/>(Minimum 10 PVP wins required)</div>';
+            return;
+        }
+
+        // Take top 100
+        const top100 = userArray.slice(0, 100);
+
+        // Render ranking list
+        let html = '';
+        top100.forEach((user, index) => {
+            const rank = index + 1;
+            const rankData = getRankForXP(user.totalXP);
+            const isCurrentUser = user.uid === myPlayerId;
+
+            let rankColor = '#94a3b8';
+            let rankIcon = '';
+            if (rank === 1) {
+                rankColor = '#fbbf24';
+                rankIcon = '👑';
+            } else if (rank === 2) {
+                rankColor = '#c0c0c0';
+                rankIcon = '🥈';
+            } else if (rank === 3) {
+                rankColor = '#cd7f32';
+                rankIcon = '🥉';
+            }
+
+            html += `
+                <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px 15px; background: ${isCurrentUser ? 'rgba(255, 255, 255, 0.1)' : 'rgba(15, 23, 42, 0.5)'}; border: 1px solid ${isCurrentUser ? 'rgba(255, 255, 255, 0.4)' : 'rgba(100, 116, 139, 0.2)'}; border-radius: 3px;">
+                    <div style="display: flex; align-items: center; gap: 15px; flex: 1;">
+                        <div style="font-family: 'Black Ops One'; font-size: 16px; color: ${rankColor}; min-width: 50px; text-align: center;">
+                            ${rankIcon} #${rank}
+                        </div>
+                        <div style="flex: 1;">
+                            <div style="font-family: 'Orbitron'; font-size: 14px; color: ${isCurrentUser ? '#ffffff' : '#e2e8f0'}; font-weight: ${isCurrentUser ? 'bold' : 'normal'};">
+                                ${user.name} ${isCurrentUser ? '(YOU)' : ''}
+                            </div>
+                            <div style="font-size: 10px; color: #94a3b8; font-family: 'Orbitron'; margin-top: 2px;">
+                                ${rankData.name} • ${user.pvpWins}W / ${user.pvpLosses}L
+                            </div>
+                        </div>
+                    </div>
+                    <div style="font-family: 'Orbitron'; font-size: 14px; color: #ffffff; font-weight: bold;">
+                        ${user.winRate.toFixed(1)}%
+                    </div>
+                </div>
+            `;
+        });
+
+        rankingList.innerHTML = html;
+
+    } catch (error) {
+        console.error('[Ranking] Error loading PVP win rate data:', error);
+        rankingList.innerHTML = '<div style="text-align: center; color: #ff4444; padding: 40px; font-family: \'Orbitron\'; font-size: 12px;">ERROR LOADING RANKING DATA</div>';
+    }
 }
 
 // ★★★★★ 請將這段語音代碼貼在這裡 (缺少的拼圖) ★★★★★
