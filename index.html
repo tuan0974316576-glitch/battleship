@@ -3140,26 +3140,26 @@ const DAMAGED_IMAGES = [
     // ★★★ RANK TABLE & XP SYSTEM ★★★
     // =========================================
     const RANK_TABLE = [
-        { minXP: 0,      name: 'RECRUIT' },     // Lvl 1
-        { minXP: 500,    name: 'PRIVATE' },      // Lvl 2
-        { minXP: 1200,   name: 'TROOPER' },      // Lvl 3
-        { minXP: 2500,   name: 'GUARD' },         // Lvl 4
-        { minXP: 4000,   name: 'SCOUT' },         // Lvl 5
-        { minXP: 5000,   name: 'PILOT' },         // Lvl 6
-        { minXP: 7000,   name: 'SERGEANT' },      // Lvl 7
-        { minXP: 9500,   name: 'CHIEF' },         // Lvl 8
-        { minXP: 13000,  name: 'OFFICER' },       // Lvl 9
-        { minXP: 17000,  name: 'CAPTAIN' },       // Lvl 10
-        { minXP: 20000,  name: 'MAJOR' },         // Lvl 11
-        { minXP: 25000,  name: 'COLONEL' },       // Lvl 12
-        { minXP: 31000,  name: 'WARDEN' },        // Lvl 13
-        { minXP: 40000,  name: 'COMMANDER' },     // Lvl 14
-        { minXP: 50000,  name: 'GENERAL' },       // Lvl 15
-        { minXP: 55000,  name: 'ADMIRAL' },       // Lvl 16
-        { minXP: 65000,  name: 'ARCHON' },        // Lvl 17
-        { minXP: 80000,  name: 'TITAN' },         // Lvl 18
-        { minXP: 100000, name: 'OVERLORD' },      // Lvl 19
-        { minXP: 130000, name: 'LEGEND' }         // Lvl 20
+        { minXP: 0,       name: 'RECRUIT' },     // Lvl 1
+        { minXP: 5000,    name: 'PRIVATE' },     // Lvl 2
+        { minXP: 12000,   name: 'TROOPER' },     // Lvl 3
+        { minXP: 25000,   name: 'GUARD' },       // Lvl 4
+        { minXP: 40000,   name: 'SCOUT' },       // Lvl 5
+        { minXP: 50000,   name: 'PILOT' },       // Lvl 6
+        { minXP: 70000,   name: 'SERGEANT' },    // Lvl 7
+        { minXP: 95000,   name: 'CHIEF' },       // Lvl 8
+        { minXP: 130000,  name: 'OFFICER' },     // Lvl 9
+        { minXP: 170000,  name: 'CAPTAIN' },     // Lvl 10
+        { minXP: 200000,  name: 'MAJOR' },       // Lvl 11
+        { minXP: 250000,  name: 'COLONEL' },     // Lvl 12
+        { minXP: 310000,  name: 'WARDEN' },      // Lvl 13
+        { minXP: 400000,  name: 'COMMANDER' },   // Lvl 14
+        { minXP: 500000,  name: 'GENERAL' },     // Lvl 15
+        { minXP: 600000,  name: 'ADMIRAL' },     // Lvl 16
+        { minXP: 750000,  name: 'ARCHON' },      // Lvl 17
+        { minXP: 900000,  name: 'TITAN' },       // Lvl 18
+        { minXP: 1200000, name: 'OVERLORD' },    // Lvl 19
+        { minXP: 1500000, name: 'LEGEND' }       // Lvl 20
     ];
 
     function getRankForXP(xp) {
@@ -3978,33 +3978,58 @@ function openLaunchModal(index) {
         return;
     }
 
-// 準備題目 (抽卡機制 + 錯字優先)
+// 準備題目 (3-Tier Spaced Repetition System)
 
-    // 0. 優先出錯字：如果 wrongWordsDeck 有字，先出錯字
+    // ★★★ PHASE 3: 3-TIER QUEUE SYSTEM ★★★
+    // Pool 1 (Learning): Wrong words from previous session
+    // Pool 2 (New): Words not in userMastery
+    // Pool 3 (Review): Mastered words
+
+    // Convert currentPracticeMode to lowercase for mastery key (READING -> reading)
+    const masteryKey = currentPracticeMode.toLowerCase();
+
+    // Pool 1: Prioritize wrong words
     if (wrongWordsDeck.length > 0) {
         const wIdx = Math.floor(Math.random() * wrongWordsDeck.length);
         currentVocab = wrongWordsDeck[wIdx];
         wrongWordsDeck.splice(wIdx, 1);
-        console.log(`[Wrong Words] Prioritizing: ${currentVocab.en} (${wrongWordsDeck.length} remaining)`);
+        console.log(`[Pool 1 - Learning] Wrong word: ${currentVocab.en} (${wrongWordsDeck.length} remaining)`);
     } else {
-        // 1. 如果「手牌」抽乾了，重新由原本的 List 補滿 (洗牌)
-        if (sessionDeck.length === 0) {
-            console.log("Deck empty! Reshuffling...");
-            if (activeVocabList.length === 0) {
-                alert("Error: Database is empty!");
-                return;
+        // Pool 2: New words (not in mastery)
+        const newWords = activeVocabList.filter(word => {
+            if (!userMastery[masteryKey]) return true;
+            if (!userMastery[masteryKey][selectedLevel]) return true;
+            return !userMastery[masteryKey][selectedLevel][word.en];
+        });
+
+        if (newWords.length > 0) {
+            const randIdx = Math.floor(Math.random() * newWords.length);
+            currentVocab = newWords[randIdx];
+            console.log(`[Pool 2 - New] Fresh word: ${currentVocab.en} (${newWords.length} new words available)`);
+        } else {
+            // Pool 3: Review mastered words
+            const masteredWords = activeVocabList.filter(word => {
+                if (!userMastery[masteryKey]) return false;
+                if (!userMastery[masteryKey][selectedLevel]) return false;
+                return userMastery[masteryKey][selectedLevel][word.en];
+            });
+
+            if (masteredWords.length > 0) {
+                const randIdx = Math.floor(Math.random() * masteredWords.length);
+                currentVocab = masteredWords[randIdx];
+                const masteryData = userMastery[masteryKey][selectedLevel][currentVocab.en];
+                console.log(`[Pool 3 - Review] Mastered word: ${currentVocab.en} (count: ${masteryData.count})`);
+            } else {
+                // Fallback: if somehow no words available
+                if (activeVocabList.length === 0) {
+                    alert("Error: Database is empty!");
+                    return;
+                }
+                const randIdx = Math.floor(Math.random() * activeVocabList.length);
+                currentVocab = activeVocabList[randIdx];
+                console.log(`[Fallback] Random word: ${currentVocab.en}`);
             }
-            sessionDeck = [...activeVocabList]; // 重新複製
         }
-
-        // 2. 從剩餘的手牌中，隨機抽出一個 index
-        const randIndex = Math.floor(Math.random() * sessionDeck.length);
-
-        // 3. 設定當前題目
-        currentVocab = sessionDeck[randIndex];
-
-        // 4. ★ 關鍵：從手牌中移除這個字 (Splice)
-        sessionDeck.splice(randIndex, 1);
     }
 
     if (currentVocab.sents && currentVocab.sents.length > 0) {
@@ -4304,6 +4329,69 @@ function handlePlayerTimeout() {
     // 為了兼容，將舊名 updateDisplay 指向新函數 updateSmartDisplay
     window.updateDisplay = updateSmartDisplay;
 
+// ★★★ PHASE 4: DYNAMIC XP & MASTERY CALCULATION ★★★
+function handleCorrectAnswer() {
+    // Convert currentPracticeMode to lowercase for mastery key (READING -> reading)
+    const masteryKey = currentPracticeMode.toLowerCase();
+    const wordId = currentVocab.en;
+
+    // Initialize mastery structure if needed
+    if (!userMastery[masteryKey]) userMastery[masteryKey] = {};
+    if (!userMastery[masteryKey][selectedLevel]) userMastery[masteryKey][selectedLevel] = {};
+
+    // Get current count (default to 0 if word is new)
+    const currentCount = userMastery[masteryKey][selectedLevel][wordId]?.count || 0;
+
+    // Calculate XP based on half-life formula
+    let xpGained = 0;
+    if (currentCount === 0) {
+        xpGained = 100; // New word
+    } else if (currentCount === 1) {
+        xpGained = 50;
+    } else if (currentCount === 2) {
+        xpGained = 25;
+    } else {
+        xpGained = 10; // Cap at 10 XP for count >= 3
+    }
+
+    // Update global XP
+    userTotalXP += xpGained;
+
+    // Update mastery for this word
+    userMastery[masteryKey][selectedLevel][wordId] = {
+        count: currentCount + 1,
+        status: 1
+    };
+
+    console.log(`[XP] +${xpGained} XP | Word: ${wordId} | Count: ${currentCount} -> ${currentCount + 1} | Total XP: ${userTotalXP}`);
+
+    // Update Firebase instantly
+    if (window.myPlayerId && window.db) {
+        const { ref, update } = window.firebaseModules;
+        const userRef = ref(window.db, 'users/' + window.myPlayerId);
+
+        // Update both XP and this specific word's mastery
+        const updates = {};
+        updates['xp'] = userTotalXP;
+        updates[`mastery/${masteryKey}/${selectedLevel}/${wordId}`] = {
+            count: currentCount + 1,
+            status: 1
+        };
+
+        update(userRef, updates).then(() => {
+            console.log(`[Firebase] Synced XP (${userTotalXP}) and mastery for ${wordId}`);
+        }).catch(e => {
+            console.warn('[Firebase] Update failed:', e);
+        });
+    }
+
+    // Update HUD to reflect new rank
+    if (typeof updateHUD === 'function') {
+        const cachedName = localStorage.getItem('battleship_username');
+        if (cachedName) updateHUD(cachedName);
+    }
+}
+
 // --- 修正版：核對答案 (智能無視符號) ---
 function checkAnswer() {
     const input = document.getElementById('hidden-input');
@@ -4339,6 +4427,8 @@ function checkAnswer() {
     // ★ 錯字記錄：答啱就移除，答錯就記錄
     if (isCorrect) {
         removeWrongWord(currentPracticeMode, selectedLevel, currentVocab.en);
+        // ★★★ PHASE 4: Call XP & Mastery handler ★★★
+        handleCorrectAnswer();
     } else {
         saveWrongWord(currentPracticeMode, selectedLevel, currentVocab.en);
     }
