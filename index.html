@@ -2781,14 +2781,14 @@ body {
 
     <div style="display: flex; flex-direction: column; gap: 20px; align-items: center;">
 
-        <button class="skill-btn" onclick="selectSkill('READING')" style="border-color: #0ea5e9; color: #0ea5e9; width: 300px; height: 80px;">
+        <button id="skill-btn-reading" class="skill-btn" onclick="selectSkill('READING')" style="border-color: #0ea5e9; color: #0ea5e9; width: 300px; height: 80px;">
             <div style="display:flex; flex-direction:column; align-items:center;">
                 <span style="font-size:24px;">READING</span>
                 <span style="font-size:10px; opacity:0.7;">DECRYPT CODE</span>
             </div>
         </button>
 
-        <button class="skill-btn" onclick="selectSkill('LISTENING')" style="border-color: #22c55e; color: #22c55e; width: 300px; height: 80px;">
+        <button id="skill-btn-listening" class="skill-btn" onclick="selectSkill('LISTENING')" style="border-color: #22c55e; color: #22c55e; width: 300px; height: 80px;">
             <div style="display:flex; flex-direction:column; align-items:center;">
                 <span style="font-size:24px;">LISTENING</span>
                 <span style="font-size:10px; opacity:0.7;">AUDIO INTEL</span>
@@ -3423,6 +3423,64 @@ function updateLevelProgressUI() {
     console.log(`[Level Progress] Updated for mode: ${currentPracticeMode} (${modeLetter})`);
 }
 
+// ★★★ UPDATE SKILL BUTTONS WITH PROGRESS ★★★
+function updateSkillButtonsProgress() {
+    // Only update if we have a selected level
+    if (!selectedLevel || !VOCAB_DB[selectedLevel]) return;
+
+    const totalWords = VOCAB_DB[selectedLevel].length;
+
+    // Calculate progress for each skill
+    let readingCount = 0;
+    let listeningCount = 0;
+    let speakingCount = 0;
+
+    if (userMastery.reading && userMastery.reading[selectedLevel]) {
+        readingCount = Object.values(userMastery.reading[selectedLevel]).filter(m => m.status === 1).length;
+    }
+    if (userMastery.listening && userMastery.listening[selectedLevel]) {
+        listeningCount = Object.values(userMastery.listening[selectedLevel]).filter(m => m.status === 1).length;
+    }
+    if (userMastery.speaking && userMastery.speaking[selectedLevel]) {
+        speakingCount = Object.values(userMastery.speaking[selectedLevel]).filter(m => m.status === 1).length;
+    }
+
+    // Update Reading button
+    const readingBtn = document.getElementById('skill-btn-reading');
+    if (readingBtn) {
+        readingBtn.innerHTML = `
+            <div style="display:flex; flex-direction:column; align-items:center;">
+                <span style="font-size:24px;">READING</span>
+                <span style="font-size:12px; opacity:0.8; font-family: 'Orbitron';">${readingCount}/${totalWords}</span>
+            </div>
+        `;
+    }
+
+    // Update Listening button
+    const listeningBtn = document.getElementById('skill-btn-listening');
+    if (listeningBtn) {
+        listeningBtn.innerHTML = `
+            <div style="display:flex; flex-direction:column; align-items:center;">
+                <span style="font-size:24px;">LISTENING</span>
+                <span style="font-size:12px; opacity:0.8; font-family: 'Orbitron';">${listeningCount}/${totalWords}</span>
+            </div>
+        `;
+    }
+
+    // Update Speaking button
+    const speakingBtn = document.getElementById('btn-skill-speaking');
+    if (speakingBtn) {
+        speakingBtn.innerHTML = `
+            <div style="display:flex; flex-direction:column; align-items:center;">
+                <span style="font-size:24px;">SPEAKING</span>
+                <span style="font-size:12px; opacity:0.8; font-family: 'Orbitron';">${speakingCount}/${totalWords}</span>
+            </div>
+        `;
+    }
+
+    console.log(`[Skill Progress] R: ${readingCount}/${totalWords} | L: ${listeningCount}/${totalWords} | S: ${speakingCount}/${totalWords}`);
+}
+
 // Legacy function name for compatibility
 function updateLevelProgress() {
     updateLevelProgressUI();
@@ -3442,6 +3500,9 @@ function selectLevel(level) {
 
     if (tempGameMode === 'AI') {
         // --- AI 模式：Level -> Skill (顯示 Skill 選擇) ---
+        // ★★★ Update skill buttons with progress for selected level ★★★
+        updateSkillButtonsProgress();
+
         document.getElementById('skill-screen').style.display = 'flex';
 
         // 確保 AI 模式見到 Speaking 按鈕
@@ -3449,6 +3510,9 @@ function selectLevel(level) {
         if (speakBtn) speakBtn.style.display = 'flex';
     } else {
         // --- PVP 模式：Level -> Skill -> Lobby ---
+        // ★★★ Update skill buttons with progress for selected level ★★★
+        updateSkillButtonsProgress();
+
         // 顯示 Skill 選擇
         document.getElementById('skill-screen').style.display = 'flex';
 
