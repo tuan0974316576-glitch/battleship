@@ -3372,7 +3372,8 @@ function closeLevelScreen() {
     function prepareCreateRoom() {
         playSound('deploy-sfx');
         // 彈出 Level 選單畀場主揀
-        updateLevelProgress(); // ★★★ PHASE 6: Update progress display ★★★
+        // ★★★ PVP 模式唔顯示進度，重置返原本嘅文字 ★★★
+        resetLevelButtonsToDefault();
         document.getElementById('level-screen').style.display = 'flex';
     }
 
@@ -3517,6 +3518,30 @@ function resetSkillButtonsToDefault() {
     }
 
     console.log(`[Skill Buttons] Reset to default (PVP mode)`);
+}
+
+// ★★★ RESET LEVEL BUTTONS TO DEFAULT (FOR PVP) ★★★
+function resetLevelButtonsToDefault() {
+    const levels = ['L1', 'L2', 'L3', 'L4', 'L5', 'L5_STAR'];
+    const levelNames = ['LEVEL 1', 'LEVEL 2', 'LEVEL 3', 'LEVEL 4', 'LEVEL 5', 'LEVEL 5*'];
+
+    levels.forEach((levelKey, index) => {
+        const levelScreen = document.getElementById('level-screen');
+        if (!levelScreen) return;
+
+        const buttons = levelScreen.querySelectorAll('.level-btn');
+        const button = buttons[index];
+        if (!button) return;
+
+        // Reset to default text without progress
+        button.innerHTML = `
+            <div style="display: flex; flex-direction: column; align-items: center; gap: 5px;">
+                <span style="font-size: 18px; font-weight: bold;">${levelNames[index]}</span>
+            </div>
+        `;
+    });
+
+    console.log(`[Level Buttons] Reset to default (PVP mode)`);
 }
 
 // Legacy function name for compatibility
