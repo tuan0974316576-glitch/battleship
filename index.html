@@ -3559,6 +3559,7 @@ function selectLevel(level) {
         if (speakBtn) speakBtn.style.display = 'none';
     }
 }
+
 function enterGameUI() {
     const bgm = document.getElementById('bgm');
     if (bgm) { bgm.volume = 0.5; bgm.play().then(()=>isMusicPlaying=true).catch(e=>{}); }
