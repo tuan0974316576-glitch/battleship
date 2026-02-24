@@ -3481,6 +3481,44 @@ function updateSkillButtonsProgress() {
     console.log(`[Skill Progress] R: ${readingCount}/${totalWords} | L: ${listeningCount}/${totalWords} | S: ${speakingCount}/${totalWords}`);
 }
 
+// ★★★ RESET SKILL BUTTONS TO DEFAULT (FOR PVP) ★★★
+function resetSkillButtonsToDefault() {
+    // Reset Reading button
+    const readingBtn = document.getElementById('skill-btn-reading');
+    if (readingBtn) {
+        readingBtn.innerHTML = `
+            <div style="display:flex; flex-direction:column; align-items:center;">
+                <span style="font-size:24px;">READING</span>
+                <span style="font-size:10px; opacity:0.7;">DECRYPT CODE</span>
+            </div>
+        `;
+    }
+
+    // Reset Listening button
+    const listeningBtn = document.getElementById('skill-btn-listening');
+    if (listeningBtn) {
+        listeningBtn.innerHTML = `
+            <div style="display:flex; flex-direction:column; align-items:center;">
+                <span style="font-size:24px;">LISTENING</span>
+                <span style="font-size:10px; opacity:0.7;">AUDIO INTEL</span>
+            </div>
+        `;
+    }
+
+    // Reset Speaking button
+    const speakingBtn = document.getElementById('btn-skill-speaking');
+    if (speakingBtn) {
+        speakingBtn.innerHTML = `
+            <div style="display:flex; flex-direction:column; align-items:center;">
+                <span style="font-size:24px;">SPEAKING</span>
+                <span style="font-size:10px; opacity:0.7;">VOICE COMMAND</span>
+            </div>
+        `;
+    }
+
+    console.log(`[Skill Buttons] Reset to default (PVP mode)`);
+}
+
 // Legacy function name for compatibility
 function updateLevelProgress() {
     updateLevelProgressUI();
@@ -3510,8 +3548,8 @@ function selectLevel(level) {
         if (speakBtn) speakBtn.style.display = 'flex';
     } else {
         // --- PVP 模式：Level -> Skill -> Lobby ---
-        // ★★★ Update skill buttons with progress for selected level ★★★
-        updateSkillButtonsProgress();
+        // ★★★ PVP 唔顯示進度，重置返原本嘅文字 ★★★
+        resetSkillButtonsToDefault();
 
         // 顯示 Skill 選擇
         document.getElementById('skill-screen').style.display = 'flex';
@@ -4189,56 +4227,67 @@ function openLaunchModal(index) {
         return;
     }
 
-// 準備題目 (3-Tier Spaced Repetition System)
+// 準備題目 (AI: 3-Tier Spaced Repetition | PVP: Random)
 
-    // ★★★ PHASE 3: 3-TIER QUEUE SYSTEM ★★★
-    // Pool 1 (Learning): Wrong words from previous session
-    // Pool 2 (New): Words not in userMastery
-    // Pool 3 (Review): Mastered words
-
-    // Convert currentPracticeMode to lowercase for mastery key (READING -> reading)
-    const masteryKey = currentPracticeMode.toLowerCase();
-
-    // Pool 1: Prioritize wrong words
-    if (wrongWordsDeck.length > 0) {
-        const wIdx = Math.floor(Math.random() * wrongWordsDeck.length);
-        currentVocab = wrongWordsDeck[wIdx];
-        wrongWordsDeck.splice(wIdx, 1);
-        console.log(`[Pool 1 - Learning] Wrong word: ${currentVocab.en} (${wrongWordsDeck.length} remaining)`);
+    // ★★★ PVP 模式：簡單隨機抽字 (唔用 mastery 系統) ★★★
+    if (gameMode === 'PVP') {
+        // PVP 直接從 activeVocabList 隨機抽
+        if (activeVocabList.length === 0) {
+            alert("Error: Database is empty!");
+            return;
+        }
+        const randIdx = Math.floor(Math.random() * activeVocabList.length);
+        currentVocab = activeVocabList[randIdx];
+        console.log(`[PVP Random] Word: ${currentVocab.en}`);
     } else {
-        // Pool 2: New words (not in mastery)
-        const newWords = activeVocabList.filter(word => {
-            if (!userMastery[masteryKey]) return true;
-            if (!userMastery[masteryKey][selectedLevel]) return true;
-            return !userMastery[masteryKey][selectedLevel][word.en];
-        });
+        // ★★★ AI 模式：PHASE 3: 3-TIER QUEUE SYSTEM ★★★
+        // Pool 1 (Learning): Wrong words from previous session
+        // Pool 2 (New): Words not in userMastery
+        // Pool 3 (Review): Mastered words
 
-        if (newWords.length > 0) {
-            const randIdx = Math.floor(Math.random() * newWords.length);
-            currentVocab = newWords[randIdx];
-            console.log(`[Pool 2 - New] Fresh word: ${currentVocab.en} (${newWords.length} new words available)`);
+        // Convert currentPracticeMode to lowercase for mastery key (READING -> reading)
+        const masteryKey = currentPracticeMode.toLowerCase();
+
+        // Pool 1: Prioritize wrong words
+        if (wrongWordsDeck.length > 0) {
+            const wIdx = Math.floor(Math.random() * wrongWordsDeck.length);
+            currentVocab = wrongWordsDeck[wIdx];
+            wrongWordsDeck.splice(wIdx, 1);
+            console.log(`[Pool 1 - Learning] Wrong word: ${currentVocab.en} (${wrongWordsDeck.length} remaining)`);
         } else {
-            // Pool 3: Review mastered words
-            const masteredWords = activeVocabList.filter(word => {
-                if (!userMastery[masteryKey]) return false;
-                if (!userMastery[masteryKey][selectedLevel]) return false;
-                return userMastery[masteryKey][selectedLevel][word.en];
+            // Pool 2: New words (not in mastery)
+            const newWords = activeVocabList.filter(word => {
+                if (!userMastery[masteryKey]) return true;
+                if (!userMastery[masteryKey][selectedLevel]) return true;
+                return !userMastery[masteryKey][selectedLevel][word.en];
             });
 
-            if (masteredWords.length > 0) {
-                const randIdx = Math.floor(Math.random() * masteredWords.length);
-                currentVocab = masteredWords[randIdx];
-                const masteryData = userMastery[masteryKey][selectedLevel][currentVocab.en];
-                console.log(`[Pool 3 - Review] Mastered word: ${currentVocab.en} (count: ${masteryData.count})`);
+            if (newWords.length > 0) {
+                const randIdx = Math.floor(Math.random() * newWords.length);
+                currentVocab = newWords[randIdx];
+                console.log(`[Pool 2 - New] Fresh word: ${currentVocab.en} (${newWords.length} new words available)`);
             } else {
-                // Fallback: if somehow no words available
-                if (activeVocabList.length === 0) {
-                    alert("Error: Database is empty!");
-                    return;
-                }
-                const randIdx = Math.floor(Math.random() * activeVocabList.length);
-                currentVocab = activeVocabList[randIdx];
-                console.log(`[Fallback] Random word: ${currentVocab.en}`);
+                // Pool 3: Review mastered words
+                const masteredWords = activeVocabList.filter(word => {
+                    if (!userMastery[masteryKey]) return false;
+                    if (!userMastery[masteryKey][selectedLevel]) return false;
+                    return userMastery[masteryKey][selectedLevel][word.en];
+                });
+
+                if (masteredWords.length > 0) {
+                    const randIdx = Math.floor(Math.random() * masteredWords.length);
+                    currentVocab = masteredWords[randIdx];
+                    const masteryData = userMastery[masteryKey][selectedLevel][currentVocab.en];
+                    console.log(`[Pool 3 - Review] Mastered word: ${currentVocab.en} (count: ${masteryData.count})`);
+                } else {
+                    // Fallback: if somehow no words available
+                    if (activeVocabList.length === 0) {
+                        alert("Error: Database is empty!");
+                        return;
+                    }
+                    const randIdx = Math.floor(Math.random() * activeVocabList.length);
+                    currentVocab = activeVocabList[randIdx];
+                    console.log(`[Fallback] Random word: ${currentVocab.en}`);
             }
         }
     }
