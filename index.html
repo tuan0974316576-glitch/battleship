@@ -77,6 +77,12 @@ console.log("Firebase Modules Loaded Successfully");
                     // 舊用戶 — 更新名稱 (可能 Firebase 上改過名)
                     const realName = snapshot.val().displayName;
                     localStorage.setItem('battleship_username', realName);
+
+                    // ★ 讀取 XP & Mastery (如果存在)
+                    const userData = snapshot.val();
+                    window.userTotalXP = (typeof userData.xp === 'number') ? userData.xp : 0;
+                    window.userMastery = userData.mastery || { reading: {}, listening: {}, speaking: {} };
+
                     if(typeof updateHUD === 'function') updateHUD(realName);
                     // 如果之前已經用 cached name 顯示咗主選單，就唔使再 call
                     if (!cachedName) {
@@ -88,7 +94,10 @@ console.log("Firebase Modules Loaded Successfully");
                     if (u.isAnonymous) {
                         // Guest 自動派名
                         const autoName = window.generateGuestId ? window.generateGuestId() : "GUEST_" + u.uid.substring(0,4);
-                        update(ref(db, 'users/' + u.uid), { displayName: autoName, lastLogin: Date.now() }).then(() => {
+                        // ★ 新用戶初始化 XP & Mastery
+                        window.userTotalXP = 0;
+                        window.userMastery = { reading: {}, listening: {}, speaking: {} };
+                        update(ref(db, 'users/' + u.uid), { displayName: autoName, lastLogin: Date.now(), xp: 0 }).then(() => {
                             localStorage.setItem('battleship_username', autoName);
                             if(typeof updateHUD === 'function') updateHUD(autoName);
                             if(typeof showMainMenu === 'function') showMainMenu();
@@ -3126,7 +3135,52 @@ const DAMAGED_IMAGES = [
    
 
     // 全局變數：當前使用的生字表
-    
+
+    // =========================================
+    // ★★★ RANK TABLE & XP SYSTEM ★★★
+    // =========================================
+    const RANK_TABLE = [
+        { minXP: 0,      name: 'RECRUIT' },     // Lvl 1
+        { minXP: 500,    name: 'PRIVATE' },      // Lvl 2
+        { minXP: 1200,   name: 'TROOPER' },      // Lvl 3
+        { minXP: 2500,   name: 'GUARD' },         // Lvl 4
+        { minXP: 4000,   name: 'SCOUT' },         // Lvl 5
+        { minXP: 5000,   name: 'PILOT' },         // Lvl 6
+        { minXP: 7000,   name: 'SERGEANT' },      // Lvl 7
+        { minXP: 9500,   name: 'CHIEF' },         // Lvl 8
+        { minXP: 13000,  name: 'OFFICER' },       // Lvl 9
+        { minXP: 17000,  name: 'CAPTAIN' },       // Lvl 10
+        { minXP: 20000,  name: 'MAJOR' },         // Lvl 11
+        { minXP: 25000,  name: 'COLONEL' },       // Lvl 12
+        { minXP: 31000,  name: 'WARDEN' },        // Lvl 13
+        { minXP: 40000,  name: 'COMMANDER' },     // Lvl 14
+        { minXP: 50000,  name: 'GENERAL' },       // Lvl 15
+        { minXP: 55000,  name: 'ADMIRAL' },       // Lvl 16
+        { minXP: 65000,  name: 'ARCHON' },        // Lvl 17
+        { minXP: 80000,  name: 'TITAN' },         // Lvl 18
+        { minXP: 100000, name: 'OVERLORD' },      // Lvl 19
+        { minXP: 130000, name: 'LEGEND' }         // Lvl 20
+    ];
+
+    function getRankForXP(xp) {
+        let rank = RANK_TABLE[0];
+        let level = 1;
+        for (let i = RANK_TABLE.length - 1; i >= 0; i--) {
+            if (xp >= RANK_TABLE[i].minXP) {
+                rank = RANK_TABLE[i];
+                level = i + 1;
+                break;
+            }
+        }
+        const nextXP = (level < RANK_TABLE.length) ? RANK_TABLE[level].minXP : null;
+        return { level, name: rank.name, minXP: rank.minXP, nextXP };
+    }
+
+    // ★★★ XP & MASTERY GLOBAL VARIABLES ★★★
+    let userTotalXP = 0;
+    // mastery 結構: { reading: { L1: { "apple": { count: 3, status: 1 } }, ... }, listening: {...}, speaking: {...} }
+    let userMastery = { reading: {}, listening: {}, speaking: {} };
+
     let activeVocabList = [];
     let sessionDeck = [];
     let wrongWordsDeck = []; // 優先出錯字 deck
@@ -5638,9 +5692,16 @@ window.submitRegistration = function() {
 
     // ★★★ 關鍵修復：將名寫入 Database ★★★
     // 這樣 Auto-Login 下次先會搵到你！
-    update(ref(db, 'users/' + user.uid), { 
+    // ★ 新用戶初始化 XP
+    userTotalXP = 0;
+    window.userTotalXP = 0;
+    userMastery = { reading: {}, listening: {}, speaking: {} };
+    window.userMastery = { reading: {}, listening: {}, speaking: {} };
+
+    update(ref(db, 'users/' + user.uid), {
         displayName: name,
-        lastLogin: Date.now() // 順便記低最後上線時間
+        lastLogin: Date.now(),
+        xp: 0
     }).then(() => {
         localStorage.setItem('battleship_username', name);
         // --- 成功儲存後的轉場 ---
@@ -5667,6 +5728,14 @@ window.submitRegistration = function() {
 function updateHUD(name) {
     const hudName = document.getElementById('hud-player-name');
     if (hudName) hudName.innerText = name;
+
+    // ★ 更新 Rank 顯示
+    const xp = userTotalXP || window.userTotalXP || 0;
+    if (typeof getRankForXP === 'function') {
+        const rank = getRankForXP(xp);
+        const rankEl = document.getElementById('hud-rank-title');
+        if (rankEl) rankEl.innerText = rank.name;
+    }
 }
 
 // 8. 顯示主選單 (隱藏 Login Panel)
@@ -5787,6 +5856,10 @@ window.addEventListener('load', () => {
     auth = window.auth;
     myPlayerId = window.myPlayerId || null;
 
+    // ★ 同步 XP & Mastery 從 Module Scope
+    userTotalXP = window.userTotalXP || 0;
+    userMastery = window.userMastery || { reading: {}, listening: {}, speaking: {} };
+
     // 4. 同步 myPlayerId (因為 onAuthStateChanged 可能仲未 fire)
     // 加一個輕量級 listener 確保 let-scoped myPlayerId 永遠同步
     if (window.firebaseModules && auth) {
@@ -5799,8 +5872,13 @@ window.addEventListener('load', () => {
                     const displayName = localStorage.getItem('battleship_username');
                     pidEl.innerText = displayName || u.uid.substring(0, 8).toUpperCase();
                 }
+                // ★ 同步 XP & Mastery
+                userTotalXP = window.userTotalXP || 0;
+                userMastery = window.userMastery || { reading: {}, listening: {}, speaking: {} };
             } else {
                 myPlayerId = null;
+                userTotalXP = 0;
+                userMastery = { reading: {}, listening: {}, speaking: {} };
             }
         });
     }
