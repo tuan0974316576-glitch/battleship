@@ -1229,6 +1229,40 @@ body {
     animation: fadeIn 0.3s ease-out;
 }
 
+/* ★★★ RANKING SCREEN (White Theme) ★★★ */
+#ranking-screen {
+    display: none;
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    z-index: 400;
+    background: rgba(5, 10, 20, 0.95);
+    backdrop-filter: blur(10px);
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    animation: fadeIn 0.3s ease-out;
+    overflow-y: auto;
+    padding: 40px 20px;
+}
+
+#ranking-screen .tech-title {
+    font-family: 'Black Ops One'; font-size: 40px; color: #ffffff;
+    text-shadow: 0 0 20px rgba(255, 255, 255, 0.6); margin: 0; letter-spacing: 3px;
+}
+
+#ranking-screen .tech-subtitle {
+    font-family: 'Orbitron'; font-size: 12px; color: #a8a29e; letter-spacing: 5px; margin-top: 5px;
+}
+
+.ranking-container {
+    width: 100%; max-width: 800px;
+    background: rgba(15, 23, 42, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 5px;
+    padding: 20px;
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
+}
+
+
 /* 2. 標題區域 */
 .tech-header { text-align: center; margin-bottom: 20px; }
 .tech-title {
@@ -1382,6 +1416,18 @@ body {
     }
 }
 
+/* ★★★ White/Silver Ranking Button Animation ★★★ */
+@keyframes pulse-white {
+    0% {
+        box-shadow: 0 0 10px rgba(255, 255, 255, 0.6);
+        border-color: rgba(255, 255, 255, 0.8);
+    }
+    100% {
+        box-shadow: 0 0 20px rgba(255, 255, 255, 1);
+        border-color: #ffffff;
+    }
+}
+
 /* --- CODE LIST 按鈕樣式 --- */
 .btn-code-list {
     border-color: #d946ef !important;
@@ -1417,37 +1463,31 @@ body {
     animation: none;
 }
 
-@keyframes pulse-white {
-    0% { box-shadow: 0 0 10px rgba(255, 255, 255, 0.2); }
-    100% { box-shadow: 0 0 20px rgba(255, 255, 255, 0.4); }
+/* ★★★ RANKING TAB STYLES ★★★ */
+.ranking-tabs {
+    display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; justify-content: center;
 }
 
-/* ★★★ RANKING TAB STYLES ★★★ */
 .ranking-tab {
-    padding: 12px 24px;
-    background: rgba(15, 23, 42, 0.5);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid #475569;
     color: #94a3b8;
-    font-family: 'Orbitron', sans-serif;
-    font-size: 12px;
+    padding: 10px 20px;
+    font-family: 'Orbitron'; font-weight: bold; font-size: 12px;
+    cursor: pointer; transition: all 0.2s;
+    clip-path: polygon(10% 0, 100% 0, 100% 90%, 90% 100%, 0 100%, 0 10%);
     letter-spacing: 1px;
-    cursor: pointer;
-    transition: all 0.3s;
-    border-radius: 3px;
 }
 
 .ranking-tab:hover {
-    background: rgba(255, 255, 255, 0.1);
-    color: #ffffff;
-    border-color: rgba(255, 255, 255, 0.4);
+    background: rgba(255, 255, 255, 0.2); color: #fff; border-color: #ffffff;
 }
 
 .ranking-tab.active {
-    background: rgba(255, 255, 255, 0.15);
-    border-color: #ffffff;
-    color: #ffffff;
-    box-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
+    background: rgba(255, 255, 255, 0.9); color: #000000; border-color: #ffffff;
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
 }
+
 
 /* --- AI 語音讀取中的特效 --- */
 @keyframes tech-speak-pulse {
@@ -2908,7 +2948,7 @@ body {
     </div>
 
     <!-- Tab System -->
-    <div class="ranking-tabs" style="display: flex; gap: 10px; margin-bottom: 20px;">
+    <div class="ranking-tabs">
         <button id="tab-total-xp" class="ranking-tab active" onclick="switchRankingTab('total-xp')">
             TOTAL EXP RANKING
         </button>
@@ -2918,7 +2958,7 @@ body {
     </div>
 
     <!-- Ranking List Container -->
-    <div style="width: 100%; max-width: 700px; background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 5px; padding: 20px;">
+    <div class="ranking-container">
         <div id="ranking-list" style="display: flex; flex-direction: column; gap: 10px;">
             <!-- Ranking entries will be populated here -->
             <div style="text-align: center; color: #64748b; padding: 40px; font-family: 'Orbitron'; font-size: 12px;">
@@ -6105,8 +6145,9 @@ async function loadTotalXPRanking() {
     rankingList.innerHTML = '<div style="text-align: center; color: #64748b; padding: 40px; font-family: \'Orbitron\'; font-size: 12px;">LOADING RANKING DATA...</div>';
 
     try {
-        const usersRef = window.db.ref('users');
-        const snapshot = await usersRef.once('value');
+        const { ref, get } = window.firebaseModules;
+        const usersRef = ref(window.db, 'users');
+        const snapshot = await get(usersRef);
         const users = snapshot.val();
 
         if (!users) {
@@ -6117,8 +6158,8 @@ async function loadTotalXPRanking() {
         // Convert to array and sort by totalXP
         const userArray = Object.keys(users).map(uid => ({
             uid,
-            name: users[uid].name || 'UNKNOWN',
-            totalXP: users[uid].totalXP || 0
+            name: users[uid].name || users[uid].displayName || 'UNKNOWN',
+            totalXP: users[uid].xp || 0
         }));
 
         userArray.sort((a, b) => b.totalXP - a.totalXP);
@@ -6183,8 +6224,9 @@ async function loadPVPWinRateRanking() {
     rankingList.innerHTML = '<div style="text-align: center; color: #64748b; padding: 40px; font-family: \'Orbitron\'; font-size: 12px;">LOADING PVP RANKING DATA...</div>';
 
     try {
-        const usersRef = window.db.ref('users');
-        const snapshot = await usersRef.once('value');
+        const { ref, get } = window.firebaseModules;
+        const usersRef = ref(window.db, 'users');
+        const snapshot = await get(usersRef);
         const users = snapshot.val();
 
         if (!users) {
@@ -6196,8 +6238,8 @@ async function loadPVPWinRateRanking() {
         const userArray = Object.keys(users)
             .map(uid => ({
                 uid,
-                name: users[uid].name || 'UNKNOWN',
-                totalXP: users[uid].totalXP || 0,
+                name: users[uid].name || users[uid].displayName || 'UNKNOWN',
+                totalXP: users[uid].xp || 0,
                 pvpWins: users[uid].pvpWins || 0,
                 pvpLosses: users[uid].pvpLosses || 0,
                 pvpTotalMatches: users[uid].pvpTotalMatches || 0
