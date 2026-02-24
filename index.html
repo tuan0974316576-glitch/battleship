@@ -2843,16 +2843,40 @@ body {
 
     <div id="warning-overlay"></div>
 <div id="end-screen" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 300; background: rgba(0,0,0,0.95); flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(10px);">
-    
+
     <h1 id="end-title" style="font-family: 'Black Ops One'; font-size: 60px; margin-bottom: 10px; text-shadow: 0 0 30px currentColor;">VICTORY</h1>
     <div id="end-msg" style="color: #94a3b8; margin-bottom: 20px; font-size: 18px;">ENEMY FLEET ELIMINATED</div>
 
+    <!-- ★★★ PHASE 5: SETTLEMENT SUMMARY ★★★ -->
+    <div id="settlement-summary" style="width: 90%; max-width: 600px; background: rgba(15, 23, 42, 0.9); border: 2px solid var(--warning); border-radius: 10px; padding: 20px; margin-bottom: 20px; display: flex; flex-direction: column; box-shadow: 0 0 20px rgba(251, 191, 36, 0.3);">
+        <div style="font-family: 'Black Ops One'; color: var(--warning); font-size: 20px; margin-bottom: 15px; text-align: center; letter-spacing: 2px; text-shadow: 0 0 10px var(--warning);">⚡ SETTLEMENT REPORT ⚡</div>
+
+        <div style="display: flex; flex-direction: column; gap: 10px; font-family: 'Orbitron'; font-size: 16px;">
+            <div style="display: flex; justify-content: space-between; padding: 8px; background: rgba(0,0,0,0.3); border-radius: 5px;">
+                <span style="color: #94a3b8;">MISSION RESULT:</span>
+                <span id="settlement-result" style="color: var(--success); font-weight: bold;">VICTORY</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; padding: 8px; background: rgba(0,0,0,0.3); border-radius: 5px;">
+                <span style="color: #94a3b8;">Answering XP:</span>
+                <span id="settlement-answering-xp" style="color: #0ea5e9; font-weight: bold;">+0</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; padding: 8px; background: rgba(0,0,0,0.3); border-radius: 5px;">
+                <span style="color: #94a3b8;">Match Bonus:</span>
+                <span id="settlement-match-bonus" style="color: #22c55e; font-weight: bold;">+0</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; padding: 10px; background: rgba(251, 191, 36, 0.1); border: 1px solid var(--warning); border-radius: 5px; margin-top: 5px;">
+                <span style="color: var(--warning); font-weight: bold;">TOTAL SESSION XP:</span>
+                <span id="settlement-total-xp" style="color: var(--warning); font-weight: bold; font-size: 18px;">+0</span>
+            </div>
+        </div>
+    </div>
+
     <div id="review-container" style="width: 90%; max-width: 600px; background: rgba(15, 23, 42, 0.8); border: 1px solid #334155; border-radius: 10px; padding: 15px; margin-bottom: 20px; display: flex; flex-direction: column;">
         <div style="font-family: 'Orbitron'; color: #0ea5e9; font-size: 16px; margin-bottom: 10px; text-align: center; letter-spacing: 2px;">>> MISSION DEBRIEF <<</div>
-        
+
 <div style="display: grid; grid-template-columns: 0.5fr 0.8fr 1.2fr 1.5fr; border-bottom: 1px solid #475569; padding-bottom: 5px; margin-bottom: 10px; color: #94a3b8; font-size: 12px; font-weight: bold;">
     <span>TURN</span>
-    <span>MEANING</span> 
+    <span>MEANING</span>
     <span>YOUR INPUT</span>
     <span>CORRECT CODE</span>
 </div>
@@ -3181,6 +3205,9 @@ const DAMAGED_IMAGES = [
     // mastery 結構: { reading: { L1: { "apple": { count: 3, status: 1 } }, ... }, listening: {...}, speaking: {...} }
     let userMastery = { reading: {}, listening: {}, speaking: {} };
 
+    // ★★★ PHASE 5: SESSION XP TRACKING ★★★
+    let sessionAnsweringXP = 0; // Tracks XP gained from answering questions in current match
+
     let activeVocabList = [];
     let sessionDeck = [];
     let wrongWordsDeck = []; // 優先出錯字 deck
@@ -3263,6 +3290,9 @@ function selectMode(mode) {
         document.getElementById('main-menu-carousel').style.display = 'none';
         document.getElementById('game-mode-selection').style.display = 'none';
 
+        // ★★★ PHASE 6: Update level progress before showing ★★★
+        updateLevelProgress();
+
         // 顯示 Level 選擇 (先揀 Level 再揀 Skill)
         document.getElementById('level-screen').style.display = 'flex';
     }
@@ -3284,13 +3314,54 @@ function closeLevelScreen() {
     function prepareCreateRoom() {
         playSound('deploy-sfx');
         // 彈出 Level 選單畀場主揀
+        updateLevelProgress(); // ★★★ PHASE 6: Update progress display ★★★
         document.getElementById('level-screen').style.display = 'flex';
     }
+
+// ★★★ PHASE 6: LEVEL PROGRESS DISPLAY ★★★
+function updateLevelProgress() {
+    const levels = ['L1', 'L2', 'L3', 'L4', 'L5', 'L5_STAR'];
+    const levelNames = ['LEVEL 1', 'LEVEL 2', 'LEVEL 3', 'LEVEL 4', 'LEVEL 5', 'LEVEL 5*'];
+
+    levels.forEach((levelKey, index) => {
+        // Find the button
+        const buttons = document.querySelectorAll('.level-btn');
+        const button = buttons[index];
+        if (!button) return;
+
+        // Calculate progress for each skill
+        const totalWords = VOCAB_DB[levelKey] ? VOCAB_DB[levelKey].length : 0;
+
+        let readingCount = 0;
+        let listeningCount = 0;
+        let speakingCount = 0;
+
+        if (userMastery.reading && userMastery.reading[levelKey]) {
+            readingCount = Object.values(userMastery.reading[levelKey]).filter(m => m.status === 1).length;
+        }
+        if (userMastery.listening && userMastery.listening[levelKey]) {
+            listeningCount = Object.values(userMastery.listening[levelKey]).filter(m => m.status === 1).length;
+        }
+        if (userMastery.speaking && userMastery.speaking[levelKey]) {
+            speakingCount = Object.values(userMastery.speaking[levelKey]).filter(m => m.status === 1).length;
+        }
+
+        // Update button text with progress
+        button.innerHTML = `
+            <div style="display: flex; flex-direction: column; align-items: center; gap: 5px;">
+                <span style="font-size: 18px; font-weight: bold;">${levelNames[index]}</span>
+                <span style="font-size: 11px; opacity: 0.7; font-family: 'Orbitron';">
+                    R: ${readingCount}/${totalWords} | L: ${listeningCount}/${totalWords} | S: ${speakingCount}/${totalWords}
+                </span>
+            </div>
+        `;
+    });
+}
 
 // --- 修正版：選擇等級 (PVP 改為去選 Skill) ---
 function selectLevel(level) {
     selectedLevel = level;
-    activeVocabList = VOCAB_DB[level]; 
+    activeVocabList = VOCAB_DB[level];
     sessionDeck = [...activeVocabList];
     console.log(`Level ${level} selected. Deck size: ${sessionDeck.length}`);
     playSound('deploy-sfx');
@@ -3319,6 +3390,9 @@ function selectLevel(level) {
 function enterGameUI() {
     const bgm = document.getElementById('bgm');
     if (bgm) { bgm.volume = 0.5; bgm.play().then(()=>isMusicPlaying=true).catch(e=>{}); }
+
+    // ★ PHASE 5: Reset session XP counter
+    sessionAnsweringXP = 0;
 
     // ★ 初始化錯字優先 deck：將之前錯過的字排先出
     wrongWordsDeck = getWrongWordsForSession(currentPracticeMode, selectedLevel);
@@ -3759,15 +3833,18 @@ function getShipIndices(idx, conf, v) {
 function startBattle() {
     if (deploymentTimerInterval) clearInterval(deploymentTimerInterval);
     document.getElementById('turn-timer-container').style.display = 'none';
-    
+
+    // ★ PHASE 5: Reset session XP counter (in case not reset in enterGameUI)
+    sessionAnsweringXP = 0;
+
     const exitBtn = document.getElementById('game-exit-btn');
     if(exitBtn) {
         exitBtn.innerText = "SURRENDER";
         exitBtn.style.borderColor = "var(--danger)";
     }
-    
+
     document.getElementById('deploy-controls').style.display = 'none';
-    document.getElementById('fleet-sidebar').style.display = 'none'; 
+    document.getElementById('fleet-sidebar').style.display = 'none';
     initEnemyFleetIndicator();
     playSound('deploy-sfx');
 
@@ -4357,6 +4434,9 @@ function handleCorrectAnswer() {
     // Update global XP
     userTotalXP += xpGained;
 
+    // ★★★ PHASE 5: Track session XP ★★★
+    sessionAnsweringXP += xpGained;
+
     // Update mastery for this word
     userMastery[masteryKey][selectedLevel][wordId] = {
         count: currentCount + 1,
@@ -4945,31 +5025,110 @@ function renderSidebar() {
                 return i;
             }
         }
-        return FLEET.length; 
+        return FLEET.length;
     }
+
+// ★★★ PHASE 5: SETTLEMENT CALCULATION ★★★
+function calculateAndDisplaySettlement(isVictory, isSurrender = false) {
+    // Calculate accuracy
+    const totalAnswers = battleLog.length;
+    const correctAnswers = battleLog.filter(log => log.isCorrect).length;
+    const accuracy = totalAnswers > 0 ? (correctAnswers / totalAnswers) * 100 : 0;
+    const isPerfect = accuracy === 100 && totalAnswers > 0;
+
+    // Calculate match bonus
+    let matchBonus = 0;
+    if (isSurrender) {
+        matchBonus = 0; // Surrender: no bonus
+    } else if (isVictory) {
+        matchBonus = (gameMode === 'PVP') ? 100 : 50; // Win PVP: +100, Win AI: +50
+        if (isPerfect) {
+            matchBonus += 150; // Perfection bonus
+        }
+    } else {
+        matchBonus = 20; // Loss: +20
+    }
+
+    // Add match bonus to total XP
+    userTotalXP += matchBonus;
+
+    // Calculate total session XP
+    const totalSessionXP = sessionAnsweringXP + matchBonus;
+
+    // Update UI
+    const resultEl = document.getElementById('settlement-result');
+    const answeringXpEl = document.getElementById('settlement-answering-xp');
+    const matchBonusEl = document.getElementById('settlement-match-bonus');
+    const totalXpEl = document.getElementById('settlement-total-xp');
+
+    if (resultEl) {
+        if (isSurrender) {
+            resultEl.innerText = "ABORTED";
+            resultEl.style.color = "#64748b";
+        } else if (isVictory) {
+            resultEl.innerText = isPerfect ? "VICTORY (PERFECT!)" : "VICTORY";
+            resultEl.style.color = "var(--success)";
+        } else {
+            resultEl.innerText = "DEFEAT";
+            resultEl.style.color = "var(--danger)";
+        }
+    }
+
+    if (answeringXpEl) answeringXpEl.innerText = `+${sessionAnsweringXP}`;
+    if (matchBonusEl) {
+        matchBonusEl.innerText = `+${matchBonus}`;
+        if (isPerfect && isVictory) {
+            matchBonusEl.innerHTML = `+${matchBonus} <span style="color: var(--warning); font-size: 12px;">(+150 PERFECT!)</span>`;
+        }
+    }
+    if (totalXpEl) totalXpEl.innerText = `+${totalSessionXP}`;
+
+    // Sync to Firebase
+    if (window.myPlayerId && window.db) {
+        const { ref, update } = window.firebaseModules;
+        update(ref(window.db, 'users/' + window.myPlayerId), {
+            xp: userTotalXP
+        }).then(() => {
+            console.log(`[Settlement] Synced final XP: ${userTotalXP} (Bonus: +${matchBonus})`);
+        }).catch(e => {
+            console.warn('[Settlement] Firebase sync failed:', e);
+        });
+    }
+
+    // Update HUD to reflect new rank
+    if (typeof updateHUD === 'function') {
+        const cachedName = localStorage.getItem('battleship_username');
+        if (cachedName) updateHUD(cachedName);
+    }
+
+    console.log(`[Settlement] Answering: +${sessionAnsweringXP} | Bonus: +${matchBonus} | Total: +${totalSessionXP} | Final XP: ${userTotalXP}`);
+}
 
    function checkGameOver() {
         const title = document.getElementById('end-title');
         const msg = document.getElementById('end-msg');
         const screen = document.getElementById('end-screen');
-        
+
         // --- 情況 A：勝利 (Victory) ---
         if (enemyDamage >= TOTAL_HP) {
             title.innerText = "VICTORY";
             title.style.color = "var(--success)";
             title.style.textShadow = "0 0 30px var(--success)";
             msg.innerText = "ENEMY FLEET ELIMINATED";
-            
+
             // 延遲 2.5 秒彈出畫面並播放勝利音效
             setTimeout(() => {
                 renderReview();
+                // ★★★ PHASE 5: Calculate and display settlement ★★★
+                calculateAndDisplaySettlement(true, false);
+
                 // ★ 修改點：播放 victory-sfx ★
                 const vSfx = document.getElementById('victory-sfx');
                 if(vSfx) { vSfx.currentTime = 0; vSfx.play().catch(e=>{}); }
-                
+
                 screen.style.display = "flex";
                 screen.style.animation = "fadeIn 0.5s ease-out";
-            }, 2500); 
+            }, 2500);
 
             return true;
         }
@@ -4980,21 +5139,24 @@ function renderSidebar() {
             title.style.color = "var(--danger)";
             title.style.textShadow = "0 0 30px var(--danger)";
             msg.innerText = "CRITICAL MISSION FAILURE";
-            
+
             // 延遲 2.5 秒彈出畫面並播放失敗音效
             setTimeout(() => {
                 renderReview();
+                // ★★★ PHASE 5: Calculate and display settlement ★★★
+                calculateAndDisplaySettlement(false, false);
+
                 // ★ 修改點：播放 lose-sfx ★
                 const lSfx = document.getElementById('lose-sfx');
                 if(lSfx) { lSfx.currentTime = 0; lSfx.play().catch(e=>{}); }
-                
+
                 screen.style.display = "flex";
                 screen.style.animation = "fadeIn 0.5s ease-out";
             }, 2500);
 
             return true;
         }
-        
+
         return false;
     }
 
@@ -5077,12 +5239,15 @@ function executeAbort() {
         // 2. 生成戰後報告 (這就是你要的！)
         if(typeof renderReview === 'function') renderReview();
 
+        // ★★★ PHASE 5: Calculate and display settlement (Surrender = no bonus) ★★★
+        calculateAndDisplaySettlement(false, true);
+
         // 3. 設定 End Screen 文字
         document.getElementById('end-title').innerText = "DEFEAT";
         document.getElementById('end-title').style.color = "var(--danger)";
         document.getElementById('end-title').style.textShadow = "0 0 30px var(--danger)";
         document.getElementById('end-msg').innerText = "MISSION ABORTED // SURRENDERED";
-        
+
         // 4. 顯示畫面 & 播片
         document.getElementById('end-screen').style.display = "flex";
         playSound('lose-sfx');
@@ -6348,6 +6513,7 @@ function backToMainMenu() {
 
     if (tempGameMode === 'AI') {
         // AI 模式：Skill 係第二步，Back 返回 Level 選擇
+        updateLevelProgress(); // ★★★ PHASE 6: Update progress display ★★★
         document.getElementById('level-screen').style.display = 'flex';
     } else {
         // 其他模式返回主選單
