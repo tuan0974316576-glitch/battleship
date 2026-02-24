@@ -1103,11 +1103,60 @@ body {
 
 /* 確保 Hover 唔會變實心色 (重要！) */
 .level-btn:hover {
-    background: transparent !important; 
+    background: transparent !important;
     transform: scale(1.1); /* 輕微放大 */
 }
 
-/* --- 個別顏色光暈 --- */
+/* ★★★ SKILL BUTTON STYLING (Isolated from level-btn) ★★★ */
+.skill-btn {
+    background: transparent !important;
+    border: 2px solid var(--primary);
+    color: #fff;
+    padding: 15px;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-shadow: 0 0 5px var(--primary);
+    box-shadow: 0 0 10px rgba(14, 165, 233, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.skill-btn:hover {
+    background: transparent !important;
+    transform: scale(1.1);
+}
+
+/* --- 個別顏色光暈 (Skill Buttons) --- */
+
+/* 1. READING (藍色光) */
+#skill-screen .skill-btn:nth-child(1):hover {
+    border-color: #0ea5e9;
+    color: #0ea5e9;
+    box-shadow: 0 0 20px #0ea5e9, inset 0 0 10px rgba(14, 165, 233, 0.3);
+    text-shadow: 0 0 10px #0ea5e9;
+}
+
+/* 2. LISTENING (綠色光) */
+#skill-screen .skill-btn:nth-child(2):hover {
+    border-color: #22c55e;
+    color: #22c55e;
+    box-shadow: 0 0 20px #22c55e, inset 0 0 10px rgba(34, 197, 94, 0.3);
+    text-shadow: 0 0 10px #22c55e;
+}
+
+/* 3. SPEAKING (紫色光) */
+#skill-screen .skill-btn:nth-child(3):hover {
+    border-color: #d946ef;
+    color: #d946ef;
+    box-shadow: 0 0 20px #d946ef, inset 0 0 10px rgba(217, 70, 239, 0.3);
+    text-shadow: 0 0 10px #d946ef;
+}
+
+/* --- 個別顏色光暈 (Legacy - kept for compatibility) --- */
 
 /* 1. READING (藍色光) */
 #skill-screen .level-btn:nth-child(1):hover {
@@ -2372,16 +2421,28 @@ body {
     margin: 0 5px; 
     letter-spacing: 2px;
 }
-/* --- 新增：修正 Listening 按鈕預設顏色 --- */
+/* --- 新增：修正 Skill 按鈕預設顏色 --- */
+#skill-screen .skill-btn:nth-child(2) {
+    border-color: #22c55e;
+    text-shadow: 0 0 5px #22c55e;
+    box-shadow: 0 0 10px rgba(34, 197, 94, 0.2);
+}
+#skill-screen .skill-btn:nth-child(3) {
+    border-color: #d946ef;
+    text-shadow: 0 0 5px #d946ef;
+    box-shadow: 0 0 10px rgba(217, 70, 239, 0.2);
+}
+
+/* --- Legacy: Keep old selectors for compatibility --- */
 #skill-screen .level-btn:nth-child(2) {
     border-color: #22c55e;
     text-shadow: 0 0 5px #22c55e;
     box-shadow: 0 0 10px rgba(34, 197, 94, 0.2);
 }
 #skill-screen .level-btn:nth-child(3) {
-    border-color: #d946ef;  /* 預設紫色邊框 */
-    text-shadow: 0 0 5px #d946ef; /* ★ 修正重點：文字改發紫色光 */
-    box-shadow: 0 0 10px rgba(217, 70, 239, 0.2); /* 預設紫色陰影 */
+    border-color: #d946ef;
+    text-shadow: 0 0 5px #d946ef;
+    box-shadow: 0 0 10px rgba(217, 70, 239, 0.2);
 }
 /* --- 參考技能按鈕編寫的等級按鈕樣式 --- */
 
@@ -2717,24 +2778,24 @@ body {
 </div>
 <div id="skill-screen" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 250; background: rgba(0,0,0,0.9); flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(5px);">
     <h2 style="font-family: 'Black Ops One'; color: var(--primary); font-size: 40px; margin-bottom: 30px; text-shadow: 0 0 20px var(--primary);">SELECT TRAINING MODULE</h2>
-    
+
     <div style="display: flex; flex-direction: column; gap: 20px; align-items: center;">
-        
-        <button class="level-btn" onclick="selectSkill('READING')" style="border-color: #0ea5e9; color: #0ea5e9; width: 300px; height: 80px;">
+
+        <button class="skill-btn" onclick="selectSkill('READING')" style="border-color: #0ea5e9; color: #0ea5e9; width: 300px; height: 80px;">
             <div style="display:flex; flex-direction:column; align-items:center;">
                 <span style="font-size:24px;">READING</span>
                 <span style="font-size:10px; opacity:0.7;">DECRYPT CODE</span>
             </div>
         </button>
 
-        <button class="level-btn" onclick="selectSkill('LISTENING')" style="border-color: #22c55e; color: #22c55e; width: 300px; height: 80px;">
+        <button class="skill-btn" onclick="selectSkill('LISTENING')" style="border-color: #22c55e; color: #22c55e; width: 300px; height: 80px;">
             <div style="display:flex; flex-direction:column; align-items:center;">
                 <span style="font-size:24px;">LISTENING</span>
                 <span style="font-size:10px; opacity:0.7;">AUDIO INTEL</span>
             </div>
         </button>
 
-        <button id="btn-skill-speaking" class="level-btn" onclick="selectSkill('SPEAKING')" style="border-color: #d946ef; color: #d946ef; width: 300px; height: 80px;">
+        <button id="btn-skill-speaking" class="skill-btn" onclick="selectSkill('SPEAKING')" style="border-color: #d946ef; color: #d946ef; width: 300px; height: 80px;">
             <div style="display:flex; flex-direction:column; align-items:center;">
                 <span style="font-size:24px;">SPEAKING</span>
                 <span style="font-size:10px; opacity:0.7;">VOICE COMMAND</span>
@@ -3284,20 +3345,17 @@ function selectMode(mode) {
             }
         }
     } else {
-        // --- AI 模式 (新流程：Menu -> Level -> Skill) ---
+        // --- AI 模式 (流程：Menu -> Level -> Skill) ---
 
         // 只隱藏 Menu 按鈕，保留標題
         document.getElementById('main-menu-carousel').style.display = 'none';
         document.getElementById('game-mode-selection').style.display = 'none';
 
-        // ★★★ PHASE 6: Update level progress before showing ★★★
-        updateLevelProgress();
-
         // 顯示 Level 選擇 (先揀 Level 再揀 Skill)
         document.getElementById('level-screen').style.display = 'flex';
     }
 }
-    
+
 function closeLevelScreen() {
     playSound('delete-sfx');
     document.getElementById('level-screen').style.display = 'none';
@@ -3318,44 +3376,56 @@ function closeLevelScreen() {
         document.getElementById('level-screen').style.display = 'flex';
     }
 
-// ★★★ PHASE 6: LEVEL PROGRESS DISPLAY ★★★
-function updateLevelProgress() {
+// ★★★ PHASE 6: CONTEXT-SENSITIVE LEVEL PROGRESS DISPLAY ★★★
+function updateLevelProgressUI() {
     const levels = ['L1', 'L2', 'L3', 'L4', 'L5', 'L5_STAR'];
     const levelNames = ['LEVEL 1', 'LEVEL 2', 'LEVEL 3', 'LEVEL 4', 'LEVEL 5', 'LEVEL 5*'];
 
+    // Determine current mode and its display letter
+    let modeKey = 'reading'; // default
+    let modeLetter = 'R';
+
+    if (typeof currentPracticeMode !== 'undefined' && currentPracticeMode) {
+        modeKey = currentPracticeMode.toLowerCase();
+        if (modeKey === 'reading') modeLetter = 'R';
+        else if (modeKey === 'listening') modeLetter = 'L';
+        else if (modeKey === 'speaking') modeLetter = 'S';
+    }
+
     levels.forEach((levelKey, index) => {
-        // Find the button
-        const buttons = document.querySelectorAll('.level-btn');
+        // Find the button in #level-screen
+        const levelScreen = document.getElementById('level-screen');
+        if (!levelScreen) return;
+
+        const buttons = levelScreen.querySelectorAll('.level-btn');
         const button = buttons[index];
         if (!button) return;
 
-        // Calculate progress for each skill
+        // Calculate progress for CURRENT MODE ONLY
         const totalWords = VOCAB_DB[levelKey] ? VOCAB_DB[levelKey].length : 0;
+        let masteryCount = 0;
 
-        let readingCount = 0;
-        let listeningCount = 0;
-        let speakingCount = 0;
-
-        if (userMastery.reading && userMastery.reading[levelKey]) {
-            readingCount = Object.values(userMastery.reading[levelKey]).filter(m => m.status === 1).length;
-        }
-        if (userMastery.listening && userMastery.listening[levelKey]) {
-            listeningCount = Object.values(userMastery.listening[levelKey]).filter(m => m.status === 1).length;
-        }
-        if (userMastery.speaking && userMastery.speaking[levelKey]) {
-            speakingCount = Object.values(userMastery.speaking[levelKey]).filter(m => m.status === 1).length;
+        if (userMastery[modeKey] && userMastery[modeKey][levelKey]) {
+            masteryCount = Object.values(userMastery[modeKey][levelKey]).filter(m => m.status === 1).length;
         }
 
-        // Update button text with progress
+        // Update button text with context-sensitive progress
         button.innerHTML = `
             <div style="display: flex; flex-direction: column; align-items: center; gap: 5px;">
                 <span style="font-size: 18px; font-weight: bold;">${levelNames[index]}</span>
                 <span style="font-size: 11px; opacity: 0.7; font-family: 'Orbitron';">
-                    R: ${readingCount}/${totalWords} | L: ${listeningCount}/${totalWords} | S: ${speakingCount}/${totalWords}
+                    ${modeLetter}: ${masteryCount}/${totalWords}
                 </span>
             </div>
         `;
     });
+
+    console.log(`[Level Progress] Updated for mode: ${currentPracticeMode} (${modeLetter})`);
+}
+
+// Legacy function name for compatibility
+function updateLevelProgress() {
+    updateLevelProgressUI();
 }
 
 // --- 修正版：選擇等級 (PVP 改為去選 Skill) ---
@@ -3365,13 +3435,13 @@ function selectLevel(level) {
     sessionDeck = [...activeVocabList];
     console.log(`Level ${level} selected. Deck size: ${sessionDeck.length}`);
     playSound('deploy-sfx');
-    
+
     // ★★★ 關鍵修正：直接隱藏 Level 畫面，千萬不要呼叫 closeLevelScreen() ★★★
     // closeLevelScreen() 係俾「返回鍵」用的，它會錯誤地帶你返去上一頁 (Skill Screen)
     document.getElementById('level-screen').style.display = 'none';
 
     if (tempGameMode === 'AI') {
-        // --- AI 模式：Level -> Skill (新流程) ---
+        // --- AI 模式：Level -> Skill (顯示 Skill 選擇) ---
         document.getElementById('skill-screen').style.display = 'flex';
 
         // 確保 AI 模式見到 Speaking 按鈕
@@ -3381,7 +3451,7 @@ function selectLevel(level) {
         // --- PVP 模式：Level -> Skill -> Lobby ---
         // 顯示 Skill 選擇
         document.getElementById('skill-screen').style.display = 'flex';
-        
+
         // PVP 暫時隱藏 Speaking Mode (如需要)
         const speakBtn = document.getElementById('btn-skill-speaking');
         if (speakBtn) speakBtn.style.display = 'none';
@@ -6371,7 +6441,7 @@ function generateSmartBlanks(text) {
 // --- 最終修正版：選擇技能 (PVP 救星) ---
 async function selectSkill(skill) {
     console.log("Skill Selected:", skill);
-    currentPracticeMode = skill; 
+    currentPracticeMode = skill;
     playSound('deploy-sfx');
 
     // 1. 預熱語音 (Listening 專用)
@@ -6382,7 +6452,7 @@ async function selectSkill(skill) {
     // 2. ★ 載入錯字 (Local Storage) ★
     // 確保錯字功能運作
     if (typeof loadMissedWordsToPriorityDeck === 'function') {
-        loadMissedWordsToPriorityDeck(skill); 
+        loadMissedWordsToPriorityDeck(skill);
     }
 
     // 3. 隱藏 Skill 畫面
@@ -6390,16 +6460,16 @@ async function selectSkill(skill) {
 
     // 4. 核心分流邏輯
     if (tempGameMode === 'AI') {
-        // --- AI 模式：直接開始 ---
+        // --- AI 模式：Skill selected, start game ---
         gameMode = 'AI';
         enterGameUI();
     } else {
         // --- PVP 模式：執行開房！ ---
         gameMode = 'PVP';
-        
+
         // ★ 保險措施：確保 Lobby 畫面係開緊嘅 (避免黑畫面)
         document.getElementById('lobby-screen').style.display = 'flex';
-        
+
         // ★ 關鍵：呼叫開房函數！
         if (typeof createRoom === 'function') {
             createRoom();
@@ -6513,7 +6583,6 @@ function backToMainMenu() {
 
     if (tempGameMode === 'AI') {
         // AI 模式：Skill 係第二步，Back 返回 Level 選擇
-        updateLevelProgress(); // ★★★ PHASE 6: Update progress display ★★★
         document.getElementById('level-screen').style.display = 'flex';
     } else {
         // 其他模式返回主選單
