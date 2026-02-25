@@ -1013,21 +1013,21 @@ body {
     #launch-modal {
         align-items: flex-start !important; /* 強制靠上 */
         padding-top: 5vh !important; /* 由 15vh 改做 5vh，即係貼近頂部好多 */
-        overflow-y: scroll; /* 容許滾動，萬一鍵盤真係太高都可以拉上去 */
+        overflow-y: hidden !important; /* 禁止滾動，固定螢幕 */
     }
 
     /* 2. 縮細個框 & 修正左右爆邊 (解決：左右CUT左 & 細少少) */
     .modal-content {
         /* ★ 關鍵：將 Padding 計入闊度內，防止 90% + Padding 爆出螢幕 */
-        box-sizing: border-box; 
-        
+        box-sizing: border-box;
+
         width: 85%; /* 稍微收窄，留番啲邊位呼吸 */
         max-width: 350px; /* 限制最大闊度 */
-        
+
         padding: 15px 20px; /* 上下 15px, 左右 20px (原本係 30px，改薄啲) */
-        
-        /* 底部加超大 Margin，確保鍵盤彈起時，你可以 Scroll 得起個畫面 */
-        margin-bottom: 50vh; 
+
+        /* 移除底部margin，因為keyboard係fixed position */
+        margin-bottom: 0;
     }
 
     /* 3. 字體微調 (解決：個框太大) */
@@ -4813,6 +4813,11 @@ if (currentPracticeMode === 'SPEAKING') {
         input.setAttribute('readonly', 'readonly');
         input.style.position = 'absolute';
         input.style.left = '-9999px';
+
+        // Lock body scroll to prevent page scrolling
+        document.body.style.overflow = 'hidden';
+        document.body.style.position = 'fixed';
+        document.body.style.width = '100%';
     } else if (!isMobile && (currentPracticeMode === 'READING' || currentPracticeMode === 'LISTENING')) {
         // Desktop: Hide virtual keyboard, show and focus input
         virtualKeyboard.style.display = 'none';
@@ -4873,6 +4878,12 @@ function handlePlayerTimeout() {
 
     if (typeof timerInterval !== 'undefined') clearInterval(timerInterval);
     document.getElementById('launch-modal').style.display = "none";
+
+    // Unlock body scroll when modal closes
+    document.body.style.overflow = '';
+    document.body.style.position = '';
+    document.body.style.width = '';
+
     playSound('timeout-sfx');
     stopMatrixEffect();
     
@@ -5151,6 +5162,12 @@ function playerFire(success) {
     // 1. 基本清理：停計時器、關閉彈窗
     clearInterval(timerInterval);
     document.getElementById('launch-modal').style.display = "none";
+
+    // Unlock body scroll when modal closes
+    document.body.style.overflow = '';
+    document.body.style.position = '';
+    document.body.style.width = '';
+
     stopMatrixEffect();
 
     if (success) {
