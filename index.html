@@ -6725,9 +6725,9 @@ function updateHUD(name) {
 
 // ★★★ Task 4: Real-time Global Rank Check for Main Menu HUD ★★★
 async function checkGlobalRankAndUpdateIcon(rankEl, rank) {
-    // First set default display with white icon
+    // First set default display with white icon (smaller and closer)
     const defaultIconPath = `ranking_icon/white/${rank.iconFile}`;
-    rankEl.innerHTML = `${rank.name} <img src="${defaultIconPath}" style="width: 32px; height: 32px; vertical-align: middle; margin-left: 8px;" onerror="this.style.display='none'">`;
+    rankEl.innerHTML = `${rank.name} <img src="${defaultIconPath}" style="width: 24px; height: 24px; vertical-align: middle; margin-left: 4px;" onerror="this.style.display='none'">`;
 
     try {
         const { ref, query, orderByChild, limitToLast, get } = firebaseModules;
@@ -6760,8 +6760,8 @@ async function checkGlobalRankAndUpdateIcon(rankEl, rank) {
             const iconColor = getIconColor(myIndex);
             const iconPath = `ranking_icon/${iconColor}/${rank.iconFile}`;
 
-            // Append icon after rank title
-            rankEl.innerHTML = `${rank.name} <img src="${iconPath}" style="width: 32px; height: 32px; vertical-align: middle; margin-left: 8px;" onerror="this.style.display='none'">`;
+            // Append icon after rank title (smaller and closer)
+            rankEl.innerHTML = `${rank.name} <img src="${iconPath}" style="width: 24px; height: 24px; vertical-align: middle; margin-left: 4px;" onerror="this.style.display='none'">`;
             console.log(`[HUD] Player is rank #${myIndex + 1} globally. Icon: ${iconColor}`);
         } else {
             console.log(`[HUD] Player not in top 10. Using white icon.`);
@@ -6840,6 +6840,7 @@ function updateEnemySectorLabel(rank, iconColor) {
 function updateExpBar(currentXP, rank) {
     const expBarFill = document.getElementById('exp-bar-fill');
     const expBarText = document.getElementById('exp-bar-text');
+    const expBarLabel = document.querySelector('.exp-bar-label span:first-child');
 
     if (!expBarFill || !expBarText) return;
 
@@ -6852,6 +6853,7 @@ function updateExpBar(currentXP, rank) {
         // Max rank reached
         expBarFill.style.width = '100%';
         expBarText.innerText = `${currentXP.toLocaleString()} / MAX`;
+        if (expBarLabel) expBarLabel.innerText = 'MAX RANK';
     } else {
         const xpInCurrentRank = currentXP - currentRankXP;
         const xpNeededForNextRank = nextRankXP - currentRankXP;
@@ -6864,6 +6866,12 @@ function updateExpBar(currentXP, rank) {
 
         // Update text
         expBarText.innerText = `${currentXP.toLocaleString()} / ${nextRankXP.toLocaleString()}`;
+
+        // Update label to show next rank name
+        const nextRankData = RANK_TABLE[rank.level]; // rank.level is current level (0-indexed), so +1 is next
+        if (expBarLabel && nextRankData) {
+            expBarLabel.innerText = `NEXT RANK: ${nextRankData.name}`;
+        }
     }
 
     console.log(`[EXP Bar] Updated: ${currentXP} / ${nextRankXP || 'MAX'}`);
