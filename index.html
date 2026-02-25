@@ -1240,8 +1240,9 @@ body {
     align-items: center;
     justify-content: flex-start;
     animation: fadeIn 0.3s ease-out;
-    overflow: hidden; /* ★ 改為 hidden，唔好有 scrollbar */
-    padding: 40px 20px;
+    overflow: hidden;
+    padding: 40px 0; /* ★ 移除左右padding，避免偏移 */
+    box-sizing: border-box;
 }
 
 #ranking-screen .tech-title {
