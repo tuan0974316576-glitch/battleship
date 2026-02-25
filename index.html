@@ -3119,7 +3119,7 @@ body {
             <div style="font-size: 18px; margin-top: 10px; color: #94a3b8;">Translate to English:</div>
             <div style="font-size: 24px; margin: 10px 0; color: #fff; font-weight: bold;" id="q-text">...</div>
             <div class="vocab-hint" id="q-display">_ _ _ _ _</div>
-            <div style="color: #64748b; font-size: 12px;">TYPE TO DECRYPT // ENTER TO FIRE</div>
+            <div style="color: #64748b; font-size: 12px;" id="input-hint">TYPE TO DECRYPT // ENTER TO FIRE</div>
             
             <div id="timer-bar-container"><div id="timer-bar"></div></div>
             <div id="msg-area" style="height: 20px; color: var(--danger); margin-top: 5px; font-weight: bold;"></div>
@@ -4664,6 +4664,13 @@ if (currentPracticeMode === 'SPEAKING') {
         input.style.display = 'block';
         setTimeout(() => input.focus(), 10); // 小延遲確保 focus 成功
 
+        // ★ iOS提示：需要點擊輸入框
+        const inputHint = document.getElementById('input-hint');
+        if (inputHint && /iPhone|iPad|iPod/.test(navigator.userAgent)) {
+            inputHint.innerHTML = 'TAP INPUT BOX BELOW TO START // ENTER TO FIRE';
+            inputHint.style.color = '#fbbf24';
+        }
+
         // 自動讀出整句句子
         const autoPlayText = currentVocab.sent ? currentVocab.sent : currentVocab.en;
         setTimeout(() => speakText(autoPlayText), 300);
@@ -4671,15 +4678,22 @@ if (currentPracticeMode === 'SPEAKING') {
     } else {
         // --- C. 閱讀模式 (Reading) ---
         qText.innerText = currentVocab.ch;
-        qText.style.fontSize = ""; 
+        qText.style.fontSize = "";
         qText.style.cursor = "default";
         qText.onclick = null;
 
         qDisplay.innerHTML = generateSmartBlanks(currentVocab.en);
         qDisplay.style.color = "var(--primary)";
-        
+
         input.style.display = 'block';
         setTimeout(() => input.focus(), 10);
+
+        // ★ iOS提示：需要點擊輸入框
+        const inputHint = document.getElementById('input-hint');
+        if (inputHint && /iPhone|iPad|iPod/.test(navigator.userAgent)) {
+            inputHint.innerHTML = 'TAP INPUT BOX BELOW TO START // ENTER TO FIRE';
+            inputHint.style.color = '#fbbf24';
+        }
     }
 
 // --- 動畫與倒數 (修正版) ---
@@ -7782,6 +7796,11 @@ function startCountdownTimer() {
 function speakText(text, element = null) {
     if (!text) return;
 
+    // ★ 保存當前focus狀態（LISTENING mode需要）
+    const hiddenInput = document.getElementById('hidden-input');
+    const shouldMaintainFocus = hiddenInput && hiddenInput.style.display !== 'none' &&
+                                 typeof currentPracticeMode !== 'undefined' && currentPracticeMode === 'LISTENING';
+
     // 1. 檢查支援性
     if (!('speechSynthesis' in window)) {
         console.error("Browser does not support Speech Synthesis");
@@ -7793,20 +7812,20 @@ function speakText(text, element = null) {
     document.querySelectorAll('.vocab-row.speaking').forEach(el => el.classList.remove('speaking'));
 
     const utterance = new SpeechSynthesisUtterance(text);
-    
+
     // 3. 設定語音參數 (整合音量設定)
     // 即使你未加音量設定，這段代碼也會自動用預設值，不會報錯
     if (typeof gameVolume !== 'undefined') {
-        utterance.volume = gameVolume.voice; 
+        utterance.volume = gameVolume.voice;
     } else {
         utterance.volume = 1.0;
     }
-    
+
     // 嘗試套用 Google Voice 或其他英文聲
     if (typeof techVoice !== 'undefined' && techVoice) {
          utterance.voice = techVoice;
     }
-    
+
     utterance.rate = 0.9; // 語速適中
     utterance.pitch = 1.0;
 
@@ -7815,16 +7834,16 @@ function speakText(text, element = null) {
     let targetWordEndIndex = -1;
 
     // 只在 LISTENING 模式下進行計算
-    if (typeof currentPracticeMode !== 'undefined' && currentPracticeMode === 'LISTENING' && 
-        typeof currentVocab !== 'undefined' && currentVocab.en && 
+    if (typeof currentPracticeMode !== 'undefined' && currentPracticeMode === 'LISTENING' &&
+        typeof currentVocab !== 'undefined' && currentVocab.en &&
         text.toLowerCase().includes(currentVocab.en.toLowerCase())) {
-        
+
         const targetWord = currentVocab.en;
         // 使用 Regex 準確搵出個字係句子入面既「結束位置」
-        const escapedTarget = targetWord.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); 
+        const escapedTarget = targetWord.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
         const regex = new RegExp(`\\b${escapedTarget}\\b`, 'i');
         const match = regex.exec(text);
-        
+
         if (match) {
             // match.index 係單字開始位置 + 單字長度 = 結束位置
             targetWordEndIndex = match.index + match[0].length;
@@ -7832,7 +7851,7 @@ function speakText(text, element = null) {
     }
 
     // 4. 設定事件監聽器
-    
+
     // A. 開始讀 (視覺特效)
     utterance.onstart = () => {
         if (element) element.classList.add('speaking');
@@ -7856,9 +7875,16 @@ function speakText(text, element = null) {
     // C. 讀完 (Fallback 保險掣)
     utterance.onend = () => {
         if (element) element.classList.remove('speaking');
-        
+
+        // ★ LISTENING mode：重新focus input
+        if (shouldMaintainFocus && hiddenInput) {
+            setTimeout(() => {
+                hiddenInput.focus();
+            }, 50);
+        }
+
         // 如果讀完都未 Trigger (例如個字係整句既最後一個字)，就係度 Trigger
-        if (typeof currentPracticeMode !== 'undefined' && currentPracticeMode === 'LISTENING' && 
+        if (typeof currentPracticeMode !== 'undefined' && currentPracticeMode === 'LISTENING' &&
             !hasTimerStarted) {
              const modal = document.getElementById('launch-modal');
              // 確保視窗仲開緊
