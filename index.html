@@ -3427,27 +3427,39 @@ const DAMAGED_IMAGES = [
     // ★★★ RANK TABLE & XP SYSTEM ★★★
     // =========================================
     const RANK_TABLE = [
-        { minXP: 0,       name: 'RECRUIT' },     // Lvl 1
-        { minXP: 5000,    name: 'PRIVATE' },     // Lvl 2
-        { minXP: 12000,   name: 'TROOPER' },     // Lvl 3
-        { minXP: 25000,   name: 'GUARD' },       // Lvl 4
-        { minXP: 40000,   name: 'SCOUT' },       // Lvl 5
-        { minXP: 50000,   name: 'PILOT' },       // Lvl 6
-        { minXP: 70000,   name: 'SERGEANT' },    // Lvl 7
-        { minXP: 95000,   name: 'CHIEF' },       // Lvl 8
-        { minXP: 130000,  name: 'OFFICER' },     // Lvl 9
-        { minXP: 170000,  name: 'CAPTAIN' },     // Lvl 10
-        { minXP: 200000,  name: 'MAJOR' },       // Lvl 11
-        { minXP: 250000,  name: 'COLONEL' },     // Lvl 12
-        { minXP: 310000,  name: 'WARDEN' },      // Lvl 13
-        { minXP: 400000,  name: 'COMMANDER' },   // Lvl 14
-        { minXP: 500000,  name: 'GENERAL' },     // Lvl 15
-        { minXP: 600000,  name: 'ADMIRAL' },     // Lvl 16
-        { minXP: 750000,  name: 'ARCHON' },      // Lvl 17
-        { minXP: 900000,  name: 'TITAN' },       // Lvl 18
-        { minXP: 1200000, name: 'OVERLORD' },    // Lvl 19
-        { minXP: 1500000, name: 'LEGEND' }       // Lvl 20
+        { minXP: 0, name: 'RECRUIT', iconFile: '01_recruit.png' },
+        { minXP: 3000, name: 'CADET', iconFile: '02_cadet.png' },
+        { minXP: 8000, name: 'PRIVATE', iconFile: '03_private.png' },
+        { minXP: 15000, name: 'TROOPER', iconFile: '04_trooper.png' },
+        { minXP: 25000, name: 'CORPORAL', iconFile: '05_corporal.png' },
+        { minXP: 38000, name: 'SERGEANT', iconFile: '06_sergeant.png' },
+        { minXP: 55000, name: 'CHIEF', iconFile: '07_chief.png' },
+        { minXP: 75000, name: 'ENSIGN', iconFile: '08_ensign.png' },
+        { minXP: 100000, name: 'WARRANT', iconFile: '09_warrant.png' },
+        { minXP: 130000, name: 'LIEUTENANT', iconFile: '10_lieutenant.png' },
+        { minXP: 165000, name: 'CAPTAIN', iconFile: '11_captain.png' },
+        { minXP: 205000, name: 'MAJOR', iconFile: '12_major.png' },
+        { minXP: 250000, name: 'COLONEL', iconFile: '13_colonel.png' },
+        { minXP: 300000, name: 'COMMANDER', iconFile: '14_commander.png' },
+        { minXP: 360000, name: 'BRIGADIER', iconFile: '15_brigadier.png' },
+        { minXP: 430000, name: 'COMMODORE', iconFile: '16_commodore.png' },
+        { minXP: 510000, name: 'GENERAL', iconFile: '17_general.png' },
+        { minXP: 600000, name: 'ADMIRAL', iconFile: '18_admiral.png' },
+        { minXP: 700000, name: 'MARSHAL', iconFile: '19_marshal.png' },
+        { minXP: 820000, name: 'WARLORD', iconFile: '20_warlord.png' },
+        { minXP: 960000, name: 'ARCHON', iconFile: '21_archon.png' },
+        { minXP: 1120000, name: 'TITAN', iconFile: '22_titan.png' },
+        { minXP: 1300000, name: 'OVERLORD', iconFile: '23_overlord.png' },
+        { minXP: 1500000, name: 'LEGEND', iconFile: '24_legend.png' }
     ];
+
+    // ★★★ Dynamic Color Helper for Leaderboard Icons ★★★
+    function getIconColor(globalRankIndex) {
+        if (globalRankIndex === 0) return 'gold';
+        if (globalRankIndex >= 1 && globalRankIndex <= 2) return 'silver';
+        if (globalRankIndex >= 3 && globalRankIndex <= 9) return 'bronze';
+        return 'white';
+    }
 
     function getRankForXP(xp) {
         let rank = RANK_TABLE[0];
@@ -4306,7 +4318,13 @@ function startBattle() {
                     battleUnsubscribe(); // 停止監聽 Ready 狀態
                     battleUnsubscribe = null;
                 }
-                
+
+                // ★★★ Task 5: Get opponent ID and update their rank badge ★★★
+                const opponentId = playerRole === 'host' ? data.guest : data.host;
+                if (opponentId) {
+                    updateOpponentRankBadge(opponentId);
+                }
+
                 if (playerRole === 'host') {
                     enemyGrid = data.guestBoard;
                     processEnemyFleetData(data.guestBoardShips);
@@ -6189,30 +6207,29 @@ async function loadTotalXPRanking() {
             const rankData = getRankForXP(user.totalXP);
             const isCurrentUser = user.uid === myPlayerId;
 
+            // ★★★ Dynamic Icon Color based on global rank ★★★
+            const iconColor = getIconColor(index);
+            const iconPath = `ranking_icon/${iconColor}/${rankData.iconFile}`;
+
             let rankColor = '#94a3b8';
-            let rankIcon = '';
-            if (rank === 1) {
-                rankColor = '#fbbf24';
-                rankIcon = '👑';
-            } else if (rank === 2) {
-                rankColor = '#c0c0c0';
-                rankIcon = '🥈';
-            } else if (rank === 3) {
-                rankColor = '#cd7f32';
-                rankIcon = '🥉';
-            }
+            if (index === 0) rankColor = '#fbbf24';
+            else if (index >= 1 && index <= 2) rankColor = '#c0c0c0';
+            else if (index >= 3 && index <= 9) rankColor = '#cd7f32';
 
             html += `
                 <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px 15px; background: ${isCurrentUser ? 'rgba(255, 255, 255, 0.1)' : 'rgba(15, 23, 42, 0.5)'}; border: 1px solid ${isCurrentUser ? 'rgba(255, 255, 255, 0.4)' : 'rgba(100, 116, 139, 0.2)'}; border-radius: 3px;">
                     <div style="display: flex; align-items: center; gap: 15px; flex: 1;">
                         <div style="font-family: 'Black Ops One'; font-size: 16px; color: ${rankColor}; min-width: 50px; text-align: center;">
-                            ${rankIcon} #${rank}
+                            #${rank}
                         </div>
                         <div style="flex: 1;">
-                            <div style="font-family: 'Orbitron'; font-size: 14px; color: ${isCurrentUser ? '#ffffff' : '#e2e8f0'}; font-weight: ${isCurrentUser ? 'bold' : 'normal'};">
-                                ${user.name} ${isCurrentUser ? '(YOU)' : ''}
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <img src="${iconPath}" style="width: 24px; height: 24px; vertical-align: middle;" onerror="this.style.display='none'">
+                                <div style="font-family: 'Orbitron'; font-size: 14px; color: ${isCurrentUser ? '#ffffff' : '#e2e8f0'}; font-weight: ${isCurrentUser ? 'bold' : 'normal'};">
+                                    ${user.name} ${isCurrentUser ? '(YOU)' : ''}
+                                </div>
                             </div>
-                            <div style="font-size: 10px; color: #94a3b8; font-family: 'Orbitron'; margin-top: 2px;">
+                            <div style="font-size: 10px; color: #94a3b8; font-family: 'Orbitron'; margin-top: 2px; margin-left: 32px;">
                                 ${rankData.name}
                             </div>
                         </div>
@@ -6285,30 +6302,29 @@ async function loadPVPWinRateRanking() {
             const rankData = getRankForXP(user.totalXP);
             const isCurrentUser = user.uid === myPlayerId;
 
+            // ★★★ Dynamic Icon Color based on global rank ★★★
+            const iconColor = getIconColor(index);
+            const iconPath = `ranking_icon/${iconColor}/${rankData.iconFile}`;
+
             let rankColor = '#94a3b8';
-            let rankIcon = '';
-            if (rank === 1) {
-                rankColor = '#fbbf24';
-                rankIcon = '👑';
-            } else if (rank === 2) {
-                rankColor = '#c0c0c0';
-                rankIcon = '🥈';
-            } else if (rank === 3) {
-                rankColor = '#cd7f32';
-                rankIcon = '🥉';
-            }
+            if (index === 0) rankColor = '#fbbf24';
+            else if (index >= 1 && index <= 2) rankColor = '#c0c0c0';
+            else if (index >= 3 && index <= 9) rankColor = '#cd7f32';
 
             html += `
                 <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px 15px; background: ${isCurrentUser ? 'rgba(255, 255, 255, 0.1)' : 'rgba(15, 23, 42, 0.5)'}; border: 1px solid ${isCurrentUser ? 'rgba(255, 255, 255, 0.4)' : 'rgba(100, 116, 139, 0.2)'}; border-radius: 3px;">
                     <div style="display: flex; align-items: center; gap: 15px; flex: 1;">
                         <div style="font-family: 'Black Ops One'; font-size: 16px; color: ${rankColor}; min-width: 50px; text-align: center;">
-                            ${rankIcon} #${rank}
+                            #${rank}
                         </div>
                         <div style="flex: 1;">
-                            <div style="font-family: 'Orbitron'; font-size: 14px; color: ${isCurrentUser ? '#ffffff' : '#e2e8f0'}; font-weight: ${isCurrentUser ? 'bold' : 'normal'};">
-                                ${user.name} ${isCurrentUser ? '(YOU)' : ''}
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <img src="${iconPath}" style="width: 24px; height: 24px; vertical-align: middle;" onerror="this.style.display='none'">
+                                <div style="font-family: 'Orbitron'; font-size: 14px; color: ${isCurrentUser ? '#ffffff' : '#e2e8f0'}; font-weight: ${isCurrentUser ? 'bold' : 'normal'};">
+                                    ${user.name} ${isCurrentUser ? '(YOU)' : ''}
+                                </div>
                             </div>
-                            <div style="font-size: 10px; color: #94a3b8; font-family: 'Orbitron'; margin-top: 2px;">
+                            <div style="font-size: 10px; color: #94a3b8; font-family: 'Orbitron'; margin-top: 2px; margin-left: 32px;">
                                 ${rankData.name} • ${user.pvpWins}W / ${user.pvpLosses}L
                             </div>
                         </div>
@@ -6673,11 +6689,126 @@ function updateHUD(name) {
     if (typeof getRankForXP === 'function') {
         const rank = getRankForXP(xp);
         const rankEl = document.getElementById('hud-rank-title');
-        if (rankEl) rankEl.innerText = rank.name;
+        if (rankEl) {
+            // ★★★ Task 4: Check global rank and add colored icon ★★★
+            checkGlobalRankAndUpdateIcon(rankEl, rank);
+        }
 
         // ★★★ 更新 EXP BAR ★★★
         updateExpBar(xp, rank);
     }
+}
+
+// ★★★ Task 4: Real-time Global Rank Check for Main Menu HUD ★★★
+async function checkGlobalRankAndUpdateIcon(rankEl, rank) {
+    try {
+        const { ref, query, orderByChild, limitToLast, get } = firebaseModules;
+
+        // Query top 10 players by XP
+        const usersRef = ref(window.db, 'users');
+        const top10Query = query(usersRef, orderByChild('xp'), limitToLast(10));
+        const snapshot = await get(top10Query);
+
+        if (!snapshot.exists()) {
+            rankEl.innerText = rank.name;
+            return;
+        }
+
+        // Convert to array and sort descending
+        const top10 = [];
+        snapshot.forEach(childSnapshot => {
+            top10.push({
+                id: childSnapshot.key,
+                xp: childSnapshot.val().xp || 0
+            });
+        });
+        top10.sort((a, b) => b.xp - a.xp);
+
+        // Check if current player is in top 10
+        const myIndex = top10.findIndex(user => user.id === window.myPlayerId);
+
+        if (myIndex !== -1) {
+            // Player is in top 10, determine color
+            const iconColor = getIconColor(myIndex);
+            const iconPath = `ranking_icon/${iconColor}/${rank.iconFile}`;
+
+            // Prepend icon to rank title
+            rankEl.innerHTML = `<img src="${iconPath}" style="width: 32px; height: 32px; vertical-align: middle; margin-right: 8px;" onerror="this.style.display='none'">${rank.name}`;
+            console.log(`[HUD] Player is rank #${myIndex + 1} globally. Icon: ${iconColor}`);
+        } else {
+            // Not in top 10, show white icon
+            const iconPath = `ranking_icon/white/${rank.iconFile}`;
+            rankEl.innerHTML = `<img src="${iconPath}" style="width: 32px; height: 32px; vertical-align: middle; margin-right: 8px;" onerror="this.style.display='none'">${rank.name}`;
+            console.log(`[HUD] Player not in top 10. Using white icon.`);
+        }
+    } catch (error) {
+        console.error('[HUD] Error checking global rank:', error);
+        rankEl.innerText = rank.name;
+    }
+}
+
+// ★★★ Task 5: Update Opponent Rank Badge in PVP Battle ★★★
+async function updateOpponentRankBadge(opponentId) {
+    try {
+        const { ref, query, orderByChild, limitToLast, get } = firebaseModules;
+
+        // Get opponent's XP
+        const opponentRef = ref(window.db, `users/${opponentId}`);
+        const opponentSnapshot = await get(opponentRef);
+
+        if (!opponentSnapshot.exists()) {
+            console.log('[PVP] Opponent data not found');
+            return;
+        }
+
+        const opponentXP = opponentSnapshot.val().xp || 0;
+        const opponentRank = getRankForXP(opponentXP);
+
+        // Query top 10 players to check opponent's global rank
+        const usersRef = ref(window.db, 'users');
+        const top10Query = query(usersRef, orderByChild('xp'), limitToLast(10));
+        const snapshot = await get(top10Query);
+
+        if (!snapshot.exists()) {
+            // No leaderboard data, use white icon
+            updateEnemySectorLabel(opponentRank, 'white');
+            return;
+        }
+
+        // Convert to array and sort descending
+        const top10 = [];
+        snapshot.forEach(childSnapshot => {
+            top10.push({
+                id: childSnapshot.key,
+                xp: childSnapshot.val().xp || 0
+            });
+        });
+        top10.sort((a, b) => b.xp - a.xp);
+
+        // Check if opponent is in top 10
+        const opponentIndex = top10.findIndex(user => user.id === opponentId);
+
+        if (opponentIndex !== -1) {
+            // Opponent is in top 10, determine color
+            const iconColor = getIconColor(opponentIndex);
+            updateEnemySectorLabel(opponentRank, iconColor);
+            console.log(`[PVP] Opponent is rank #${opponentIndex + 1} globally. Icon: ${iconColor}`);
+        } else {
+            // Not in top 10, use white icon
+            updateEnemySectorLabel(opponentRank, 'white');
+            console.log(`[PVP] Opponent not in top 10. Using white icon.`);
+        }
+    } catch (error) {
+        console.error('[PVP] Error updating opponent rank badge:', error);
+    }
+}
+
+function updateEnemySectorLabel(rank, iconColor) {
+    const enemyLabel = document.querySelector('#enemy-board .board-label');
+    if (!enemyLabel) return;
+
+    const iconPath = `ranking_icon/${iconColor}/${rank.iconFile}`;
+    enemyLabel.innerHTML = `<img src="${iconPath}" style="width: 32px; height: 32px; vertical-align: middle; margin-right: 8px;" onerror="this.style.display='none'"><span style="color: var(--danger);">ENEMY SECTOR</span>`;
 }
 
 // ★★★ UPDATE EXP BAR FUNCTION ★★★
