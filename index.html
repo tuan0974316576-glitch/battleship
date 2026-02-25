@@ -6756,13 +6756,13 @@ async function checkGlobalRankAndUpdateIcon(rankEl, rank) {
             const iconColor = getIconColor(myIndex);
             const iconPath = `ranking_icon/${iconColor}/${rank.iconFile}`;
 
-            // Prepend icon to rank title
-            rankEl.innerHTML = `<img src="${iconPath}" style="width: 32px; height: 32px; vertical-align: middle; margin-right: 8px;" onerror="this.style.display='none'">${rank.name}`;
+            // Append icon after rank title
+            rankEl.innerHTML = `${rank.name} <img src="${iconPath}" style="width: 32px; height: 32px; vertical-align: middle; margin-left: 8px;" onerror="this.style.display='none'">`;
             console.log(`[HUD] Player is rank #${myIndex + 1} globally. Icon: ${iconColor}`);
         } else {
             // Not in top 10, show white icon
             const iconPath = `ranking_icon/white/${rank.iconFile}`;
-            rankEl.innerHTML = `<img src="${iconPath}" style="width: 32px; height: 32px; vertical-align: middle; margin-right: 8px;" onerror="this.style.display='none'">${rank.name}`;
+            rankEl.innerHTML = `${rank.name} <img src="${iconPath}" style="width: 32px; height: 32px; vertical-align: middle; margin-left: 8px;" onerror="this.style.display='none'">`;
             console.log(`[HUD] Player not in top 10. Using white icon.`);
         }
     } catch (error) {
