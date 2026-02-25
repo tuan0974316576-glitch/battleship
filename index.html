@@ -65,7 +65,8 @@ console.log("Firebase Modules Loaded Successfully");
             // 唔使等 get(userRef) 回應，避免 connecting panel 閃一閃
             const cachedName = localStorage.getItem('battleship_username');
             if (cachedName) {
-                if(typeof updateHUD === 'function') updateHUD(cachedName);
+                // ★★★ 唔好即刻 call updateHUD，等 Firebase load 完 XP 先更新 ★★★
+                // if(typeof updateHUD === 'function') updateHUD(cachedName);
                 if(typeof showMainMenu === 'function') showMainMenu();
                 if(overlay) overlay.style.display = 'none';
             }
@@ -83,7 +84,9 @@ console.log("Firebase Modules Loaded Successfully");
                     window.userTotalXP = (typeof userData.xp === 'number') ? userData.xp : 0;
                     window.userMastery = userData.mastery || { reading: {}, listening: {}, speaking: {} };
 
+                    // ★★★ 重要：即使用咗 cached name，都要再 call updateHUD 更新 XP 顯示 ★★★
                     if(typeof updateHUD === 'function') updateHUD(realName);
+
                     // 如果之前已經用 cached name 顯示咗主選單，就唔使再 call
                     if (!cachedName) {
                         if(typeof showMainMenu === 'function') showMainMenu();
