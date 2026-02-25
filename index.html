@@ -2814,6 +2814,91 @@ body {
     accent-color: var(--primary);
     cursor: pointer;
 }
+
+/* ★★★ VIRTUAL KEYBOARD STYLES ★★★ */
+#virtual-keyboard {
+    font-family: 'Orbitron', monospace;
+}
+
+.kb-row {
+    display: flex;
+    justify-content: center;
+    gap: 5px;
+    margin-bottom: 5px;
+}
+
+.kb-key {
+    min-width: 35px;
+    height: 45px;
+    background: linear-gradient(135deg, rgba(14, 165, 233, 0.15), rgba(6, 182, 212, 0.1));
+    border: 1px solid rgba(14, 165, 233, 0.4);
+    border-radius: 4px;
+    color: #0ea5e9;
+    font-family: 'Orbitron', monospace;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    box-shadow: 0 2px 8px rgba(14, 165, 233, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    text-shadow: 0 0 5px rgba(14, 165, 233, 0.5);
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.kb-key:active {
+    transform: translateY(2px);
+    box-shadow: 0 1px 4px rgba(14, 165, 233, 0.3), inset 0 2px 8px rgba(0, 0, 0, 0.3);
+    background: linear-gradient(135deg, rgba(14, 165, 233, 0.3), rgba(6, 182, 212, 0.2));
+    border-color: rgba(14, 165, 233, 0.8);
+}
+
+.kb-key:hover {
+    background: linear-gradient(135deg, rgba(14, 165, 233, 0.25), rgba(6, 182, 212, 0.15));
+    border-color: rgba(14, 165, 233, 0.6);
+    box-shadow: 0 4px 12px rgba(14, 165, 233, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+.kb-backspace {
+    min-width: 50px;
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(220, 38, 38, 0.1));
+    border-color: rgba(239, 68, 68, 0.4);
+    color: #ef4444;
+    text-shadow: 0 0 5px rgba(239, 68, 68, 0.5);
+}
+
+.kb-backspace:active {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.3), rgba(220, 38, 38, 0.2));
+    border-color: rgba(239, 68, 68, 0.8);
+}
+
+.kb-space {
+    flex: 1;
+    min-width: 150px;
+    background: linear-gradient(135deg, rgba(148, 163, 184, 0.15), rgba(100, 116, 139, 0.1));
+    border-color: rgba(148, 163, 184, 0.4);
+    color: #94a3b8;
+    text-shadow: 0 0 5px rgba(148, 163, 184, 0.5);
+}
+
+.kb-space:active {
+    background: linear-gradient(135deg, rgba(148, 163, 184, 0.3), rgba(100, 116, 139, 0.2));
+    border-color: rgba(148, 163, 184, 0.8);
+}
+
+.kb-enter {
+    min-width: 80px;
+    background: linear-gradient(135deg, rgba(34, 197, 94, 0.15), rgba(22, 163, 74, 0.1));
+    border-color: rgba(34, 197, 94, 0.4);
+    color: #22c55e;
+    text-shadow: 0 0 5px rgba(34, 197, 94, 0.5);
+    font-size: 14px;
+}
+
+.kb-enter:active {
+    background: linear-gradient(135deg, rgba(34, 197, 94, 0.3), rgba(22, 163, 74, 0.2));
+    border-color: rgba(34, 197, 94, 0.8);
+}
     </style>
 
 </head>
@@ -3120,11 +3205,52 @@ body {
             <div style="font-size: 24px; margin: 10px 0; color: #fff; font-weight: bold;" id="q-text">...</div>
             <div class="vocab-hint" id="q-display">_ _ _ _ _</div>
             <div style="color: #64748b; font-size: 12px;">TYPE TO DECRYPT // ENTER TO FIRE</div>
-            
+
             <div id="timer-bar-container"><div id="timer-bar"></div></div>
             <div id="msg-area" style="height: 20px; color: var(--danger); margin-top: 5px; font-weight: bold;"></div>
-            
-            <input type="text" id="hidden-input" autocomplete="off" autocapitalize="characters" inputmode="text">
+
+            <input type="text" id="hidden-input" autocomplete="off" style="position: absolute; left: -9999px;">
+
+            <!-- ★★★ VIRTUAL KEYBOARD ★★★ -->
+            <div id="virtual-keyboard" style="display: none; margin-top: 15px; width: 100%; max-width: 420px;">
+                <div class="kb-row">
+                    <button class="kb-key" data-key="Q">Q</button>
+                    <button class="kb-key" data-key="W">W</button>
+                    <button class="kb-key" data-key="E">E</button>
+                    <button class="kb-key" data-key="R">R</button>
+                    <button class="kb-key" data-key="T">T</button>
+                    <button class="kb-key" data-key="Y">Y</button>
+                    <button class="kb-key" data-key="U">U</button>
+                    <button class="kb-key" data-key="I">I</button>
+                    <button class="kb-key" data-key="O">O</button>
+                    <button class="kb-key" data-key="P">P</button>
+                </div>
+                <div class="kb-row">
+                    <button class="kb-key" data-key="A">A</button>
+                    <button class="kb-key" data-key="S">S</button>
+                    <button class="kb-key" data-key="D">D</button>
+                    <button class="kb-key" data-key="F">F</button>
+                    <button class="kb-key" data-key="G">G</button>
+                    <button class="kb-key" data-key="H">H</button>
+                    <button class="kb-key" data-key="J">J</button>
+                    <button class="kb-key" data-key="K">K</button>
+                    <button class="kb-key" data-key="L">L</button>
+                </div>
+                <div class="kb-row">
+                    <button class="kb-key" data-key="Z">Z</button>
+                    <button class="kb-key" data-key="X">X</button>
+                    <button class="kb-key" data-key="C">C</button>
+                    <button class="kb-key" data-key="V">V</button>
+                    <button class="kb-key" data-key="B">B</button>
+                    <button class="kb-key" data-key="N">N</button>
+                    <button class="kb-key" data-key="M">M</button>
+                    <button class="kb-key kb-backspace" data-key="BACKSPACE">⌫</button>
+                </div>
+                <div class="kb-row">
+                    <button class="kb-key kb-space" data-key=" ">SPACE</button>
+                    <button class="kb-key kb-enter" data-key="ENTER">FIRE</button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -4655,8 +4781,7 @@ if (currentPracticeMode === 'SPEAKING') {
         qDisplay.innerHTML = generateSmartBlanks(currentVocab.en);
         qDisplay.style.color = "var(--primary)";
 
-        input.style.display = 'block';
-        setTimeout(() => input.focus(), 10); // 小延遲確保 focus 成功
+        // Input stays off-screen (virtual keyboard handles input)
 
         // 自動讀出整句句子
         setTimeout(() => speakText(textToRead), 300);
@@ -4671,8 +4796,17 @@ if (currentPracticeMode === 'SPEAKING') {
         qDisplay.innerHTML = generateSmartBlanks(currentVocab.en);
         qDisplay.style.color = "var(--primary)";
 
-        input.style.display = 'block';
-        setTimeout(() => input.focus(), 10);
+        // Input stays off-screen (virtual keyboard handles input)
+    }
+
+    // ★★★ VIRTUAL KEYBOARD CONTROL ★★★
+    const virtualKeyboard = document.getElementById('virtual-keyboard');
+    if (currentPracticeMode === 'READING' || currentPracticeMode === 'LISTENING') {
+        // Show virtual keyboard for READING and LISTENING modes
+        virtualKeyboard.style.display = 'block';
+    } else {
+        // Hide virtual keyboard for SPEAKING mode
+        virtualKeyboard.style.display = 'none';
     }
 
 // --- 動畫與倒數 (修正版) ---
@@ -4776,28 +4910,14 @@ function handlePlayerTimeout() {
     }
 }
 
-// --- 1. Focus Input (手機版優化：防止游標亂跳) ---
+// --- 1. Focus Input (Virtual Keyboard Version) ---
     function focusInput() {
+        // With virtual keyboard, we don't need to trigger native keyboard
+        // Just ensure the hidden input exists for value storage
         const input = document.getElementById('hidden-input');
-        if(input && input.style.display !== 'none') {
-            // iOS需要更強制的focus
-            input.focus();
-
-            // 觸發click事件，iOS有時需要這個
-            input.click();
-
-            // 重新設定 value 可以將游標推到最後
-            const val = input.value;
-            input.value = '';
-            input.value = val;
-
-            // iOS Safari特殊處理：設定readonly然後立即移除
-            input.setAttribute('readonly', 'readonly');
-            input.setAttribute('readonly', 'readonly');
-            setTimeout(() => {
-                input.removeAttribute('readonly');
-                input.focus();
-            }, 100);
+        if(input) {
+            // Keep input off-screen but maintain its value
+            // No focus/click needed since we're using virtual keyboard
         }
     }
 
@@ -7490,6 +7610,49 @@ function stopMatrixEffect() {
         matrixInterval = null;
     }
 }
+
+// ★★★ VIRTUAL KEYBOARD EVENT LISTENERS ★★★
+document.addEventListener('DOMContentLoaded', function() {
+    const virtualKeyboard = document.getElementById('virtual-keyboard');
+    const hiddenInput = document.getElementById('hidden-input');
+
+    if (virtualKeyboard && hiddenInput) {
+        // Add click event to all keyboard keys
+        virtualKeyboard.addEventListener('click', function(e) {
+            const key = e.target.closest('.kb-key');
+            if (!key) return;
+
+            e.preventDefault();
+            e.stopPropagation();
+
+            const keyValue = key.getAttribute('data-key');
+
+            if (keyValue === 'ENTER') {
+                // Fire button - submit answer
+                checkAnswer();
+            } else if (keyValue === 'BACKSPACE') {
+                // Backspace - remove last character
+                const currentValue = hiddenInput.value;
+                hiddenInput.value = currentValue.slice(0, -1);
+
+                // Trigger input event to update display
+                const inputEvent = new Event('input', { bubbles: true });
+                hiddenInput.dispatchEvent(inputEvent);
+
+                if(typeof playSound === 'function') playSound('delete-sfx');
+            } else {
+                // Regular key or space - add character
+                hiddenInput.value += keyValue;
+
+                // Trigger input event to update display
+                const inputEvent = new Event('input', { bubbles: true });
+                hiddenInput.dispatchEvent(inputEvent);
+
+                if(typeof playSound === 'function') playSound('enter-sfx');
+            }
+        });
+    }
+});
 
 window.onload = function() {
     console.log("System Initializing...");
