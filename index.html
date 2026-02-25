@@ -4781,8 +4781,6 @@ if (currentPracticeMode === 'SPEAKING') {
         qDisplay.innerHTML = generateSmartBlanks(currentVocab.en);
         qDisplay.style.color = "var(--primary)";
 
-        // Input stays off-screen (virtual keyboard handles input)
-
         // 自動讀出整句句子
         setTimeout(() => speakText(textToRead), 300);
 
@@ -4795,18 +4793,27 @@ if (currentPracticeMode === 'SPEAKING') {
 
         qDisplay.innerHTML = generateSmartBlanks(currentVocab.en);
         qDisplay.style.color = "var(--primary)";
-
-        // Input stays off-screen (virtual keyboard handles input)
     }
 
-    // ★★★ VIRTUAL KEYBOARD CONTROL ★★★
+    // ★★★ INPUT & VIRTUAL KEYBOARD CONTROL ★★★
     const virtualKeyboard = document.getElementById('virtual-keyboard');
-    if (currentPracticeMode === 'READING' || currentPracticeMode === 'LISTENING') {
-        // Show virtual keyboard for READING and LISTENING modes
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+    if (isMobile && (currentPracticeMode === 'READING' || currentPracticeMode === 'LISTENING')) {
+        // Mobile: Show virtual keyboard, keep input off-screen
         virtualKeyboard.style.display = 'block';
-    } else {
-        // Hide virtual keyboard for SPEAKING mode
+        // Input already off-screen via CSS (position: absolute; left: -9999px)
+    } else if (!isMobile && (currentPracticeMode === 'READING' || currentPracticeMode === 'LISTENING')) {
+        // Desktop: Hide virtual keyboard, show and focus input
         virtualKeyboard.style.display = 'none';
+        input.style.position = 'static';
+        input.style.left = 'auto';
+        setTimeout(() => input.focus(), 10);
+    } else {
+        // SPEAKING mode or mobile SPEAKING: hide virtual keyboard, hide input
+        virtualKeyboard.style.display = 'none';
+        input.style.position = 'absolute';
+        input.style.left = '-9999px';
     }
 
 // --- 動畫與倒數 (修正版) ---
@@ -4910,14 +4917,22 @@ function handlePlayerTimeout() {
     }
 }
 
-// --- 1. Focus Input (Virtual Keyboard Version) ---
+// --- 1. Focus Input (Desktop/Mobile Hybrid) ---
     function focusInput() {
-        // With virtual keyboard, we don't need to trigger native keyboard
-        // Just ensure the hidden input exists for value storage
         const input = document.getElementById('hidden-input');
+        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
         if(input) {
-            // Keep input off-screen but maintain its value
-            // No focus/click needed since we're using virtual keyboard
+            if (isMobile) {
+                // Mobile: Keep input off-screen, virtual keyboard handles input
+                // No focus needed to avoid triggering native keyboard
+            } else {
+                // Desktop: Focus the input for normal keyboard typing
+                input.focus();
+                const val = input.value;
+                input.value = '';
+                input.value = val;
+            }
         }
     }
 
