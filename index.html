@@ -2045,19 +2045,21 @@ body {
     position: relative;
     margin-top: 20px;
     animation: fadeIn 0.5s;
+    overflow: visible; /* ★ 允許發光效果顯示 */
 }
 
 /* 2. 捲動軌道 (智能置中設定) */
 .carousel-track {
     display: flex;
     gap: 20px;
-    
+
     overflow-x: auto;
+    overflow-y: visible; /* ★ 允許垂直方向發光效果顯示 */
     scroll-snap-type: x mandatory;
     scroll-behavior: smooth;
-    
-    padding: 50px 30px; 
-    
+
+    padding: 50px 30px;
+
     scrollbar-width: none;
     -ms-overflow-style: none;
 
