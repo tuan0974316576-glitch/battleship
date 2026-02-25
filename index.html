@@ -6725,6 +6725,10 @@ function updateHUD(name) {
 
 // ★★★ Task 4: Real-time Global Rank Check for Main Menu HUD ★★★
 async function checkGlobalRankAndUpdateIcon(rankEl, rank) {
+    // First set default display with white icon
+    const defaultIconPath = `ranking_icon/white/${rank.iconFile}`;
+    rankEl.innerHTML = `${rank.name} <img src="${defaultIconPath}" style="width: 32px; height: 32px; vertical-align: middle; margin-left: 8px;" onerror="this.style.display='none'">`;
+
     try {
         const { ref, query, orderByChild, limitToLast, get } = firebaseModules;
 
@@ -6734,7 +6738,7 @@ async function checkGlobalRankAndUpdateIcon(rankEl, rank) {
         const snapshot = await get(top10Query);
 
         if (!snapshot.exists()) {
-            rankEl.innerText = rank.name;
+            console.log('[HUD] No leaderboard data, using white icon');
             return;
         }
 
@@ -6760,14 +6764,11 @@ async function checkGlobalRankAndUpdateIcon(rankEl, rank) {
             rankEl.innerHTML = `${rank.name} <img src="${iconPath}" style="width: 32px; height: 32px; vertical-align: middle; margin-left: 8px;" onerror="this.style.display='none'">`;
             console.log(`[HUD] Player is rank #${myIndex + 1} globally. Icon: ${iconColor}`);
         } else {
-            // Not in top 10, show white icon
-            const iconPath = `ranking_icon/white/${rank.iconFile}`;
-            rankEl.innerHTML = `${rank.name} <img src="${iconPath}" style="width: 32px; height: 32px; vertical-align: middle; margin-left: 8px;" onerror="this.style.display='none'">`;
             console.log(`[HUD] Player not in top 10. Using white icon.`);
         }
     } catch (error) {
         console.error('[HUD] Error checking global rank:', error);
-        rankEl.innerText = rank.name;
+        // Keep the default white icon that was already set
     }
 }
 
