@@ -3124,7 +3124,7 @@ body {
             <div id="timer-bar-container"><div id="timer-bar"></div></div>
             <div id="msg-area" style="height: 20px; color: var(--danger); margin-top: 5px; font-weight: bold;"></div>
             
-            <input type="text" id="hidden-input" autocomplete="off">
+            <input type="text" id="hidden-input" autocomplete="off" autocapitalize="characters" inputmode="text">
         </div>
     </div>
 
@@ -4784,14 +4784,27 @@ function handlePlayerTimeout() {
 }
 
 // --- 1. Focus Input (手機版優化：防止游標亂跳) ---
-    function focusInput() { 
+    function focusInput() {
         const input = document.getElementById('hidden-input');
-        if(input) {
+        if(input && input.style.display !== 'none') {
+            // iOS需要更強制的focus
             input.focus();
+
+            // 觸發click事件，iOS有時需要這個
+            input.click();
+
             // 重新設定 value 可以將游標推到最後
-            const val = input.value; 
-            input.value = ''; 
-            input.value = val; 
+            const val = input.value;
+            input.value = '';
+            input.value = val;
+
+            // iOS Safari特殊處理：設定readonly然後立即移除
+            input.setAttribute('readonly', 'readonly');
+            input.setAttribute('readonly', 'readonly');
+            setTimeout(() => {
+                input.removeAttribute('readonly');
+                input.focus();
+            }, 100);
         }
     }
 
