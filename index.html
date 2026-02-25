@@ -3472,7 +3472,7 @@ const DAMAGED_IMAGES = [
             }
         }
         const nextXP = (level < RANK_TABLE.length) ? RANK_TABLE[level].minXP : null;
-        return { level, name: rank.name, minXP: rank.minXP, nextXP };
+        return { level, name: rank.name, minXP: rank.minXP, nextXP, iconFile: rank.iconFile };
     }
 
     // ★★★ XP & MASTERY GLOBAL VARIABLES ★★★

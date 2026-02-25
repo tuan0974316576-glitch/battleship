@@ -8,7 +8,9 @@
       "Bash(node:*)",
       "Bash(awk:*)",
       "Bash(git pull:*)",
-      "Bash(git reset:*)"
+      "Bash(git reset:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)"
     ]
   }
 }
