@@ -6996,6 +6996,8 @@ function updateHUD(name) {
 
 // ★★★ Task 4: Real-time Dual Rank Check for Main Menu HUD ★★★
 async function checkGlobalRankAndUpdateIcon(rankEl, rank) {
+    console.log('[HUD] checkGlobalRankAndUpdateIcon called for player:', window.myPlayerId);
+
     // First set default display with white icon (smaller and closer)
     const defaultIconPath = `ranking_icon/white/${rank.iconFile}`;
     rankEl.innerHTML = `${rank.name} <img src="${defaultIconPath}" style="width: 24px; height: 24px; vertical-align: middle; margin-left: 4px;" onerror="this.style.display='none'">`;
@@ -7019,6 +7021,8 @@ async function checkGlobalRankAndUpdateIcon(rankEl, rank) {
             });
             top10.sort((a, b) => b.xp - a.xp);
             xpRankIndex = top10.findIndex(user => user.id === window.myPlayerId);
+            console.log('[HUD] Total XP Top 10:', top10.map(u => `${u.id.substring(0,6)}:${u.xp}`));
+            console.log('[HUD] My XP rank index:', xpRankIndex);
         }
 
         // ★★★ Check 2: PVP Win Rate Ranking (Top 10 with 10+ wins) ★★★
@@ -7045,11 +7049,15 @@ async function checkGlobalRankAndUpdateIcon(rankEl, rank) {
             // Get top 10 and find current player
             const top10PVP = userArray.slice(0, 10);
             pvpRankIndex = top10PVP.findIndex(user => user.uid === window.myPlayerId);
+            console.log('[HUD] PVP Win Rate Top 10:', top10PVP.map(u => `${u.uid.substring(0,6)}:${u.winRate.toFixed(1)}%`));
+            console.log('[HUD] My PVP rank index:', pvpRankIndex);
         }
 
         // ★★★ Determine best rank (gold > silver > bronze > white) ★★★
         const xpColor = xpRankIndex !== -1 ? getIconColor(xpRankIndex) : 'white';
         const pvpColor = pvpRankIndex !== -1 ? getIconColor(pvpRankIndex) : 'white';
+
+        console.log('[HUD] XP color:', xpColor, '| PVP color:', pvpColor);
 
         // Priority: gold > silver > bronze > white
         const colorPriority = { 'gold': 4, 'silver': 3, 'bronze': 2, 'white': 1 };
@@ -7059,9 +7067,10 @@ async function checkGlobalRankAndUpdateIcon(rankEl, rank) {
         const iconPath = `ranking_icon/${bestColor}/${rank.iconFile}`;
         rankEl.innerHTML = `${rank.name} <img src="${iconPath}" style="width: 24px; height: 24px; vertical-align: middle; margin-left: 4px;" onerror="this.style.display='none'">`;
 
-        console.log(`[HUD] XP rank: ${xpRankIndex !== -1 ? '#' + (xpRankIndex + 1) : 'unranked'} (${xpColor}) | PVP rank: ${pvpRankIndex !== -1 ? '#' + (pvpRankIndex + 1) : 'unranked'} (${pvpColor}) | Best: ${bestColor}`);
+        console.log(`[HUD] ✅ Final result - XP rank: ${xpRankIndex !== -1 ? '#' + (xpRankIndex + 1) : 'unranked'} (${xpColor}) | PVP rank: ${pvpRankIndex !== -1 ? '#' + (pvpRankIndex + 1) : 'unranked'} (${pvpColor}) | Best: ${bestColor}`);
+        console.log(`[HUD] Icon path: ${iconPath}`);
     } catch (error) {
-        console.error('[HUD] Error checking ranks:', error);
+        console.error('[HUD] ❌ Error checking ranks:', error);
         // Keep the default white icon that was already set
     }
 }
