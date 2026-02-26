@@ -3100,9 +3100,6 @@ body {
 
         <button class="start-btn-large btn-pvp carousel-item" onclick="selectMode('PVP')">
             <div class="mode-title">VS PLAYER</div>
-            <div id="pvp-rank-requirement" style="font-family: 'Orbitron'; font-size: 10px; color: #ef4444; margin-top: 8px; letter-spacing: 1px; display: none;">
-                ONLY AVAILABLE TO PRIVATE OR ABOVE
-            </div>
         </button>
 
         <button class="start-btn-large btn-code-list carousel-item" onclick="openVocabScreen()">
@@ -3799,7 +3796,7 @@ function selectMode(mode) {
 
         if (currentRank.level < 1) {  // RECRUIT is level 0, PRIVATE is level 1
             playSound('wrong-sfx');
-            showNotification('⚠️ PVP LOCKED: PRIVATE RANK OR ABOVE REQUIRED', 'error', 5000);
+            showNotification('ONLY AVAILABLE TO PRIVATE OR ABOVE', 'error', 4000);
             return;  // Block PVP access
         }
 
@@ -7140,16 +7137,6 @@ function updateHUD(name) {
 
         // ★★★ 更新 EXP BAR ★★★
         updateExpBar(xp, rank);
-
-        // ★★★ Update PVP rank requirement display ★★★
-        const pvpRequirementEl = document.getElementById('pvp-rank-requirement');
-        if (pvpRequirementEl) {
-            if (rank.level < 1) {  // RECRUIT (level 0)
-                pvpRequirementEl.style.display = 'block';
-            } else {
-                pvpRequirementEl.style.display = 'none';
-            }
-        }
     }
 }
 
