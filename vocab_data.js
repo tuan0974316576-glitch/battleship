@@ -1761,13 +1761,24 @@ const VOCAB_DB = {
             ]
         }
     ],
-    // --- LEVEL 2: 日常生活 (4-5個字母) ---
     "L2": [
-        { en: "book", ch: "書本", sent: "She is reading a book in the library." },
-        { en: "desk", ch: "書桌", sent: "Please put your homework on the desk." },
-        { en: "fish", ch: "魚", sent: "Can you see the fish swimming in the water?" }
+        {
+            en: "ant",
+            ch: "螞蟻 (n.)",
+            sents: [
+                { text: "The owls is carrying a crumb.", answer: "owls" },
+                { text: "Owls like sweet food.", answer: "Owls" }
+            ]
+        },
+        {
+            en: "add",
+            ch: "螞蟻 (n.)",
+            sents: [
+                { text: "The suggestion will be added to the proposal.", answer: "added" },
+                { text: "He adds some e-books onto the database from time to time ", answer: "adds" }
+            ]
+        }
     ],
-
     // --- LEVEL 3: 同音字地獄 (測試 Listening 辨識力) ---
     "L3": [
         { en: "sea", ch: "大海", sent: "We swim in the sea every summer." }, // 同音: See
