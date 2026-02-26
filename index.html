@@ -5225,7 +5225,9 @@ function checkAnswer() {
                 turn: currentTurn,
                 user: input.value,
                 correct: targetAnswer,  // ★ Use targetAnswer instead of currentVocab.en
-                isCorrect: isCorrect
+                isCorrect: isCorrect,
+                mode: currentPracticeMode,  // ★★★ Add mode for display logic ★★★
+                sentence: currentVocab.sent || null  // ★★★ Add sentence for LISTENING mode ★★★
             });
         }
     }
@@ -7488,11 +7490,21 @@ if (displayUser !== "(TIMEOUT)") {
 }
 
         // ★ 修正 1：套用 .review-meaning 樣式 ★
+        // ★★★ For LISTENING mode, show full sentence with highlighted answer ★★★
+        let correctDisplay = log.correct;
+        if (log.mode === 'LISTENING' && log.sentence) {
+            // Show full sentence with answer word highlighted in orange
+            const answerWord = log.correct;
+            const sentence = log.sentence;
+            const regex = new RegExp(`\\b(${answerWord})\\b`, 'gi');
+            correctDisplay = sentence.replace(regex, '<span style="color: var(--warning);">$1</span>');
+        }
+
         item.innerHTML = `
             <div class="review-turn">T-${log.turn}</div>
-            <div class="review-meaning">${chineseMeaning}</div> 
+            <div class="review-meaning">${chineseMeaning}</div>
             <div class="review-user ${userClass}">${displayUser}</div>
-            <div class="review-answer">${log.correct}</div>
+            <div class="review-answer">${correctDisplay}</div>
         `;
         list.appendChild(item);
     });
