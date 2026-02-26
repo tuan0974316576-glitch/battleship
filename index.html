@@ -3743,7 +3743,7 @@ const DAMAGED_IMAGES = [
 let deploymentTimerInterval = null; // 佈陣倒數器
 let turnTimerInterval = null; // 用來計選位嗰 8 秒
     var app, db, auth;
-    var myPlayerId = null, currentRoomId = null, gameMode = 'AI', playerRole = null;
+    var myPlayerId = null, currentRoomId = null, gameMode = 'AI', playerRole = null, currentOpponentId = null;
     let myGrid = Array(GRID_SIZE*GRID_SIZE).fill(0);
     let enemyGrid = Array(GRID_SIZE*GRID_SIZE).fill(0);
     let enemyShots = [];
@@ -4082,6 +4082,65 @@ function enterGameUI() {
 }
 
     // --- 6. PVP 邏輯 ---
+
+// ★★★ ANTI-FARMING: Check match history in last 24 hours ★★★
+async function checkMatchHistory(player1Id, player2Id) {
+    try {
+        const { ref, get } = window.firebaseModules;
+        const now = Date.now();
+        const twentyFourHoursAgo = now - (24 * 60 * 60 * 1000);
+
+        // Get match history for both players
+        const player1HistoryRef = ref(window.db, `users/${player1Id}/matchHistory`);
+        const player2HistoryRef = ref(window.db, `users/${player2Id}/matchHistory`);
+
+        const [player1Snapshot, player2Snapshot] = await Promise.all([
+            get(player1HistoryRef),
+            get(player2HistoryRef)
+        ]);
+
+        // Count wins against each other in last 24h
+        let player1WinsAgainstPlayer2 = 0;
+        let player2WinsAgainstPlayer1 = 0;
+
+        if (player1Snapshot.exists()) {
+            const history = player1Snapshot.val();
+            Object.values(history).forEach(match => {
+                if (match.opponent === player2Id &&
+                    match.timestamp > twentyFourHoursAgo &&
+                    match.result === 'win' &&
+                    match.counted) {
+                    player1WinsAgainstPlayer2++;
+                }
+            });
+        }
+
+        if (player2Snapshot.exists()) {
+            const history = player2Snapshot.val();
+            Object.values(history).forEach(match => {
+                if (match.opponent === player1Id &&
+                    match.timestamp > twentyFourHoursAgo &&
+                    match.result === 'win' &&
+                    match.counted) {
+                    player2WinsAgainstPlayer1++;
+                }
+            });
+        }
+
+        console.log(`[Match History] Player1 wins vs Player2: ${player1WinsAgainstPlayer2}, Player2 wins vs Player1: ${player2WinsAgainstPlayer1}`);
+
+        return {
+            hostExceeded: player1WinsAgainstPlayer2 >= 3,
+            guestExceeded: player2WinsAgainstPlayer1 >= 3,
+            hostWins: player1WinsAgainstPlayer2,
+            guestWins: player2WinsAgainstPlayer1
+        };
+    } catch (error) {
+        console.error('[Match History] Error checking history:', error);
+        return { hostExceeded: false, guestExceeded: false, hostWins: 0, guestWins: 0 };
+    }
+}
+
 function createRoom() {
         // ★ 新增：一按掣即刻播放開房音效 ★
         playSound('open-room-sfx');
@@ -4124,27 +4183,27 @@ unsubscribeRoom = onValue(roomRef, (snapshot) => {
 function joinRoom() {
         const { ref, get, update } = window.firebaseModules;
         const inputId = document.getElementById('room-id-input').value.trim();
-        
+
         // 簡單檢查長度
         if (inputId.length !== 4) {
-            playSound('wrong-sfx'); 
+            playSound('wrong-sfx');
             return;
         }
-        
+
         const roomRef = ref(db, 'rooms/' + inputId);
         get(roomRef).then((snapshot) => {
             if (snapshot.exists()) {
                 const data = snapshot.val();
-                
+
                 // 檢查房間是否未滿
                 if (!data.guest) {
                     playSound('open-room-sfx');
                     currentRoomId = inputId;
                     playerRole = 'guest';
-                    
+
                     // ★ 關鍵修復：必須在這裡強制設定為 PVP 模式！ ★
                     // 因為 Guest 跳過了 selectLevel，如果唔加呢句，系統會以為係玩 AI
-                    gameMode = 'PVP'; 
+                    gameMode = 'PVP';
 
                     // Guest 跟隨 Host 的等級設定
                     if (data.level && VOCAB_DB[data.level]) {
@@ -4153,21 +4212,40 @@ function joinRoom() {
                         showNotification(`SYNCED: ${data.level}`, 'success');
                     }
 
-                    update(roomRef, { guest: myPlayerId, status: 'deploying' });
-                    
-                    setupDisconnectHandler();
+                    // ★★★ Check match history before joining ★★★
+                    checkMatchHistory(data.host, myPlayerId).then(result => {
+                        const warningMsg = [];
+                        if (result.hostExceeded) {
+                            warningMsg.push(`⚠️ HOST has won 3+ matches against you in 24h. This match WON'T count for HOST.`);
+                        }
+                        if (result.guestExceeded) {
+                            warningMsg.push(`⚠️ YOU have won 3+ matches against HOST in 24h. This match WON'T count for YOU.`);
+                        }
 
-                    if (typeof showNotification === 'function') {
-                        showNotification(`LINKING TO ROOM ${inputId}...`);
-                    }
-                    enterGameUI();
+                        if (warningMsg.length > 0) {
+                            showNotification(warningMsg.join('\n'), 'warning', 8000);
+                        }
+
+                        update(roomRef, {
+                            guest: myPlayerId,
+                            status: 'deploying',
+                            matchLimitWarning: warningMsg.length > 0 ? warningMsg : null
+                        });
+
+                        setupDisconnectHandler();
+
+                        if (typeof showNotification === 'function') {
+                            showNotification(`LINKING TO ROOM ${inputId}...`);
+                        }
+                        enterGameUI();
+                    });
                 } else {
                     document.getElementById('lobby-msg').innerText = "ROOM FULL";
-                    playSound('wrong-sfx'); 
+                    playSound('wrong-sfx');
                 }
             } else {
                 document.getElementById('lobby-msg').innerText = "ROOM NOT FOUND";
-                playSound('wrong-sfx'); 
+                playSound('wrong-sfx');
             }
         });
     }
@@ -4570,6 +4648,7 @@ function startBattle() {
 
                 // ★★★ Task 5: Get opponent ID and update their rank badge ★★★
                 const opponentId = playerRole === 'host' ? data.guest : data.host;
+                currentOpponentId = opponentId; // ★★★ Store for settlement ★★★
                 if (opponentId) {
                     updateOpponentRankBadge(opponentId);
                 }
@@ -5859,29 +5938,59 @@ function calculateAndDisplaySettlement(isVictory, isSurrender = false) {
         const { ref, get, update } = window.firebaseModules;
 
         // ★★★ PVP STATS TRACKING WITH ANTI-FARMING ★★★
-        if (gameMode === 'PVP' && isValidMatch) {
-            // Valid PVP match (15+ turns): Update stats
+        if (gameMode === 'PVP' && isValidMatch && currentOpponentId) {
+            // Valid PVP match: Check 24h limit and update stats
             const userRef = ref(window.db, 'users/' + window.myPlayerId);
-            get(userRef).then(snapshot => {
-                const userData = snapshot.val() || {};
-                const currentPvpWins = userData.pvpWins || 0;
-                const currentPvpLosses = userData.pvpLosses || 0;
-                const currentPvpTotalMatches = userData.pvpTotalMatches || 0;
 
-                const updates = {
-                    xp: userTotalXP,
-                    pvpTotalMatches: currentPvpTotalMatches + 1
-                };
+            // Check if this player has already won 3+ times against this opponent in 24h
+            checkMatchHistory(window.myPlayerId, currentOpponentId).then(historyResult => {
+                const shouldCount = isVictory
+                    ? !historyResult.hostExceeded  // If I'm winning, check if I haven't exceeded limit
+                    : true;  // Losses always count
 
-                if (isVictory && !isSurrender) {
-                    updates.pvpWins = currentPvpWins + 1;
-                    console.log(`[PVP Stats] Win recorded. Total wins: ${currentPvpWins + 1}`);
-                } else if (!isVictory && !isSurrender) {
-                    updates.pvpLosses = currentPvpLosses + 1;
-                    console.log(`[PVP Stats] Loss recorded. Total losses: ${currentPvpLosses + 1}`);
-                }
+                console.log(`[PVP Stats] Should count: ${shouldCount}, Victory: ${isVictory}, History check: ${JSON.stringify(historyResult)}`);
 
-                return update(userRef, updates);
+                return get(userRef).then(snapshot => {
+                    const userData = snapshot.val() || {};
+                    const currentPvpWins = userData.pvpWins || 0;
+                    const currentPvpLosses = userData.pvpLosses || 0;
+                    const currentPvpTotalMatches = userData.pvpTotalMatches || 0;
+
+                    const updates = {
+                        xp: userTotalXP,
+                        pvpTotalMatches: currentPvpTotalMatches + 1
+                    };
+
+                    // Record match history
+                    const matchHistoryRef = ref(window.db, `users/${window.myPlayerId}/matchHistory/${Date.now()}`);
+                    const matchRecord = {
+                        opponent: currentOpponentId,
+                        timestamp: Date.now(),
+                        result: isVictory && !isSurrender ? 'win' : (isSurrender ? 'surrender' : 'loss'),
+                        counted: shouldCount,
+                        enemyDamage: enemyDamage,
+                        myDamage: myDamage
+                    };
+
+                    if (shouldCount) {
+                        if (isVictory && !isSurrender) {
+                            updates.pvpWins = currentPvpWins + 1;
+                            console.log(`[PVP Stats] Win recorded. Total wins: ${currentPvpWins + 1}`);
+                        } else if (!isVictory && !isSurrender) {
+                            updates.pvpLosses = currentPvpLosses + 1;
+                            console.log(`[PVP Stats] Loss recorded. Total losses: ${currentPvpLosses + 1}`);
+                        }
+                    } else {
+                        console.log(`[PVP Stats] Match NOT counted (24h limit exceeded)`);
+                        showNotification('⚠️ This win does NOT count (3+ wins vs this opponent in 24h)', 'warning', 5000);
+                    }
+
+                    // Update both stats and match history
+                    return Promise.all([
+                        update(userRef, updates),
+                        update(matchHistoryRef, matchRecord)
+                    ]);
+                });
             }).then(() => {
                 console.log(`[Settlement] PVP stats and XP synced: ${userTotalXP}`);
             }).catch(e => {
@@ -6117,6 +6226,7 @@ function resetGame() {
     // 重置變數
     currentRoomId = null;
     playerRole = null;
+    currentOpponentId = null;
 
     // --- (以下保持不變) ---
     if (turnTimerInterval) clearInterval(turnTimerInterval);
