@@ -1774,18 +1774,42 @@ body {
 }
 /* Profile Panel 動畫 */
 #user-profile-panel {
-    background: rgba(15, 23, 42, 0.8);
+    background: rgba(15, 23, 42, 0.4);
     border-left: 2px solid #fbbf24;
     border-right: 2px solid #fbbf24;
     padding: 15px;
     position: relative;
-    backdrop-filter: blur(5px);
-    animation: hudOpen 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 0 15px rgba(6, 182, 212, 0.4), inset 0 0 20px rgba(6, 182, 212, 0.1);
+    animation: holoAppear 0.4s forwards;
 }
 
-@keyframes hudOpen {
-    from { transform: rotateX(90deg); opacity: 0; }
-    to { transform: rotateX(0deg); opacity: 1; }
+@keyframes holoAppear {
+    0% {
+        opacity: 0;
+        transform: scale(1.5);
+        filter: blur(20px);
+    }
+    25% {
+        opacity: 0.3;
+        transform: scale(1.3);
+        filter: blur(15px);
+    }
+    35% {
+        opacity: 0;
+        transform: scale(1.4);
+        filter: blur(18px);
+    }
+    50% {
+        opacity: 0.6;
+        transform: scale(1.2);
+        filter: blur(10px);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1);
+        filter: blur(0);
+    }
 }
 
 /* 裝飾角落 */
@@ -1799,30 +1823,6 @@ body {
     margin-bottom: 10px;
     border-bottom: 1px solid rgba(255,255,255,0.1);
     padding-bottom: 10px;
-}
-
-/* ★★★ Rank Update Animation ★★★ */
-@keyframes rank-update-glow {
-    0% {
-        box-shadow: 0 0 0 rgba(251, 191, 36, 0);
-        transform: scale(1);
-    }
-    50% {
-        box-shadow: 0 0 20px rgba(251, 191, 36, 0.6), inset 0 0 10px rgba(251, 191, 36, 0.3);
-        transform: scale(1.02);
-    }
-    100% {
-        box-shadow: 0 0 0 rgba(251, 191, 36, 0);
-        transform: scale(1);
-    }
-}
-
-.profile-rank {
-    transition: all 0.3s ease;
-}
-
-.profile-rank.rank-updating {
-    animation: rank-update-glow 0.8s cubic-bezier(0.23, 1, 0.32, 1);
 }
 
 #hud-player-name {
@@ -7092,20 +7092,6 @@ async function checkGlobalRankAndUpdateIcon(rankEl, rank) {
         // Priority: gold > silver > bronze > white
         const colorPriority = { 'gold': 4, 'silver': 3, 'bronze': 2, 'white': 1 };
         const bestColor = colorPriority[xpColor] > colorPriority[pvpColor] ? xpColor : pvpColor;
-
-        // ★★★ Trigger animation on rank container ★★★
-        const profileRank = rankEl.closest('.profile-rank');
-        if (profileRank && bestColor !== 'white') {
-            profileRank.classList.remove('rank-updating');
-            // Force reflow to restart animation
-            void profileRank.offsetWidth;
-            profileRank.classList.add('rank-updating');
-
-            // Remove class after animation completes
-            setTimeout(() => {
-                profileRank.classList.remove('rank-updating');
-            }, 800);
-        }
 
         // Update icon with best color
         const iconPath = `ranking_icon/${bestColor}/${rank.iconFile}`;
