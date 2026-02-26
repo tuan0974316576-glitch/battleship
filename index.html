@@ -2841,7 +2841,8 @@ body {
     text-align: center;
     border-radius: 4px;
     max-width: 350px;
-    width: 85%;
+    width: calc(100% - 40px); /* ★ 左右各留 20px 空間 */
+    margin: 0 20px; /* ★ 確保左右有空間 */
     position: relative;
     backdrop-filter: blur(10px);
     animation: holo-open 0.4s ease-out forwards;
@@ -6993,7 +6994,7 @@ function updateHUD(name) {
     }
 }
 
-// ★★★ Task 4: Real-time Global Rank Check for Main Menu HUD ★★★
+// ★★★ Task 4: Real-time Dual Rank Check for Main Menu HUD ★★★
 async function checkGlobalRankAndUpdateIcon(rankEl, rank) {
     // First set default display with white icon (smaller and closer)
     const defaultIconPath = `ranking_icon/white/${rank.iconFile}`;
@@ -7002,12 +7003,12 @@ async function checkGlobalRankAndUpdateIcon(rankEl, rank) {
     try {
         const { ref, query, orderByChild, limitToLast, get } = firebaseModules;
 
-        // ★★★ Check 1: Global XP Ranking ★★★
+        // ★★★ Check 1: Total XP Ranking (Top 10) ★★★
         const usersRef = ref(window.db, 'users');
         const top10Query = query(usersRef, orderByChild('xp'), limitToLast(10));
         const snapshot = await get(top10Query);
 
-        let globalRankIndex = -1;
+        let xpRankIndex = -1;
         if (snapshot.exists()) {
             const top10 = [];
             snapshot.forEach(childSnapshot => {
@@ -7017,56 +7018,50 @@ async function checkGlobalRankAndUpdateIcon(rankEl, rank) {
                 });
             });
             top10.sort((a, b) => b.xp - a.xp);
-            globalRankIndex = top10.findIndex(user => user.id === window.myPlayerId);
+            xpRankIndex = top10.findIndex(user => user.id === window.myPlayerId);
         }
 
-        // ★★★ Check 2: Current Level Ranking (if a level is selected) ★★★
-        let levelRankIndex = -1;
-        if (selectedLevel && VOCAB_DB[selectedLevel]) {
-            // Get all users and calculate their progress for this level
-            const allUsersSnapshot = await get(usersRef);
-            if (allUsersSnapshot.exists()) {
-                const levelProgress = [];
-                allUsersSnapshot.forEach(childSnapshot => {
-                    const userId = childSnapshot.key;
-                    const userData = childSnapshot.val();
+        // ★★★ Check 2: PVP Win Rate Ranking (Top 10 with 10+ wins) ★★★
+        let pvpRankIndex = -1;
+        const allUsersSnapshot = await get(usersRef);
+        if (allUsersSnapshot.exists()) {
+            const users = allUsersSnapshot.val();
+            const userArray = Object.keys(users)
+                .map(uid => ({
+                    uid,
+                    pvpWins: users[uid].pvpWins || 0,
+                    pvpTotalMatches: users[uid].pvpTotalMatches || 0
+                }))
+                .filter(user => user.pvpWins >= 10); // Only users with 10+ wins
 
-                    // Calculate total mastered words for this level across all modes
-                    let totalMastered = 0;
-                    ['reading', 'listening', 'speaking'].forEach(mode => {
-                        if (userData.mastery && userData.mastery[mode] && userData.mastery[mode][selectedLevel]) {
-                            const levelData = userData.mastery[mode][selectedLevel];
-                            totalMastered += Object.values(levelData).filter(m => m.status === 1).length;
-                        }
-                    });
+            // Calculate win rate and sort
+            userArray.forEach(user => {
+                user.winRate = user.pvpTotalMatches > 0
+                    ? (user.pvpWins / user.pvpTotalMatches * 100)
+                    : 0;
+            });
+            userArray.sort((a, b) => b.winRate - a.winRate);
 
-                    if (totalMastered > 0) {
-                        levelProgress.push({ id: userId, mastered: totalMastered });
-                    }
-                });
-
-                // Sort by mastered count descending and get top 10
-                levelProgress.sort((a, b) => b.mastered - a.mastered);
-                const top10Level = levelProgress.slice(0, 10);
-                levelRankIndex = top10Level.findIndex(user => user.id === window.myPlayerId);
-            }
+            // Get top 10 and find current player
+            const top10PVP = userArray.slice(0, 10);
+            pvpRankIndex = top10PVP.findIndex(user => user.uid === window.myPlayerId);
         }
 
         // ★★★ Determine best rank (gold > silver > bronze > white) ★★★
-        const globalColor = globalRankIndex !== -1 ? getIconColor(globalRankIndex) : 'white';
-        const levelColor = levelRankIndex !== -1 ? getIconColor(levelRankIndex) : 'white';
+        const xpColor = xpRankIndex !== -1 ? getIconColor(xpRankIndex) : 'white';
+        const pvpColor = pvpRankIndex !== -1 ? getIconColor(pvpRankIndex) : 'white';
 
         // Priority: gold > silver > bronze > white
         const colorPriority = { 'gold': 4, 'silver': 3, 'bronze': 2, 'white': 1 };
-        const bestColor = colorPriority[globalColor] > colorPriority[levelColor] ? globalColor : levelColor;
+        const bestColor = colorPriority[xpColor] > colorPriority[pvpColor] ? xpColor : pvpColor;
 
         // Update icon with best color
         const iconPath = `ranking_icon/${bestColor}/${rank.iconFile}`;
         rankEl.innerHTML = `${rank.name} <img src="${iconPath}" style="width: 24px; height: 24px; vertical-align: middle; margin-left: 4px;" onerror="this.style.display='none'">`;
 
-        console.log(`[HUD] Global rank: #${globalRankIndex + 1} (${globalColor}) | Level rank: #${levelRankIndex + 1} (${levelColor}) | Best: ${bestColor}`);
+        console.log(`[HUD] XP rank: ${xpRankIndex !== -1 ? '#' + (xpRankIndex + 1) : 'unranked'} (${xpColor}) | PVP rank: ${pvpRankIndex !== -1 ? '#' + (pvpRankIndex + 1) : 'unranked'} (${pvpColor}) | Best: ${bestColor}`);
     } catch (error) {
-        console.error('[HUD] Error checking global rank:', error);
+        console.error('[HUD] Error checking ranks:', error);
         // Keep the default white icon that was already set
     }
 }
