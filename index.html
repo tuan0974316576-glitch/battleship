@@ -157,6 +157,14 @@ console.log("Firebase Modules Loaded Successfully");
         } else {
             console.log('[Auth] User logged out');
             window.isFirebaseAuthenticated = false;
+
+            // ★★★ CRITICAL FIX: Clear XP and Mastery data on logout ★★★
+            window.userTotalXP = 0;
+            window.userMastery = { reading: {}, listening: {}, speaking: {} };
+            if (typeof userTotalXP !== 'undefined') userTotalXP = 0;
+            if (typeof userMastery !== 'undefined') userMastery = { reading: {}, listening: {}, speaking: {} };
+            console.log('[Auth] Cleared XP and Mastery data');
+
             // ★ 清除可能殘留嘅 cached username (確保下次唔會誤跳主選單)
             localStorage.removeItem('battleship_username');
             if(overlay) overlay.style.display = 'none';
@@ -2871,6 +2879,11 @@ body {
     margin-bottom: 5px;
 }
 
+/* Row 3: Z-M - left offset for trapezoid effect (Z under S) */
+.kb-row:nth-child(3) {
+    padding-left: 40px;
+}
+
 .kb-key {
     min-width: 35px;
     height: 45px;
@@ -2906,7 +2919,7 @@ body {
 }
 
 .kb-backspace {
-    min-width: 80px;
+    min-width: 60px;
     background: linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(220, 38, 38, 0.1));
     border-color: rgba(239, 68, 68, 0.4);
     color: #ef4444;
@@ -3558,6 +3571,10 @@ let battleLog = [];
         return levelVocab.filter(v => wrongKeys.includes(v.en));
     }
 
+    // ★★★ CRITICAL FIX: Declare variables BEFORE calling loadWrongWordsFromLocal ★★★
+    let wrongWordsDB = {};   // { READING: { L1: { "apple": 1 }, ... }, LISTENING: {...}, SPEAKING: {...} }
+    let wrongWordsDeck = []; // 優先出錯字 deck
+
     // 初始化：先從 localStorage 載入
     loadWrongWordsFromLocal();
 
@@ -3689,8 +3706,6 @@ const DAMAGED_IMAGES = [
 
     let activeVocabList = [];
     let sessionDeck = [];
-    let wrongWordsDeck = []; // 優先出錯字 deck
-    let wrongWordsDB = {};   // { READING: { L1: { "apple": 1 }, ... }, LISTENING: {...}, SPEAKING: {...} }
     let selectedLevel = 'L1'; // 預設
     let tempGameMode = 'AI';  // 暫存模式選擇
 
@@ -5041,7 +5056,11 @@ function handlePlayerTimeout() {
 
         // D. 防止打爆格 (用純字母長度去計)
         if (currentVocab && currentVocab.en) {
-             const targetClean = currentVocab.en.replace(/[^a-zA-Z0-9]/g, '');
+             // ★★★ For LISTENING mode, use listeningAnswer if available ★★★
+             const targetWord = (currentPracticeMode === 'LISTENING' && currentVocab.listeningAnswer)
+                 ? currentVocab.listeningAnswer
+                 : currentVocab.en;
+             const targetClean = targetWord.replace(/[^a-zA-Z0-9]/g, '');
              if (logicVal.length > targetClean.length) {
                  // 如果打多咗，截斷 logicVal
                  logicVal = logicVal.substring(0, targetClean.length);
@@ -5071,9 +5090,14 @@ function handlePlayerTimeout() {
         let html = "";
         let inputIdx = 0; // 用黎記住用到第幾個玩家輸入嘅字母
 
+        // ★★★ For LISTENING mode, use listeningAnswer if available ★★★
+        const targetWord = (currentPracticeMode === 'LISTENING' && currentVocab.listeningAnswer)
+            ? currentVocab.listeningAnswer
+            : currentVocab.en;
+
         // 逐個字檢查題目原本格式 (例如 "WAKE UP")
-        for (let i = 0; i < currentVocab.en.length; i++) {
-            const targetChar = currentVocab.en[i];
+        for (let i = 0; i < targetWord.length; i++) {
+            const targetChar = targetWord[i];
 
             if (targetChar === ' ') {
                 // 遇到空格：顯示空白位 (inputIdx 唔郁)
