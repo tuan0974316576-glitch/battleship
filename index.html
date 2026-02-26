@@ -7553,6 +7553,11 @@ function checkSpeakingResult(spokenText) {
         // ★ 錯字記錄：答啱就移除
         removeWrongWord(currentPracticeMode, selectedLevel, currentVocab.en);
 
+        // ★★★ CRITICAL FIX: Call handleCorrectAnswer to award XP and update mastery ★★★
+        if (typeof handleCorrectAnswer === 'function') {
+            handleCorrectAnswer();
+        }
+
         // UI 顯示
         const scorePercent = Math.floor(similarity * 100);
         document.getElementById('msg-area').innerText = `ACCURACY: ${scorePercent}% // MATCH CONFIRMED!`;
