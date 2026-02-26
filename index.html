@@ -52,10 +52,12 @@ window.firebaseModules = {
 console.log("Firebase Modules Loaded Successfully");
     // --- 1. 登入狀態監聽 (包含 Guest 自動派名) ---
     onAuthStateChanged(auth, (u) => {
+        console.log('[Auth] onAuthStateChanged triggered, user:', u ? u.uid : 'null');
         const overlay = document.getElementById('login-overlay');
         // 清除 auth overlay timeout (如果有)
         if (window.authOverlayTimeout) { clearTimeout(window.authOverlayTimeout); window.authOverlayTimeout = null; }
         if (u) {
+            console.log('[Auth] User authenticated:', u.uid, 'isAnonymous:', u.isAnonymous);
             window.isFirebaseAuthenticated = true;
             window.myPlayerId = u.uid;
             // 登入後從 Firebase 載入錯字記錄
@@ -64,7 +66,9 @@ console.log("Firebase Modules Loaded Successfully");
             // ★ 極速登入：如果 localStorage 有 cached username，即刻顯示主選單
             // 唔使等 get(userRef) 回應，避免 connecting panel 閃一閃
             const cachedName = localStorage.getItem('battleship_username');
+            console.log('[Auth] Cached username:', cachedName);
             if (cachedName) {
+                console.log('[Auth] Using cached name, showing main menu immediately');
                 // ★★★ 唔好即刻 call updateHUD，等 Firebase load 完 XP 先更新 ★★★
                 // if(typeof updateHUD === 'function') updateHUD(cachedName);
                 if(typeof showMainMenu === 'function') showMainMenu();
@@ -73,16 +77,20 @@ console.log("Firebase Modules Loaded Successfully");
 
             // 背景 fetch Firebase 數據 (更新名稱 / 處理新用戶)
             const userRef = ref(db, 'users/' + u.uid);
+            console.log('[Auth] Fetching user data from Firebase...');
             get(userRef).then((snapshot) => {
+                console.log('[Auth] Firebase get() completed, exists:', snapshot.exists());
                 if (snapshot.exists() && snapshot.val().displayName) {
                     // 舊用戶 — 更新名稱 (可能 Firebase 上改過名)
                     const realName = snapshot.val().displayName;
+                    console.log('[Auth] Existing user:', realName);
                     localStorage.setItem('battleship_username', realName);
 
                     // ★ 讀取 XP & Mastery (如果存在)
                     const userData = snapshot.val();
                     window.userTotalXP = (typeof userData.xp === 'number') ? userData.xp : 0;
                     window.userMastery = userData.mastery || { reading: {}, listening: {}, speaking: {} };
+                    console.log('[Auth] Loaded XP:', window.userTotalXP);
 
                     // ★★★ 同步去 local variables (確保即時更新) ★★★
                     if (typeof userTotalXP !== 'undefined') {
@@ -101,32 +109,45 @@ console.log("Firebase Modules Loaded Successfully");
 
                     // 如果之前已經用 cached name 顯示咗主選單，就唔使再 call
                     if (!cachedName) {
+                        console.log('[Auth] No cached name, showing main menu now');
                         if(typeof showMainMenu === 'function') showMainMenu();
                     }
-                    if(overlay) overlay.style.display = 'none';
+                    if(overlay) {
+                        console.log('[Auth] Hiding overlay');
+                        overlay.style.display = 'none';
+                    }
                 } else {
                     // 新用戶
+                    console.log('[Auth] New user detected');
                     if (u.isAnonymous) {
                         // Guest 自動派名
                         const autoName = window.generateGuestId ? window.generateGuestId() : "GUEST_" + u.uid.substring(0,4);
+                        console.log('[Auth] Creating guest account:', autoName);
                         // ★ 新用戶初始化 XP & Mastery
                         window.userTotalXP = 0;
                         window.userMastery = { reading: {}, listening: {}, speaking: {} };
                         update(ref(db, 'users/' + u.uid), { displayName: autoName, lastLogin: Date.now(), xp: 0 }).then(() => {
+                            console.log('[Auth] Guest account created successfully');
                             localStorage.setItem('battleship_username', autoName);
                             if(typeof updateHUD === 'function') updateHUD(autoName);
                             if(typeof showMainMenu === 'function') showMainMenu();
                             if(overlay) overlay.style.display = 'none';
+                        }).catch(err => {
+                            console.error('[Auth] Guest account creation failed:', err);
                         });
                     } else {
                         // Google/Apple 新人
+                        console.log('[Auth] Google/Apple new user, showing registration');
                         if(overlay) overlay.style.display = 'none';
                         const reg = document.getElementById('registration-modal');
                         if(reg) reg.style.display = 'flex';
                     }
                 }
+            }).catch(err => {
+                console.error('[Auth] Firebase get() failed:', err);
             });
         } else {
+            console.log('[Auth] User logged out');
             window.isFirebaseAuthenticated = false;
             // ★ 清除可能殘留嘅 cached username (確保下次唔會誤跳主選單)
             localStorage.removeItem('battleship_username');
