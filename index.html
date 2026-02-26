@@ -84,8 +84,20 @@ console.log("Firebase Modules Loaded Successfully");
                     window.userTotalXP = (typeof userData.xp === 'number') ? userData.xp : 0;
                     window.userMastery = userData.mastery || { reading: {}, listening: {}, speaking: {} };
 
+                    // ★★★ 同步去 local variables (確保即時更新) ★★★
+                    if (typeof userTotalXP !== 'undefined') {
+                        userTotalXP = window.userTotalXP;
+                    }
+                    if (typeof userMastery !== 'undefined') {
+                        userMastery = window.userMastery;
+                    }
+
                     // ★★★ 重要：即使用咗 cached name，都要再 call updateHUD 更新 XP 顯示 ★★★
                     if(typeof updateHUD === 'function') updateHUD(realName);
+
+                    // ★★★ 更新 Level 按鈕進度顯示 ★★★
+                    if(typeof updateLevelButtonsProgress === 'function') updateLevelButtonsProgress();
+                    if(typeof updateSkillButtonsProgress === 'function') updateSkillButtonsProgress();
 
                     // 如果之前已經用 cached name 顯示咗主選單，就唔使再 call
                     if (!cachedName) {
