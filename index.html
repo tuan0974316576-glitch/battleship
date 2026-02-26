@@ -1822,6 +1822,11 @@ body {
     text-transform: uppercase;
     text-shadow: 0 0 10px rgba(14, 165, 233, 0.8); /* 藍光 */
     letter-spacing: 2px;
+    /* ★★★ Prevent text overflow and wrapping ★★★ */
+    max-width: 200px;  /* Allow up to ~12 characters with letter-spacing */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 .logout-link {
     background: none; border: none; color: #ff4444;
