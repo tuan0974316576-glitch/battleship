@@ -3162,10 +3162,10 @@ body {
     <!-- Tab System -->
     <div class="ranking-tabs">
         <button id="tab-total-xp" class="ranking-tab active" onclick="switchRankingTab('total-xp')">
-            TOTAL EXP RANKING
+            TOTAL XP
         </button>
         <button id="tab-pvp-winrate" class="ranking-tab" onclick="switchRankingTab('pvp-winrate')">
-            PVP WIN RATE RANKING
+            PVP WINS
         </button>
     </div>
 
@@ -6585,7 +6585,7 @@ async function loadPVPWinRateRanking() {
             return;
         }
 
-        // Convert to array and filter users with at least 10 PVP wins
+        // Convert to array - no minimum wins requirement
         const userArray = Object.keys(users)
             .map(uid => ({
                 uid,
@@ -6595,19 +6595,20 @@ async function loadPVPWinRateRanking() {
                 pvpLosses: users[uid].pvpLosses || 0,
                 pvpTotalMatches: users[uid].pvpTotalMatches || 0
             }))
-            .filter(user => user.pvpWins >= 10); // Only users with 10+ wins
+            .filter(user => user.pvpWins > 0); // Only users with at least 1 win
 
-        // Calculate win rate and sort
+        // Calculate win rate
         userArray.forEach(user => {
             user.winRate = user.pvpTotalMatches > 0
                 ? (user.pvpWins / user.pvpTotalMatches * 100)
                 : 0;
         });
 
-        userArray.sort((a, b) => b.winRate - a.winRate);
+        // ★★★ Sort by total wins (descending) ★★★
+        userArray.sort((a, b) => b.pvpWins - a.pvpWins);
 
         if (userArray.length === 0) {
-            rankingList.innerHTML = '<div style="text-align: center; color: #64748b; padding: 40px; font-family: \'Orbitron\'; font-size: 12px;">NO QUALIFIED PLAYERS<br/>(Minimum 10 PVP wins required)</div>';
+            rankingList.innerHTML = '<div style="text-align: center; color: #64748b; padding: 40px; font-family: \'Orbitron\'; font-size: 12px;">NO PVP DATA AVAILABLE</div>';
             return;
         }
 
@@ -6644,12 +6645,12 @@ async function loadPVPWinRateRanking() {
                                 ${user.name} ${isCurrentUser ? '(YOU)' : ''}
                             </div>
                             <div style="font-size: 10px; color: #94a3b8; font-family: 'Orbitron'; margin-top: 2px;">
-                                ${rankData.name} • ${user.pvpWins}W / ${user.pvpLosses}L
+                                ${rankData.name}
                             </div>
                         </div>
                     </div>
                     <div style="font-family: 'Orbitron'; font-size: 14px; color: #ffffff; font-weight: bold;">
-                        ${user.winRate.toFixed(1)}%
+                        ${user.pvpWins}W${user.pvpLosses}L(${user.winRate.toFixed(1)}%)
                     </div>
                 </div>
             `;
@@ -7055,7 +7056,7 @@ async function checkGlobalRankAndUpdateIcon(rankEl, rank) {
             console.log('[HUD] My XP rank index:', xpRankIndex);
         }
 
-        // ★★★ Check 2: PVP Win Rate Ranking (Top 10 with 10+ wins) ★★★
+        // ★★★ Check 2: PVP Wins Ranking (Top 10 by total wins) ★★★
         let pvpRankIndex = -1;
         const allUsersSnapshot = await get(usersRef);
         if (allUsersSnapshot.exists()) {
@@ -7063,23 +7064,17 @@ async function checkGlobalRankAndUpdateIcon(rankEl, rank) {
             const userArray = Object.keys(users)
                 .map(uid => ({
                     uid,
-                    pvpWins: users[uid].pvpWins || 0,
-                    pvpTotalMatches: users[uid].pvpTotalMatches || 0
+                    pvpWins: users[uid].pvpWins || 0
                 }))
-                .filter(user => user.pvpWins >= 10); // Only users with 10+ wins
+                .filter(user => user.pvpWins > 0); // Only users with at least 1 win
 
-            // Calculate win rate and sort
-            userArray.forEach(user => {
-                user.winRate = user.pvpTotalMatches > 0
-                    ? (user.pvpWins / user.pvpTotalMatches * 100)
-                    : 0;
-            });
-            userArray.sort((a, b) => b.winRate - a.winRate);
+            // Sort by total wins (descending)
+            userArray.sort((a, b) => b.pvpWins - a.pvpWins);
 
             // Get top 10 and find current player
             const top10PVP = userArray.slice(0, 10);
             pvpRankIndex = top10PVP.findIndex(user => user.uid === window.myPlayerId);
-            console.log('[HUD] PVP Win Rate Top 10:', top10PVP.map(u => `${u.uid.substring(0,6)}:${u.winRate.toFixed(1)}%`));
+            console.log('[HUD] PVP Wins Top 10:', top10PVP.map(u => `${u.uid.substring(0,6)}:${u.pvpWins}W`));
             console.log('[HUD] My PVP rank index:', pvpRankIndex);
         }
 
