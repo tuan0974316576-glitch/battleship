@@ -6514,17 +6514,17 @@ async function loadTotalXPRanking() {
             html += `
                 <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px 15px; background: ${isCurrentUser ? 'rgba(255, 255, 255, 0.1)' : 'rgba(15, 23, 42, 0.5)'}; border: 1px solid ${isCurrentUser ? 'rgba(255, 255, 255, 0.4)' : 'rgba(100, 116, 139, 0.2)'}; border-radius: 3px;">
                     <div style="display: flex; align-items: center; gap: 15px; flex: 1;">
-                        <div style="font-family: 'Black Ops One'; font-size: 16px; color: ${rankColor}; min-width: 50px; text-align: center;">
-                            #${rank}
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <div style="font-family: 'Black Ops One'; font-size: 16px; color: ${rankColor}; min-width: 50px; text-align: center;">
+                                #${rank}
+                            </div>
+                            <img src="${iconPath}" style="width: 24px; height: 24px; vertical-align: middle;" onerror="this.style.display='none'">
                         </div>
                         <div style="flex: 1;">
-                            <div style="display: flex; align-items: center; gap: 8px;">
-                                <img src="${iconPath}" style="width: 24px; height: 24px; vertical-align: middle;" onerror="this.style.display='none'">
-                                <div style="font-family: 'Orbitron'; font-size: 14px; color: ${isCurrentUser ? '#ffffff' : '#e2e8f0'}; font-weight: ${isCurrentUser ? 'bold' : 'normal'};">
-                                    ${user.name} ${isCurrentUser ? '(YOU)' : ''}
-                                </div>
+                            <div style="font-family: 'Orbitron'; font-size: 14px; color: ${isCurrentUser ? '#ffffff' : '#e2e8f0'}; font-weight: ${isCurrentUser ? 'bold' : 'normal'};">
+                                ${user.name} ${isCurrentUser ? '(YOU)' : ''}
                             </div>
-                            <div style="font-size: 10px; color: #94a3b8; font-family: 'Orbitron'; margin-top: 2px; margin-left: 32px;">
+                            <div style="font-size: 10px; color: #94a3b8; font-family: 'Orbitron'; margin-top: 2px;">
                                 ${rankData.name}
                             </div>
                         </div>
@@ -6609,17 +6609,17 @@ async function loadPVPWinRateRanking() {
             html += `
                 <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px 15px; background: ${isCurrentUser ? 'rgba(255, 255, 255, 0.1)' : 'rgba(15, 23, 42, 0.5)'}; border: 1px solid ${isCurrentUser ? 'rgba(255, 255, 255, 0.4)' : 'rgba(100, 116, 139, 0.2)'}; border-radius: 3px;">
                     <div style="display: flex; align-items: center; gap: 15px; flex: 1;">
-                        <div style="font-family: 'Black Ops One'; font-size: 16px; color: ${rankColor}; min-width: 50px; text-align: center;">
-                            #${rank}
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <div style="font-family: 'Black Ops One'; font-size: 16px; color: ${rankColor}; min-width: 50px; text-align: center;">
+                                #${rank}
+                            </div>
+                            <img src="${iconPath}" style="width: 24px; height: 24px; vertical-align: middle;" onerror="this.style.display='none'">
                         </div>
                         <div style="flex: 1;">
-                            <div style="display: flex; align-items: center; gap: 8px;">
-                                <img src="${iconPath}" style="width: 24px; height: 24px; vertical-align: middle;" onerror="this.style.display='none'">
-                                <div style="font-family: 'Orbitron'; font-size: 14px; color: ${isCurrentUser ? '#ffffff' : '#e2e8f0'}; font-weight: ${isCurrentUser ? 'bold' : 'normal'};">
-                                    ${user.name} ${isCurrentUser ? '(YOU)' : ''}
-                                </div>
+                            <div style="font-family: 'Orbitron'; font-size: 14px; color: ${isCurrentUser ? '#ffffff' : '#e2e8f0'}; font-weight: ${isCurrentUser ? 'bold' : 'normal'};">
+                                ${user.name} ${isCurrentUser ? '(YOU)' : ''}
                             </div>
-                            <div style="font-size: 10px; color: #94a3b8; font-family: 'Orbitron'; margin-top: 2px; margin-left: 32px;">
+                            <div style="font-size: 10px; color: #94a3b8; font-family: 'Orbitron'; margin-top: 2px;">
                                 ${rankData.name} • ${user.pvpWins}W / ${user.pvpLosses}L
                             </div>
                         </div>
