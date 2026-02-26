@@ -4749,12 +4749,26 @@ function openLaunchModal(index) {
         }
     }
 
+    // ★★★ Handle sentence selection (support both old and new format) ★★★
     if (currentVocab.sents && currentVocab.sents.length > 0) {
         const randSentIndex = Math.floor(Math.random() * currentVocab.sents.length);
-        currentVocab.sent = currentVocab.sents[randSentIndex];
+        const selectedSent = currentVocab.sents[randSentIndex];
+
+        // Check if new format (object with text and answer)
+        if (typeof selectedSent === 'object' && selectedSent.text) {
+            currentVocab.sent = selectedSent.text;
+            currentVocab.listeningAnswer = selectedSent.answer; // Store the correct answer for listening
+            console.log(`[Vocab] Using new format - Sentence: "${selectedSent.text}", Answer: "${selectedSent.answer}"`);
+        } else {
+            // Old format (plain string)
+            currentVocab.sent = selectedSent;
+            currentVocab.listeningAnswer = null; // Will use base form
+            console.log(`[Vocab] Using old format - Sentence: "${selectedSent}"`);
+        }
     } else if (!currentVocab.sent && currentVocab.en) {
         // 如果連一句例句都無，就用個單字本身頂住先
         currentVocab.sent = currentVocab.en;
+        currentVocab.listeningAnswer = null;
     }
     
     // 獲取介面元素
@@ -4807,11 +4821,15 @@ if (currentPracticeMode === 'SPEAKING') {
         fadeBgm(0.1, 800);
         let contentHTML = '';
 
+        // ★★★ Use listeningAnswer if available (new format), otherwise use base form (old format) ★★★
+        const targetWord = currentVocab.listeningAnswer || currentVocab.en;
+        console.log(`[Listening Display] Using target word: "${targetWord}"`);
+
         // 1. 顯示句子填空 (如果有句子)
         if (currentVocab.sent) {
-            const regex = new RegExp(`\\b${currentVocab.en}\\b`, 'gi');
+            const regex = new RegExp(`\\b${targetWord}\\b`, 'gi');
             // 將目標字換成跟字數一樣長度的動態底線
-            const dynamicBlanks = generateSmartBlanks(currentVocab.en);
+            const dynamicBlanks = generateSmartBlanks(targetWord);
             const displayHTML = currentVocab.sent.replace(regex, `<span class="listening-blank">${dynamicBlanks}</span>`);
             contentHTML += `<div class="sentence-container">${displayHTML}</div>`;
         } else {
@@ -4832,7 +4850,7 @@ if (currentPracticeMode === 'SPEAKING') {
         qText.onclick = null;
 
         // 3. 顯示智能底線
-        qDisplay.innerHTML = generateSmartBlanks(currentVocab.en);
+        qDisplay.innerHTML = generateSmartBlanks(targetWord);
         qDisplay.style.color = "var(--primary)";
 
         // 自動讀出整句句子
@@ -5152,18 +5170,25 @@ function handleCorrectAnswer() {
 // --- 修正版：核對答案 (智能無視符號) ---
 function checkAnswer() {
     const input = document.getElementById('hidden-input');
-    
+
     // 1. 玩家輸入：轉大寫 + 移除所有空格同標點 (只留 A-Z 同 0-9)
     // 例如輸入 "cup of tea" 或 "cupoftea" 都會變做 "CUPOFTEA"
     const cleanInput = input.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
-    
+
     // 2. 正確答案：同樣處理
+    // ★★★ For LISTENING mode, use listeningAnswer if available (new format) ★★★
+    let targetAnswer = currentVocab.en;
+    if (currentPracticeMode === 'LISTENING' && currentVocab.listeningAnswer) {
+        targetAnswer = currentVocab.listeningAnswer;
+        console.log(`[Check Answer] Using listeningAnswer: "${targetAnswer}"`);
+    }
+
     // 例如 "high-quality" 會變做 "HIGHQUALITY"
-    const cleanTarget = currentVocab.en.toUpperCase().replace(/[^A-Z0-9]/g, '');
-    
+    const cleanTarget = targetAnswer.toUpperCase().replace(/[^A-Z0-9]/g, '');
+
     const isCorrect = (cleanInput === cleanTarget);
 
-    // ★★★ 記錄 Log 邏輯 (保持不變) ★★★
+    // ★★★ 記錄 Log 邏輯 (使用 targetAnswer 而非 currentVocab.en) ★★★
     if (typeof battleLog !== 'undefined') {
         const currentTurn = (typeof turnCounter !== 'undefined' ? turnCounter : 1);
         const existingLogIndex = battleLog.findIndex(log => log.turn === currentTurn);
@@ -5173,10 +5198,10 @@ function checkAnswer() {
             battleLog[existingLogIndex].isCorrect = isCorrect;
         } else {
             battleLog.push({
-                turn: currentTurn, 
-                user: input.value,      
-                correct: currentVocab.en, 
-                isCorrect: isCorrect    
+                turn: currentTurn,
+                user: input.value,
+                correct: targetAnswer,  // ★ Use targetAnswer instead of currentVocab.en
+                isCorrect: isCorrect
             });
         }
     }

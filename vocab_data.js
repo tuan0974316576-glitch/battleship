@@ -5,11 +5,11 @@ const VOCAB_DB = {
             ch: "螞蟻 (n.)",
             sents: [
                 "The ant is carrying a crumb.",
-                "Ants work together as a team.",
+                { text: "Ants work together as a team.", answer: "Ants" },
                 "I saw an ant on the table.",
                 "There are many ants in the garden.",
                 "The ant climbed up the wall.",
-                "Ants are very strong for their size.",
+                { text: "Ants are very strong for their size.", answer: "Ants" },
                 "An ant can lift things heavier than itself.",
                 "The ants are building a nest.",
                 "Don't step on the ant!",
