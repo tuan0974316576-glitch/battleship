@@ -5823,9 +5823,10 @@ function calculateAndDisplaySettlement(isVictory, isSurrender = false) {
     // Calculate total session XP
     const totalSessionXP = sessionAnsweringXP + matchBonus;
 
-    // ★★★ ANTI-FARMING: Check if match is valid (15+ turns) ★★★
-    const isValidMatch = currentTurnCount >= 15;
-    console.log(`[Settlement] Turn count: ${currentTurnCount}, Valid match: ${isValidMatch}`);
+    // ★★★ ANTI-FARMING: Check if match is valid (enemy HP <= 5, i.e., dealt 16+ damage) ★★★
+    const enemyRemainingHP = TOTAL_HP - enemyDamage;
+    const isValidMatch = enemyRemainingHP <= 5;
+    console.log(`[Settlement] Enemy damage: ${enemyDamage}/${TOTAL_HP}, Remaining HP: ${enemyRemainingHP}, Valid match: ${isValidMatch}`);
 
     // Update UI
     const matchBonusLabelEl = document.getElementById('settlement-match-bonus-label');
@@ -5887,8 +5888,8 @@ function calculateAndDisplaySettlement(isVictory, isSurrender = false) {
                 console.warn('[Settlement] Firebase sync failed:', e);
             });
         } else if (gameMode === 'PVP' && !isValidMatch) {
-            // Invalid PVP match (< 15 turns): Only sync XP, no stats
-            console.log(`[Settlement] Match too short (${currentTurnCount} turns). PVP stats NOT updated.`);
+            // Invalid PVP match (enemy HP > 5): Only sync XP, no stats
+            console.log(`[Settlement] Insufficient damage dealt (${enemyDamage}/${TOTAL_HP}). Enemy HP: ${enemyRemainingHP}. PVP stats NOT updated.`);
             update(ref(window.db, 'users/' + window.myPlayerId), {
                 xp: userTotalXP
             }).then(() => {
