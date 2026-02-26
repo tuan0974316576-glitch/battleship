@@ -54,6 +54,7 @@ console.log("Firebase Modules Loaded Successfully");
     onAuthStateChanged(auth, (u) => {
         console.log('[Auth] onAuthStateChanged triggered, user:', u ? u.uid : 'null');
         const overlay = document.getElementById('login-overlay');
+        console.log('[Auth] login-overlay element:', overlay);
         // 清除 auth overlay timeout (如果有)
         if (window.authOverlayTimeout) { clearTimeout(window.authOverlayTimeout); window.authOverlayTimeout = null; }
         if (u) {
@@ -72,7 +73,11 @@ console.log("Firebase Modules Loaded Successfully");
                 // ★★★ 唔好即刻 call updateHUD，等 Firebase load 完 XP 先更新 ★★★
                 // if(typeof updateHUD === 'function') updateHUD(cachedName);
                 if(typeof showMainMenu === 'function') showMainMenu();
-                if(overlay) overlay.style.display = 'none';
+                if(overlay) {
+                    console.log('[Auth] Hiding overlay (cached name path), current display:', overlay.style.display);
+                    overlay.style.display = 'none';
+                    console.log('[Auth] Overlay display after setting to none:', overlay.style.display);
+                }
             }
 
             // 背景 fetch Firebase 數據 (更新名稱 / 處理新用戶)
@@ -113,8 +118,11 @@ console.log("Firebase Modules Loaded Successfully");
                         if(typeof showMainMenu === 'function') showMainMenu();
                     }
                     if(overlay) {
-                        console.log('[Auth] Hiding overlay');
+                        console.log('[Auth] Hiding overlay (Firebase path), current display:', overlay.style.display);
                         overlay.style.display = 'none';
+                        console.log('[Auth] Overlay display after setting to none:', overlay.style.display);
+                    } else {
+                        console.warn('[Auth] Overlay element is null!');
                     }
                 } else {
                     // 新用戶
