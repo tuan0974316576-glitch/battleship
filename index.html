@@ -7304,14 +7304,18 @@ function switchHudPanel(panelId) {
 
         // ★★★ Special handling for user-profile-panel to trigger holoAppear animation ★★★
         if(panelId === 'user-profile-panel') {
+            console.log('[switchHudPanel] Triggering holoAppear animation for user-profile-panel');
             // Remove and re-add animation to restart it
             target.style.animation = 'none';
             // Force reflow to restart animation
             void target.offsetWidth;
             target.style.animation = 'holoAppear 0.4s forwards';
+            console.log('[switchHudPanel] Animation set:', target.style.animation);
         } else {
             target.style.animation = 'fadeIn 0.5s';
         }
+    } else {
+        console.warn('[switchHudPanel] Target panel not found:', panelId);
     }
 }
 
