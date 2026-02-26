@@ -3299,46 +3299,50 @@ body {
     </div>
 
     <div id="warning-overlay"></div>
-<div id="end-screen" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 300; background: rgba(0,0,0,0.95); flex-direction: column; align-items: center; justify-content: flex-start; backdrop-filter: blur(10px); overflow-y: auto; padding: 20px 0;">
+<div id="end-screen" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 300; background: rgba(0,0,0,0.95); flex-direction: column; align-items: center; backdrop-filter: blur(10px);">
 
-    <h1 id="end-title" style="font-family: 'Black Ops One'; font-size: 60px; margin-bottom: 10px; text-shadow: 0 0 30px currentColor;">VICTORY</h1>
-    <div id="end-msg" style="color: #94a3b8; margin-bottom: 20px; font-size: 18px;">ENEMY FLEET ELIMINATED</div>
+    <!-- Scrollable content area -->
+    <div style="flex: 1; overflow-y: auto; width: 100%; display: flex; flex-direction: column; align-items: center; padding: 20px 0;">
+        <h1 id="end-title" style="font-family: 'Black Ops One'; font-size: 60px; margin-bottom: 10px; text-shadow: 0 0 30px currentColor;">VICTORY</h1>
+        <div id="end-msg" style="color: #94a3b8; margin-bottom: 20px; font-size: 18px;">ENEMY FLEET ELIMINATED</div>
 
-    <!-- ★★★ PHASE 5: SETTLEMENT SUMMARY ★★★ -->
-    <div id="settlement-summary" style="width: 85%; max-width: 600px; background: rgba(15, 23, 42, 0.9); border: 2px solid var(--warning); border-radius: 10px; padding: 20px 15px; margin-bottom: 20px; display: flex; flex-direction: column; box-shadow: 0 0 20px rgba(251, 191, 36, 0.3); box-sizing: border-box;">
-        <div style="font-family: 'Black Ops One'; color: var(--warning); font-size: 20px; margin-bottom: 15px; text-align: center; letter-spacing: 2px; text-shadow: 0 0 10px var(--warning);">⚡ SETTLEMENT REPORT ⚡</div>
+        <!-- ★★★ PHASE 5: BATTLE RESULT ★★★ -->
+        <div id="settlement-summary" style="width: 85%; max-width: 600px; background: rgba(15, 23, 42, 0.9); border: 2px solid var(--warning); border-radius: 10px; padding: 20px 15px; margin-bottom: 20px; display: flex; flex-direction: column; box-shadow: 0 0 20px rgba(251, 191, 36, 0.3); box-sizing: border-box;">
+            <div style="font-family: 'Black Ops One'; color: var(--warning); font-size: 20px; margin-bottom: 15px; text-align: center; letter-spacing: 2px; text-shadow: 0 0 10px var(--warning);">⚡ BATTLE RESULT ⚡</div>
 
-        <div style="display: flex; flex-direction: column; gap: 10px; font-family: 'Orbitron'; font-size: 16px;">
-            <div style="display: flex; justify-content: space-between; padding: 8px; background: rgba(0,0,0,0.3); border-radius: 5px;">
-                <span style="color: #94a3b8;">Answering XP:</span>
-                <span id="settlement-answering-xp" style="color: #0ea5e9; font-weight: bold;">+0</span>
+            <div style="display: flex; flex-direction: column; gap: 10px; font-family: 'Orbitron'; font-size: 16px;">
+                <div style="display: flex; justify-content: space-between; padding: 8px; background: rgba(0,0,0,0.3); border-radius: 5px;">
+                    <span style="color: #94a3b8;">Answering XP:</span>
+                    <span id="settlement-answering-xp" style="color: #0ea5e9; font-weight: bold;">+0</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; padding: 8px; background: rgba(0,0,0,0.3); border-radius: 5px;">
+                    <span id="settlement-match-bonus-label" style="color: #94a3b8;">Match Bonus:</span>
+                    <span id="settlement-match-bonus" style="color: #22c55e; font-weight: bold;">+0</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; padding: 10px; background: rgba(251, 191, 36, 0.1); border: 1px solid var(--warning); border-radius: 5px; margin-top: 5px;">
+                    <span style="color: var(--warning); font-weight: bold;">TOTAL SESSION XP:</span>
+                    <span id="settlement-total-xp" style="color: var(--warning); font-weight: bold; font-size: 18px;">+0</span>
+                </div>
             </div>
-            <div style="display: flex; justify-content: space-between; padding: 8px; background: rgba(0,0,0,0.3); border-radius: 5px;">
-                <span id="settlement-match-bonus-label" style="color: #94a3b8;">Match Bonus:</span>
-                <span id="settlement-match-bonus" style="color: #22c55e; font-weight: bold;">+0</span>
+        </div>
+
+        <div id="review-container" style="width: 90%; max-width: 600px; background: rgba(15, 23, 42, 0.8); border: 1px solid #334155; border-radius: 10px; padding: 15px; margin-bottom: 20px; display: flex; flex-direction: column;">
+            <div style="font-family: 'Orbitron'; color: #0ea5e9; font-size: 16px; margin-bottom: 10px; text-align: center; letter-spacing: 2px;">>> MISSION DEBRIEF <<</div>
+
+            <div style="display: grid; grid-template-columns: 0.5fr 0.8fr 1.2fr 1.5fr; border-bottom: 1px solid #475569; padding-bottom: 5px; margin-bottom: 10px; color: #94a3b8; font-size: 12px; font-weight: bold;">
+                <span>TURN</span>
+                <span>MEANING</span>
+                <span>YOUR INPUT</span>
+                <span>CORRECT CODE</span>
             </div>
-            <div style="display: flex; justify-content: space-between; padding: 10px; background: rgba(251, 191, 36, 0.1); border: 1px solid var(--warning); border-radius: 5px; margin-top: 5px;">
-                <span style="color: var(--warning); font-weight: bold;">TOTAL SESSION XP:</span>
-                <span id="settlement-total-xp" style="color: var(--warning); font-weight: bold; font-size: 18px;">+0</span>
+
+            <div id="review-list" style="overflow-y: auto; max-height: 300px; padding-right: 5px;">
             </div>
         </div>
     </div>
 
-    <div id="review-container" style="width: 85%; max-width: 600px; background: rgba(15, 23, 42, 0.8); border: 1px solid #334155; border-radius: 10px; padding: 15px; margin-bottom: 20px; display: flex; flex-direction: column; box-sizing: border-box;">
-        <div style="font-family: 'Orbitron'; color: #0ea5e9; font-size: 16px; margin-bottom: 10px; text-align: center; letter-spacing: 2px;">>> MISSION DEBRIEF <<</div>
-
-<div style="display: grid; grid-template-columns: 0.5fr 0.8fr 1.2fr 1.5fr; border-bottom: 1px solid #475569; padding-bottom: 5px; margin-bottom: 10px; color: #94a3b8; font-size: 12px; font-weight: bold;">
-    <span>TURN</span>
-    <span>MEANING</span>
-    <span>YOUR INPUT</span>
-    <span>CORRECT CODE</span>
-</div>
-
-        <div id="review-list" style="overflow-y: auto; max-height: 300px; padding-right: 5px;">
-            </div>
-    </div>
-
-    <button class="start-btn-large" onclick="playSound('deploy-sfx'); resetGame()">RETURN TO BASE</button>
+    <!-- Fixed button at bottom -->
+    <button class="start-btn-large" onclick="playSound('deploy-sfx'); resetGame()" style="margin: 20px 0; position: sticky; bottom: 20px;">RETURN TO BASE</button>
 </div>
 <div id="confirm-modal" class="tech-modal-overlay">
         <div class="tech-modal-box">
