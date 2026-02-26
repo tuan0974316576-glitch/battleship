@@ -7002,40 +7002,69 @@ async function checkGlobalRankAndUpdateIcon(rankEl, rank) {
     try {
         const { ref, query, orderByChild, limitToLast, get } = firebaseModules;
 
-        // Query top 10 players by XP
+        // ★★★ Check 1: Global XP Ranking ★★★
         const usersRef = ref(window.db, 'users');
         const top10Query = query(usersRef, orderByChild('xp'), limitToLast(10));
         const snapshot = await get(top10Query);
 
-        if (!snapshot.exists()) {
-            console.log('[HUD] No leaderboard data, using white icon');
-            return;
-        }
-
-        // Convert to array and sort descending
-        const top10 = [];
-        snapshot.forEach(childSnapshot => {
-            top10.push({
-                id: childSnapshot.key,
-                xp: childSnapshot.val().xp || 0
+        let globalRankIndex = -1;
+        if (snapshot.exists()) {
+            const top10 = [];
+            snapshot.forEach(childSnapshot => {
+                top10.push({
+                    id: childSnapshot.key,
+                    xp: childSnapshot.val().xp || 0
+                });
             });
-        });
-        top10.sort((a, b) => b.xp - a.xp);
-
-        // Check if current player is in top 10
-        const myIndex = top10.findIndex(user => user.id === window.myPlayerId);
-
-        if (myIndex !== -1) {
-            // Player is in top 10, determine color
-            const iconColor = getIconColor(myIndex);
-            const iconPath = `ranking_icon/${iconColor}/${rank.iconFile}`;
-
-            // Append icon after rank title (smaller and closer)
-            rankEl.innerHTML = `${rank.name} <img src="${iconPath}" style="width: 24px; height: 24px; vertical-align: middle; margin-left: 4px;" onerror="this.style.display='none'">`;
-            console.log(`[HUD] Player is rank #${myIndex + 1} globally. Icon: ${iconColor}`);
-        } else {
-            console.log(`[HUD] Player not in top 10. Using white icon.`);
+            top10.sort((a, b) => b.xp - a.xp);
+            globalRankIndex = top10.findIndex(user => user.id === window.myPlayerId);
         }
+
+        // ★★★ Check 2: Current Level Ranking (if a level is selected) ★★★
+        let levelRankIndex = -1;
+        if (selectedLevel && VOCAB_DB[selectedLevel]) {
+            // Get all users and calculate their progress for this level
+            const allUsersSnapshot = await get(usersRef);
+            if (allUsersSnapshot.exists()) {
+                const levelProgress = [];
+                allUsersSnapshot.forEach(childSnapshot => {
+                    const userId = childSnapshot.key;
+                    const userData = childSnapshot.val();
+
+                    // Calculate total mastered words for this level across all modes
+                    let totalMastered = 0;
+                    ['reading', 'listening', 'speaking'].forEach(mode => {
+                        if (userData.mastery && userData.mastery[mode] && userData.mastery[mode][selectedLevel]) {
+                            const levelData = userData.mastery[mode][selectedLevel];
+                            totalMastered += Object.values(levelData).filter(m => m.status === 1).length;
+                        }
+                    });
+
+                    if (totalMastered > 0) {
+                        levelProgress.push({ id: userId, mastered: totalMastered });
+                    }
+                });
+
+                // Sort by mastered count descending and get top 10
+                levelProgress.sort((a, b) => b.mastered - a.mastered);
+                const top10Level = levelProgress.slice(0, 10);
+                levelRankIndex = top10Level.findIndex(user => user.id === window.myPlayerId);
+            }
+        }
+
+        // ★★★ Determine best rank (gold > silver > bronze > white) ★★★
+        const globalColor = globalRankIndex !== -1 ? getIconColor(globalRankIndex) : 'white';
+        const levelColor = levelRankIndex !== -1 ? getIconColor(levelRankIndex) : 'white';
+
+        // Priority: gold > silver > bronze > white
+        const colorPriority = { 'gold': 4, 'silver': 3, 'bronze': 2, 'white': 1 };
+        const bestColor = colorPriority[globalColor] > colorPriority[levelColor] ? globalColor : levelColor;
+
+        // Update icon with best color
+        const iconPath = `ranking_icon/${bestColor}/${rank.iconFile}`;
+        rankEl.innerHTML = `${rank.name} <img src="${iconPath}" style="width: 24px; height: 24px; vertical-align: middle; margin-left: 4px;" onerror="this.style.display='none'">`;
+
+        console.log(`[HUD] Global rank: #${globalRankIndex + 1} (${globalColor}) | Level rank: #${levelRankIndex + 1} (${levelColor}) | Best: ${bestColor}`);
     } catch (error) {
         console.error('[HUD] Error checking global rank:', error);
         // Keep the default white icon that was already set
