@@ -7338,6 +7338,12 @@ window.addEventListener('load', () => {
     const cachedName = localStorage.getItem('battleship_username');
     if (cachedName) {
         console.log("🚀 FAST LOGIN: Found cached user -> " + cachedName);
+        // ★★★ CRITICAL FIX: Clear XP before updateHUD to prevent inheritance ★★★
+        window.userTotalXP = 0;
+        window.userMastery = { reading: {}, listening: {}, speaking: {} };
+        if (typeof userTotalXP !== 'undefined') userTotalXP = 0;
+        if (typeof userMastery !== 'undefined') userMastery = { reading: {}, listening: {}, speaking: {} };
+        console.log('[FAST LOGIN] Cleared XP data before updateHUD');
         updateHUD(cachedName);
     }
 
