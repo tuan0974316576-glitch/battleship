@@ -7002,6 +7002,12 @@ async function checkGlobalRankAndUpdateIcon(rankEl, rank) {
     const defaultIconPath = `ranking_icon/white/${rank.iconFile}`;
     rankEl.innerHTML = `${rank.name} <img src="${defaultIconPath}" style="width: 24px; height: 24px; vertical-align: middle; margin-left: 4px;" onerror="this.style.display='none'">`;
 
+    // ★★★ CRITICAL FIX: Don't query Firebase if player ID is not ready yet ★★★
+    if (!window.myPlayerId) {
+        console.log('[HUD] Player ID not ready yet, skipping rank check');
+        return;
+    }
+
     try {
         const { ref, query, orderByChild, limitToLast, get } = firebaseModules;
 
