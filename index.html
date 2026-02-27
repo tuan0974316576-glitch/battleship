@@ -6457,12 +6457,7 @@ function autoDeployRemainingShips() {
         }
     }
 }
-    
-    // 1秒後自動開始 (這裡維持不變)
-    setGameTimeout(() => {
-        startBattle();
-    }, 1000);
-}
+
 // 顯示高科技通知框
     function showNotification(text, type = 'success') {
         const box = document.getElementById('tech-notification');
