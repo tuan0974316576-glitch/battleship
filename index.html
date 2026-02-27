@@ -3787,18 +3787,31 @@ function startEnemyTurn() {
     // --- 5. 流程控制 ---
 function selectMode(mode) {
     tempGameMode = mode;
-    playSound('deploy-sfx');
 
     if (mode === 'PVP') {
         // ★★★ Check rank requirement: PRIVATE or above ★★★
         const currentXP = userTotalXP || window.userTotalXP || 0;
+        console.log('[PVP Check] Current XP:', currentXP);
+
+        if (typeof getRankForXP !== 'function') {
+            console.error('[PVP Check] getRankForXP function not found!');
+            playSound('wrong-sfx');
+            showNotification('SYSTEM ERROR: RANK CHECK FAILED', 'error', 4000);
+            return;
+        }
+
         const currentRank = getRankForXP(currentXP);
+        console.log('[PVP Check] Current Rank:', currentRank.name, 'Level:', currentRank.level);
 
         if (currentRank.level < 1) {  // RECRUIT is level 0, PRIVATE is level 1
             playSound('wrong-sfx');
             showNotification('ONLY AVAILABLE TO PRIVATE OR ABOVE', 'error', 4000);
+            console.log('[PVP Check] Access DENIED - Rank too low');
             return;  // Block PVP access
         }
+
+        console.log('[PVP Check] Access GRANTED');
+        playSound('deploy-sfx');
 
         // ★ 修復問題 2：隱藏整個標題畫面 (包括 Title 同 User Profile)
         // 這樣就不會擋住 Lobby 的按鈕
@@ -3822,6 +3835,7 @@ function selectMode(mode) {
         }
     } else {
         // --- AI 模式 (流程：Menu -> Level -> Skill) ---
+        playSound('deploy-sfx');
 
         // 只隱藏 Menu 按鈕，保留標題
         document.getElementById('main-menu-carousel').style.display = 'none';
