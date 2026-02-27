@@ -3249,7 +3249,7 @@ body {
             <div id="connection-status" style="width: 10px; height: 10px; border-radius: 50%; background: grey; display: none; margin-left: 10px;"></div>
             <div id="game-status">PHASE: <span style="color: var(--warning);">DEPLOYMENT</span></div>
             <div class="sys-btn-group">
-                <button id="music-btn" class="btn" onclick="toggleMusic()"> BGM: ON</button>
+                <button id="auto-deploy-btn" class="btn" onclick="autoDeployFleet()" style="border-color: var(--success); color: var(--success);">AUTO DEPLOY</button>
                 <button id="game-exit-btn" class="btn" onclick="confirmExit()" style="border-color: var(--danger); color: var(--danger);">EXIT</button>
             </div>
             <span id="deploy-controls">
@@ -4098,10 +4098,16 @@ function enterGameUI() {
     gameUI.style.display = 'flex';
     setTimeout(() => { gameUI.style.opacity = '1'; }, 50);
 
+    // ★★★ Show AUTO DEPLOY button at start ★★★
+    const autoDeployBtn = document.getElementById('auto-deploy-btn');
+    if (autoDeployBtn) {
+        autoDeployBtn.style.display = 'inline-block';
+    }
+
     startDeploymentTimer();
-    
+
     // 刪除了 global-back-btn 的控制碼
-    
+
     if (gameMode === 'PVP') initPVPListeners();
 }
 
@@ -4610,6 +4616,12 @@ function startBattle() {
     if(exitBtn) {
         exitBtn.innerText = "SURRENDER";
         exitBtn.style.borderColor = "var(--danger)";
+    }
+
+    // ★★★ Hide AUTO DEPLOY button when battle starts ★★★
+    const autoDeployBtn = document.getElementById('auto-deploy-btn');
+    if (autoDeployBtn) {
+        autoDeployBtn.style.display = 'none';
     }
 
     document.getElementById('deploy-controls').style.display = 'none';
@@ -6378,7 +6390,49 @@ function handleDeploymentTimeout() {
     playSound('timeout-sfx');
     const status = document.getElementById('game-status');
     status.innerHTML = `TIME'S UP! AUTO-DEPLOYING...`;
-    
+
+    autoDeployRemainingShips();
+
+    deployIndex = FLEET.length;
+
+    // ★★★ 修改重點：時間到自動佈陣後，都要顯示 START 掣 ★★★
+    const sBtn = document.getElementById('start-btn');
+    sBtn.style.display = 'inline-block'; // 顯示
+    sBtn.disabled = false;               // 解鎖
+}
+
+// ★★★ AUTO DEPLOY FUNCTION ★★★
+function autoDeployFleet() {
+    playSound('deploy-sfx');
+
+    // Clear all existing ships
+    for (let i = 0; i < FLEET.length; i++) {
+        if (FLEET[i].indices) {
+            FLEET[i].indices.forEach(idx => myGrid[idx] = 0);
+            FLEET[i].indices = null;
+            const img = document.getElementById(`board-ship-${i}`);
+            if (img) img.remove();
+        }
+    }
+
+    // Reset deploy index
+    deployIndex = 0;
+
+    // Auto deploy all ships
+    autoDeployRemainingShips();
+
+    // Update UI
+    deployIndex = FLEET.length;
+    document.getElementById('rotate-btn').style.display = 'none';
+    const sBtn = document.getElementById('start-btn');
+    sBtn.style.display = 'inline-block';
+    sBtn.disabled = false;
+
+    showNotification('FLEET AUTO-DEPLOYED', 'success', 2000);
+}
+
+// ★★★ Helper function to deploy remaining ships ★★★
+function autoDeployRemainingShips() {
     for (let i = 0; i < FLEET.length; i++) {
         if (!FLEET[i].indices) {
             let placed = false;
@@ -6386,10 +6440,11 @@ function handleDeploymentTimeout() {
                 let r = Math.floor(Math.random() * 100);
                 let v = Math.random() > 0.5;
                 let idxs = getShipIndices(r, FLEET[i], v);
-                
+
                 if (idxs && !idxs.some(x => myGrid[x] === 1)) {
                     idxs.forEach(x => myGrid[x] = 1);
                     FLEET[i].indices = idxs;
+                    FLEET[i].isVertical = v;
                     placeShipImage('player-grid', r, FLEET[i], v);
                     const unit = document.getElementById(`ship-unit-${i}`);
                     if (unit) {
@@ -6401,13 +6456,7 @@ function handleDeploymentTimeout() {
             }
         }
     }
-    
-    deployIndex = FLEET.length; 
-    
-    // ★★★ 修改重點：時間到自動佈陣後，都要顯示 START 掣 ★★★
-    const sBtn = document.getElementById('start-btn');
-    sBtn.style.display = 'inline-block'; // 顯示
-    sBtn.disabled = false;               // 解鎖
+}
     
     // 1秒後自動開始 (這裡維持不變)
     setGameTimeout(() => {
