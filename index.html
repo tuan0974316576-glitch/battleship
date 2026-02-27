@@ -153,6 +153,12 @@ console.log("Firebase Modules Loaded Successfully");
                 }
             }).catch(err => {
                 console.error('[Auth] Firebase get() failed:', err);
+                // ★★★ 安全網：如果 Firebase 請求失敗，都要隱藏 overlay ★★★
+                if(overlay) overlay.style.display = 'none';
+                // 顯示錯誤通知
+                if(typeof showNotification === 'function') {
+                    showNotification('FAILED TO LOAD USER DATA', 'error', 3000);
+                }
             });
         } else {
             console.log('[Auth] User logged out');
