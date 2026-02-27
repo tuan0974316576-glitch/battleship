@@ -4512,10 +4512,34 @@ function getShipIndices(idx, conf, v) {
 
             if (targetShipId !== -1) {
                 FLEET[targetShipId].indices.forEach(idx => myGrid[idx] = 0);
-                FLEET[targetShipId].indices = null; 
+                FLEET[targetShipId].indices = null;
 
-                const img = document.getElementById(`board-ship-${targetShipId}`);
-                if (img) img.remove();
+                // Remove ship image - try by ID first, then by position
+                const playerBoard = document.getElementById('player-grid');
+                let imgRemoved = false;
+
+                // Try to find by ID
+                const imgById = document.getElementById(`board-ship-${targetShipId}`);
+                if (imgById) {
+                    imgById.remove();
+                    imgRemoved = true;
+                }
+
+                // If not found by ID, find by position overlap
+                if (!imgRemoved) {
+                    const shipImages = playerBoard.querySelectorAll('.ship-overlay');
+                    const clickedCell = playerBoard.children[index];
+                    const cellRect = clickedCell.getBoundingClientRect();
+
+                    shipImages.forEach(img => {
+                        const imgRect = img.getBoundingClientRect();
+                        // Check if image overlaps with clicked cell
+                        if (imgRect.left <= cellRect.right && imgRect.right >= cellRect.left &&
+                            imgRect.top <= cellRect.bottom && imgRect.bottom >= cellRect.top) {
+                            img.remove();
+                        }
+                    });
+                }
 
                 playSound('delete-sfx');
 
@@ -6411,10 +6435,20 @@ function handleDeploymentTimeout() {
 
     deployIndex = FLEET.length;
 
-    // ★★★ 修改重點：時間到自動佈陣後，都要顯示 START 掣 ★★★
+    // Hide ROTATE and AUTO DEPLOY buttons
+    document.getElementById('rotate-btn').style.display = 'none';
+    const autoDeployBtn = document.getElementById('auto-deploy-btn');
+    if (autoDeployBtn) {
+        autoDeployBtn.style.display = 'none';
+    }
+
+    // Show and enable START BATTLE button
     const sBtn = document.getElementById('start-btn');
-    sBtn.style.display = 'inline-block'; // 顯示
-    sBtn.disabled = false;               // 解鎖
+    sBtn.style.display = 'inline-block';
+    sBtn.disabled = false;
+
+    // Lock the board - set phase to prevent further clicks
+    currentPhase = 'DEPLOY_LOCKED';
 }
 
 // ★★★ AUTO DEPLOY FUNCTION ★★★
