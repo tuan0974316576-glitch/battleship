@@ -7043,7 +7043,7 @@ function startAuthOverlayTimeout() {
             overlay.style.display = 'none';
             console.log("Auth overlay auto-dismissed (timeout)");
         }
-    }, 15000); // 15 秒後自動關閉
+    }, 30000); // 30 秒後自動關閉（延長至30秒以確保 Firebase 請求完成）
 }
 
 // 1. 訪客登入
@@ -7083,7 +7083,8 @@ window.loginWithGoogle = function() {
     signInWithPopup(getAuth(), new GoogleAuthProvider())
     .then((result) => {
         // 登入成功！onAuthStateChanged 會自動處理轉場
-        if(authOverlayTimeout) { clearTimeout(authOverlayTimeout); authOverlayTimeout = null; }
+        // ★★★ 不要清除 timeout，讓 overlay 保持顯示直到 onAuthStateChanged 完成 ★★★
+        console.log('[Google Login] signInWithPopup success, waiting for onAuthStateChanged...');
     })
     .catch(e => {
         // ★★★ 無論失敗定係取消，必須即刻移除遮罩！ ★★★
@@ -7125,8 +7126,8 @@ window.loginWithApple = function() {
     signInWithPopup(getAuth(), provider)
     .then((result) => {
         // 登入成功！onAuthStateChanged 會自動處理轉場
-        if(authOverlayTimeout) { clearTimeout(authOverlayTimeout); authOverlayTimeout = null; }
-        console.log("Apple Login Success");
+        // ★★★ 不要清除 timeout，讓 overlay 保持顯示直到 onAuthStateChanged 完成 ★★★
+        console.log('[Apple Login] signInWithPopup success, waiting for onAuthStateChanged...');
     })
     .catch(e => {
         // ★★★ 無論失敗定係取消，必須即刻移除遮罩！ ★★★
