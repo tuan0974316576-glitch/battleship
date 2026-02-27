@@ -2086,6 +2086,22 @@ body {
     box-shadow: 0 0 15px var(--primary), inset 0 0 5px var(--primary);
 }
 
+/* --- AUTO DEPLOY 按鈕專用設定 (same as BGM) --- */
+#auto-deploy-btn {
+    background: transparent !important;
+    color: var(--primary);
+    border-color: var(--primary);
+    transition: all 0.2s ease;
+}
+
+#auto-deploy-btn:hover,
+#auto-deploy-btn:active {
+    background: transparent !important;
+    color: var(--primary) !important;
+    border-color: var(--primary) !important;
+    box-shadow: 0 0 15px var(--primary), inset 0 0 5px var(--primary);
+}
+
 
 /* --- EXIT 按鈕專用設定 --- */
 #game-exit-btn {
@@ -3249,7 +3265,7 @@ body {
             <div id="connection-status" style="width: 10px; height: 10px; border-radius: 50%; background: grey; display: none; margin-left: 10px;"></div>
             <div id="game-status">PHASE: <span style="color: var(--warning);">DEPLOYMENT</span></div>
             <div class="sys-btn-group">
-                <button id="auto-deploy-btn" class="btn" onclick="autoDeployFleet()" style="border-color: var(--success); color: var(--success);">AUTO DEPLOY</button>
+                <button id="auto-deploy-btn" class="btn" onclick="autoDeployFleet()">AUTO DEPLOY</button>
                 <button id="game-exit-btn" class="btn" onclick="confirmExit()" style="border-color: var(--danger); color: var(--danger);">EXIT</button>
             </div>
             <span id="deploy-controls">
@@ -6405,13 +6421,27 @@ function handleDeploymentTimeout() {
 function autoDeployFleet() {
     playSound('deploy-sfx');
 
-    // Clear all existing ships
+    // Clear all existing ships from grid data
+    for (let i = 0; i < myGrid.length; i++) {
+        myGrid[i] = 0;
+    }
+
+    // Clear all ship indices in FLEET
     for (let i = 0; i < FLEET.length; i++) {
-        if (FLEET[i].indices) {
-            FLEET[i].indices.forEach(idx => myGrid[idx] = 0);
-            FLEET[i].indices = null;
-            const img = document.getElementById(`board-ship-${i}`);
-            if (img) img.remove();
+        FLEET[i].indices = null;
+    }
+
+    // Remove ALL ship images from player board (not just by ID)
+    const playerBoard = document.getElementById('player-grid');
+    const shipImages = playerBoard.querySelectorAll('.ship-overlay');
+    shipImages.forEach(img => img.remove());
+
+    // Reset all fleet unit UI states
+    for (let i = 0; i < FLEET.length; i++) {
+        const unit = document.getElementById(`ship-unit-${i}`);
+        if (unit) {
+            unit.classList.remove('deployed', 'current');
+            unit.classList.add('pending');
         }
     }
 
