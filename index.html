@@ -3803,10 +3803,10 @@ function selectMode(mode) {
         const currentRank = getRankForXP(currentXP);
         console.log('[PVP Check] Current Rank:', currentRank.name, 'Level:', currentRank.level);
 
-        if (currentRank.level < 1) {  // RECRUIT is level 0, PRIVATE is level 1
+        if (currentRank.level < 3) {  // RECRUIT is level 1, CADET is level 2, PRIVATE is level 3
             playSound('wrong-sfx');
             showNotification('ONLY AVAILABLE TO PRIVATE OR ABOVE', 'error', 4000);
-            console.log('[PVP Check] Access DENIED - Rank too low');
+            console.log('[PVP Check] Access DENIED - Rank too low (need PRIVATE or above)');
             return;  // Block PVP access
         }
 
