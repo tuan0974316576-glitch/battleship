@@ -5766,21 +5766,27 @@ function checkMyShipDestruction(hitIdx) {
     // 計算圖片大細 (包含邊框間隙)
     const pW = cellSize * ship.width + 2 * (ship.width - 1);
     const pH = cellSize * ship.height + 2 * (ship.height - 1);
-    
+
     img.style.width = pW + 'px';
     img.style.height = pH + 'px';
-    img.style.left = cellLeft + 'px';
-    img.style.top = cellTop + 'px';
-    
+
     // ★★★ 重點修正：直接讀取部署時記錄的方向 ★★★
     // 這樣 2x4 船隻就不會再被錯誤判斷為橫向
-    let isVertical = ship.isVertical; 
+    let isVertical = ship.isVertical;
 
     // (安全措施) 如果 undefined (例如舊存檔)，嘗試用舊方法估算，但 2x4 可能會錯
     if (isVertical === undefined && ship.indices.length > 1) {
          isVertical = (ship.indices[1] === ship.indices[0] + 10);
     }
-    
+
+    // ★★★ 關鍵修正：針對 T型船 (index 2) 橫放時的偏移修正 ★★★
+    if (index === 2 && !isVertical) {
+        img.style.left = (cellLeft - cellSize - 2) + 'px';
+    } else {
+        img.style.left = cellLeft + 'px';
+    }
+    img.style.top = cellTop + 'px';
+
     // 如果是橫放，就需要旋轉圖片
     if (!isVertical) {
         const shift = (pH - pW) / 2;
