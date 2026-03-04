@@ -96,7 +96,9 @@ console.log("Firebase Modules Loaded Successfully");
                     const userData = snapshot.val();
                     window.userTotalXP = (typeof userData.xp === 'number') ? userData.xp : 0;
                     window.userMastery = userData.mastery || { reading: {}, listening: {}, speaking: {} };
+                    window.userSupplies = (typeof userData.supplies === 'number') ? userData.supplies : 0;
                     console.log('[Auth] Loaded XP:', window.userTotalXP);
+                    console.log('[Auth] Loaded Supplies:', window.userSupplies);
 
                     // ★★★ 同步去 local variables (確保即時更新) ★★★
                     if (typeof userTotalXP !== 'undefined') {
@@ -104,6 +106,9 @@ console.log("Firebase Modules Loaded Successfully");
                     }
                     if (typeof userMastery !== 'undefined') {
                         userMastery = window.userMastery;
+                    }
+                    if (typeof userSupplies !== 'undefined') {
+                        userSupplies = window.userSupplies;
                     }
 
                     // ★★★ 重要：即使用咗 cached name，都要再 call updateHUD 更新 XP 顯示 ★★★
@@ -134,7 +139,8 @@ console.log("Firebase Modules Loaded Successfully");
                         // ★ 新用戶初始化 XP & Mastery
                         window.userTotalXP = 0;
                         window.userMastery = { reading: {}, listening: {}, speaking: {} };
-                        update(ref(db, 'users/' + u.uid), { displayName: autoName, lastLogin: Date.now(), xp: 0 }).then(() => {
+                        window.userSupplies = 0;
+                        update(ref(db, 'users/' + u.uid), { displayName: autoName, lastLogin: Date.now(), xp: 0, supplies: 0 }).then(() => {
                             console.log('[Auth] Guest account created successfully');
                             localStorage.setItem('battleship_username', autoName);
                             if(typeof updateHUD === 'function') updateHUD(autoName);
@@ -170,8 +176,10 @@ console.log("Firebase Modules Loaded Successfully");
             // ★★★ CRITICAL FIX: Clear XP and Mastery data on logout ★★★
             window.userTotalXP = 0;
             window.userMastery = { reading: {}, listening: {}, speaking: {} };
+            window.userSupplies = 0;
             if (typeof userTotalXP !== 'undefined') userTotalXP = 0;
             if (typeof userMastery !== 'undefined') userMastery = { reading: {}, listening: {}, speaking: {} };
+            if (typeof userSupplies !== 'undefined') userSupplies = 0;
             console.log('[Auth] Cleared XP and Mastery data');
 
             // ★ 清除可能殘留嘅 cached username (確保下次唔會誤跳主選單)
@@ -2895,6 +2903,36 @@ body {
     filter: drop-shadow(0 0 15px var(--primary)); /* Hover 時發光 */
 }
 
+/* 左上角 Supplies 顯示 */
+#coins-display {
+    position: fixed;
+    top: 25px;
+    left: 25px;
+    z-index: 20000;
+    display: none;
+    font-family: 'Orbitron', sans-serif;
+    background: rgba(15, 23, 42, 0.9);
+    border: 2px solid #0ea5e9;
+    border-radius: 8px;
+    padding: 10px 20px;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 0 15px rgba(14, 165, 233, 0.4), inset 0 0 20px rgba(14, 165, 233, 0.1);
+    animation: coins-glow-pulse 2s infinite alternate ease-in-out;
+}
+
+@keyframes coins-glow-pulse {
+    from { box-shadow: 0 0 10px rgba(14, 165, 233, 0.3), inset 0 0 15px rgba(14, 165, 233, 0.1); }
+    to { box-shadow: 0 0 20px rgba(14, 165, 233, 0.6), inset 0 0 25px rgba(14, 165, 233, 0.2); }
+}
+
+#coins-display .coins-amount {
+    color: #0ea5e9;
+    font-size: 18px;
+    font-weight: bold;
+    text-shadow: 0 0 10px rgba(14, 165, 233, 0.8);
+    letter-spacing: 2px;
+}
+
 /* 設定容器背景與磨砂玻璃 */
 .cyber-settings-box {
     background: rgba(10, 20, 35, 0.95);
@@ -3038,6 +3076,10 @@ body {
 </head>
 <body>
 <img src="option.png" id="main-settings-btn" onclick="event.stopPropagation(); toggleSettingsModal()" alt="Settings">
+<!-- Supplies Display -->
+<div id="coins-display">
+    <span class="coins-amount" id="coins-amount">SUPPLIES: 0</span>
+</div>
 <div id="splash-screen" onclick="startExperience()">
     
     <div class="splash-content">
@@ -3769,6 +3811,10 @@ const DAMAGED_IMAGES = [
     let userTotalXP = 0;
     // mastery 結構: { reading: { L1: { "apple": { count: 3, status: 1 } }, ... }, listening: {...}, speaking: {...} }
     let userMastery = { reading: {}, listening: {}, speaking: {} };
+
+    // ★★★ SUPPLIES SYSTEM ★★★
+    let userSupplies = 0;
+    window.userSupplies = 0;
 
     // ★★★ PHASE 5: SESSION XP TRACKING ★★★
     let sessionAnsweringXP = 0; // Tracks XP gained from answering questions in current match
@@ -5361,6 +5407,22 @@ function handleCorrectAnswer() {
     // Update global XP
     userTotalXP += xpGained;
 
+    // ★★★ SUPPLIES SYSTEM: Earn supplies for correct answers ★★★
+    let suppliesGained = 0;
+    if (currentCount === 0) {
+        suppliesGained = 10; // New word: 10 supplies
+    } else if (currentCount === 1) {
+        suppliesGained = 5; // Second time: 5 supplies
+    } else if (currentCount === 2) {
+        suppliesGained = 3; // Third time: 3 supplies
+    } else {
+        suppliesGained = 1; // Cap at 1 supply for count >= 3
+    }
+
+    userSupplies += suppliesGained;
+    window.userSupplies = userSupplies;
+    console.log(`[Supplies] Earned ${suppliesGained} supplies, total: ${userSupplies}`);
+
     // ★★★ PHASE 5: Track session XP ★★★
     sessionAnsweringXP += xpGained;
 
@@ -5377,16 +5439,18 @@ function handleCorrectAnswer() {
         const { ref, update } = window.firebaseModules;
         const userRef = ref(window.db, 'users/' + window.myPlayerId);
 
-        // Update both XP and this specific word's mastery
+        // Update both XP, Supplies and this specific word's mastery
         const updates = {};
         updates['xp'] = userTotalXP;
+        updates['supplies'] = userSupplies;
         updates[`mastery/${masteryKey}/${selectedLevel}/${wordId}`] = {
             count: currentCount + 1,
             status: 1
         };
 
         update(userRef, updates).then(() => {
-            console.log(`[Firebase] Synced XP (${userTotalXP}) and mastery for ${wordId}`);
+            console.log(`[Firebase] Synced XP (${userTotalXP}), Supplies (${userSupplies}) and mastery for ${wordId}`);
+            updateSuppliesDisplay();
         }).catch(e => {
             console.warn('[Firebase] Update failed:', e);
         });
@@ -7245,11 +7309,14 @@ window.submitRegistration = function() {
     window.userTotalXP = 0;
     userMastery = { reading: {}, listening: {}, speaking: {} };
     window.userMastery = { reading: {}, listening: {}, speaking: {} };
+    userSupplies = 0;
+    window.userSupplies = 0;
 
     update(ref(db, 'users/' + user.uid), {
         displayName: name,
         lastLogin: Date.now(),
-        xp: 0
+        xp: 0,
+        supplies: 0
     }).then(() => {
         localStorage.setItem('battleship_username', name);
         // --- 成功儲存後的轉場 ---
@@ -7478,6 +7545,16 @@ function updateExpBar(currentXP, rank) {
     console.log(`[EXP Bar] Updated: ${currentXP} / ${nextRankXP || 'MAX'}`);
 }
 
+// ★★★ UPDATE SUPPLIES DISPLAY FUNCTION ★★★
+function updateSuppliesDisplay() {
+    const suppliesAmount = document.getElementById('coins-amount');
+    if (suppliesAmount) {
+        const supplies = userSupplies || window.userSupplies || 0;
+        suppliesAmount.innerText = `SUPPLIES: ${supplies.toLocaleString()}`;
+        console.log('[Supplies] Updated display:', supplies);
+    }
+}
+
 // 8. 顯示主選單 (隱藏 Login Panel)
 function showMainMenu() {
     // ★★★ CRITICAL FIX: Hide login overlay ★★★
@@ -7500,6 +7577,13 @@ function showMainMenu() {
     if(carouselWrapper) {
         carouselWrapper.style.display = 'flex'; // 顯示選單！
         carouselWrapper.style.animation = 'fadeIn 0.5s'; // 加個淡入特效
+    }
+
+    // ★★★ 顯示 Supplies UI ★★★
+    const suppliesDisplay = document.getElementById('coins-display');
+    if(suppliesDisplay) {
+        suppliesDisplay.style.display = 'block';
+        updateSuppliesDisplay();
     }
 
     if(statusText) {
@@ -7609,8 +7693,10 @@ window.addEventListener('load', () => {
         // ★★★ CRITICAL FIX: Clear XP before updateHUD to prevent inheritance ★★★
         window.userTotalXP = 0;
         window.userMastery = { reading: {}, listening: {}, speaking: {} };
+        window.userSupplies = 0;
         if (typeof userTotalXP !== 'undefined') userTotalXP = 0;
         if (typeof userMastery !== 'undefined') userMastery = { reading: {}, listening: {}, speaking: {} };
+        if (typeof userSupplies !== 'undefined') userSupplies = 0;
         console.log('[FAST LOGIN] Cleared XP data before updateHUD');
         updateHUD(cachedName);
     }
@@ -7626,6 +7712,7 @@ window.addEventListener('load', () => {
     // ★ 同步 XP & Mastery 從 Module Scope
     userTotalXP = window.userTotalXP || 0;
     userMastery = window.userMastery || { reading: {}, listening: {}, speaking: {} };
+    userSupplies = window.userSupplies || 0;
 
     // 4. 同步 myPlayerId (因為 onAuthStateChanged 可能仲未 fire)
     // 加一個輕量級 listener 確保 let-scoped myPlayerId 永遠同步
@@ -7642,10 +7729,12 @@ window.addEventListener('load', () => {
                 // ★ 同步 XP & Mastery
                 userTotalXP = window.userTotalXP || 0;
                 userMastery = window.userMastery || { reading: {}, listening: {}, speaking: {} };
+                userSupplies = window.userSupplies || 0;
             } else {
                 myPlayerId = null;
                 userTotalXP = 0;
                 userMastery = { reading: {}, listening: {}, speaking: {} };
+                userSupplies = 0;
             }
         });
     }
