@@ -2750,6 +2750,64 @@ body {
     text-shadow: 0 0 5px #d946ef;
     box-shadow: 0 0 10px rgba(217, 70, 239, 0.2);
 }
+
+/* --- Race Selection Buttons --- */
+.race-btn {
+    background: transparent;
+    border: 2px solid;
+    padding: 15px;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.race-btn:not(.locked):hover {
+    transform: scale(1.05);
+    filter: brightness(1.3);
+}
+
+.race-btn.locked {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.race-btn.locked:hover {
+    transform: none;
+    filter: none;
+}
+
+#race-btn-vanguards {
+    text-shadow: 0 0 10px #ffffff;
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
+}
+
+#race-btn-vanguards:not(.locked):hover {
+    box-shadow: 0 0 30px rgba(255, 255, 255, 0.6), inset 0 0 20px rgba(255, 255, 255, 0.1);
+}
+
+#race-btn-aurelians {
+    text-shadow: 0 0 10px #fbbf24;
+    box-shadow: 0 0 15px rgba(251, 191, 36, 0.3);
+}
+
+#race-btn-aurelians:not(.locked):hover {
+    box-shadow: 0 0 30px rgba(251, 191, 36, 0.6), inset 0 0 20px rgba(251, 191, 36, 0.1);
+}
+
+#race-btn-caustics {
+    text-shadow: 0 0 10px #c084fc;
+    box-shadow: 0 0 15px rgba(192, 132, 252, 0.3);
+}
+
+#race-btn-caustics:not(.locked):hover {
+    box-shadow: 0 0 30px rgba(192, 132, 252, 0.6), inset 0 0 20px rgba(192, 132, 252, 0.1);
+}
 /* --- 參考技能按鈕編寫的等級按鈕樣式 --- */
 
 #level-screen .level-btn {
@@ -3291,6 +3349,36 @@ body {
     </div>
 
     <button class="btn" onclick="playSound('delete-sfx'); backToMainMenu()" style="margin-top: 30px; border-color: #64748b; color: #94a3b8;">&lt; BACK</button>
+</div>
+
+<div id="race-screen" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 250; background: rgba(0,0,0,0.9); flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(5px);">
+    <h2 style="font-family: 'Black Ops One'; color: var(--primary); font-size: 40px; margin-bottom: 30px; text-shadow: 0 0 20px var(--primary);">SELECT FACTION</h2>
+
+    <div style="display: flex; flex-direction: column; gap: 20px; align-items: center;">
+
+        <button id="race-btn-vanguards" class="race-btn" onclick="selectRace('VANGUARDS')" style="border-color: #ffffff; color: #ffffff; width: 300px; height: 80px;">
+            <div style="display:flex; flex-direction:column; align-items:center;">
+                <span style="font-size:24px;">VANGUARDS</span>
+                <span style="font-size:10px; opacity:0.7;">ELITE STRIKE FORCE</span>
+            </div>
+        </button>
+
+        <button id="race-btn-aurelians" class="race-btn locked" onclick="selectRace('AURELIANS')" style="border-color: #fbbf24; color: #fbbf24; width: 300px; height: 80px;">
+            <div style="display:flex; flex-direction:column; align-items:center;">
+                <span style="font-size:24px;">AURELIANS</span>
+                <span style="font-size:10px; opacity:0.7;">GOLDEN EMPIRE</span>
+            </div>
+        </button>
+
+        <button id="race-btn-caustics" class="race-btn locked" onclick="selectRace('CAUSTICS')" style="border-color: #c084fc; color: #c084fc; width: 300px; height: 80px;">
+            <div style="display:flex; flex-direction:column; align-items:center;">
+                <span style="font-size:24px;">CAUSTICS</span>
+                <span style="font-size:10px; opacity:0.7;">VOID HUNTERS</span>
+            </div>
+        </button>
+    </div>
+
+    <button class="btn" onclick="playSound('delete-sfx'); handleRaceBack()" style="margin-top: 30px; border-color: #64748b; color: #94a3b8;">&lt; BACK</button>
 </div>
 <div id="level-screen" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 250; background: rgba(0,0,0,0.9); flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(5px);">
         <h2 style="font-family: 'Black Ops One'; color: var(--primary); font-size: 40px; margin-bottom: 30px; text-shadow: 0 0 20px var(--primary);">SELECT DIFFICULTY</h2>
@@ -7999,9 +8087,34 @@ async function selectSkill(skill) {
     // 3. 隱藏 Skill 畫面
     document.getElementById('skill-screen').style.display = 'none';
 
-    // 4. 核心分流邏輯
+    // 4. ★★★ 新流程：跳去種族選擇畫面 ★★★
+    updateRaceButtons();
+    document.getElementById('race-screen').style.display = 'flex';
+}
+
+// ★★★ 新增：種族選擇函數 ★★★
+let selectedRace = 'VANGUARDS'; // 預設種族
+
+function selectRace(race) {
+    const btn = document.getElementById(`race-btn-${race.toLowerCase()}`);
+
+    // 檢查是否鎖定
+    if (btn && btn.classList.contains('locked')) {
+        playSound('wrong-sfx');
+        showSuppliesNeededAnimation(race);
+        return;
+    }
+
+    selectedRace = race;
+    console.log("Race Selected:", race);
+    playSound('deploy-sfx');
+
+    // 隱藏種族畫面
+    document.getElementById('race-screen').style.display = 'none';
+
+    // 核心分流邏輯
     if (tempGameMode === 'AI') {
-        // --- AI 模式：Skill selected, start game ---
+        // --- AI 模式：開始遊戲 ---
         gameMode = 'AI';
         enterGameUI();
     } else {
@@ -8019,6 +8132,87 @@ async function selectSkill(skill) {
             alert("Error: createRoom function missing.");
         }
     }
+}
+
+// ★★★ 更新種族按鈕鎖定狀態 ★★★
+function updateRaceButtons() {
+    const supplies = window.userSupplies || 0;
+
+    // Vanguards - 永遠解鎖 (預設種族)
+    const vanguardsBtn = document.getElementById('race-btn-vanguards');
+    if (vanguardsBtn) {
+        vanguardsBtn.classList.remove('locked');
+        vanguardsBtn.setAttribute('data-required', '0');
+    }
+
+    // Aurelians - 需要 15000 supplies
+    const aureliansBtn = document.getElementById('race-btn-aurelians');
+    if (aureliansBtn) {
+        aureliansBtn.setAttribute('data-required', '15000');
+        if (supplies >= 15000) {
+            aureliansBtn.classList.remove('locked');
+        } else {
+            aureliansBtn.classList.add('locked');
+        }
+    }
+
+    // Caustics - 需要 15000 supplies
+    const causticsBtn = document.getElementById('race-btn-caustics');
+    if (causticsBtn) {
+        causticsBtn.setAttribute('data-required', '15000');
+        if (supplies >= 15000) {
+            causticsBtn.classList.remove('locked');
+        } else {
+            causticsBtn.classList.add('locked');
+        }
+    }
+}
+
+// ★★★ 顯示 "需要更多補給" 動畫 ★★★
+function showSuppliesNeededAnimation(race) {
+    const supplies = window.userSupplies || 0;
+    const btn = document.getElementById(`race-btn-${race.toLowerCase()}`);
+    const required = parseInt(btn.getAttribute('data-required') || '0');
+    const needed = required - supplies;
+
+    // 創建臨時通知元素
+    const notification = document.createElement('div');
+    notification.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: rgba(239, 68, 68, 0.95);
+        color: #fff;
+        padding: 30px 50px;
+        border: 2px solid #ef4444;
+        border-radius: 10px;
+        font-family: 'Black Ops One', sans-serif;
+        font-size: 24px;
+        text-align: center;
+        z-index: 10000;
+        box-shadow: 0 0 30px rgba(239, 68, 68, 0.6);
+        animation: pulse 0.5s ease-in-out;
+    `;
+    notification.innerHTML = `
+        <div style="margin-bottom: 10px;">⚠️ LOCKED ⚠️</div>
+        <div style="font-size: 16px; font-family: 'Orbitron'; letter-spacing: 2px;">${needed.toLocaleString()} MORE SUPPLIES NEEDED</div>
+    `;
+
+    document.body.appendChild(notification);
+
+    // 1.5 秒後移除
+    setTimeout(() => {
+        notification.style.animation = 'fadeOut 0.3s ease-out';
+        setTimeout(() => notification.remove(), 300);
+    }, 1500);
+}
+
+// ★★★ 返回按鈕處理 ★★★
+function handleRaceBack() {
+    playSound('delete-sfx');
+    document.getElementById('race-screen').style.display = 'none';
+    document.getElementById('skill-screen').style.display = 'flex';
 }
 
 // --- 2. 玩家說話 (Speech-to-Text) - 用於 Speaking Mode ---
