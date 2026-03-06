@@ -688,24 +688,26 @@ body {
     /* ★ 改用 Grid 佈局，不再是一條直線 ★ */
     display: grid;
     grid-template-columns: 1fr 1fr; /* 強制分兩列 (左右並排) */
-    
+
     gap: 10px; /* 縮細船與船之間的距離 (原本係 20px) */
-    
+
     background: rgba(15, 23, 42, 0.8);
     padding: 15px 10px;
     border-radius: 8px;
     border: 1px solid var(--glass-border);
-    
+
     /* 確保佢唔會拉到太長 */
-    height: fit-content; 
+    height: fit-content;
     align-self: center; /* 令側邊欄在畫面中間垂直置中 */
-    
+
     justify-items: center; /* 內容置中 */
 }
 .fleet-unit {
+            --mini-cell-size: 25px;
+            --mini-cell-gap: 2px;
             position: relative;
             display: inline-grid; /* 用 Grid 排列背景格仔 */
-            gap: 2px;      /* 格仔之間的空隙 */
+            gap: var(--mini-cell-gap);      /* 格仔之間的空隙 */
             transition: all 0.3s;
             padding: 3px;
             border: 2px solid transparent;
@@ -717,16 +719,14 @@ body {
             position: absolute;
             top: 3px;  /* 對應 .fleet-unit 的 padding */
             left: 3px;
-            width: calc(100% - 6px); /* 扣除 padding */
-            height: calc(100% - 6px);
-            object-fit: contain;
             z-index: 2; /* 確保在格仔上面 */
             pointer-events: none; /* 讓點擊穿透 */
             filter: drop-shadow(0 0 2px #000);
         }
 .mini-cell {
-            width: 25px;  /* 迷你格大細 */
-            height: 25px;
+            box-sizing: border-box;
+            width: var(--mini-cell-size);  /* 迷你格大細 */
+            height: var(--mini-cell-size);
             background-color: rgba(255, 255, 255, 0.1); /* 半透明底 */
             border: 1px solid rgba(255, 255, 255, 0.3); /* 邊框 */
             border-radius: 2px;
@@ -6209,7 +6209,7 @@ function renderSidebar() {
             container.classList.add('caustics');
         }
 
-        container.style.gridTemplateColumns = `repeat(${ship.width}, 1fr)`;
+        container.style.gridTemplateColumns = `repeat(${ship.width}, var(--mini-cell-size))`;
 
         const totalCells = ship.width * ship.height;
         for(let i=0; i<totalCells; i++) {
@@ -6224,6 +6224,15 @@ function renderSidebar() {
         const img = document.createElement('img');
         img.src = ship.img;
         img.classList.add('fleet-ship-img');
+
+        const styles = getComputedStyle(container);
+        const cellSize = parseFloat(styles.getPropertyValue('--mini-cell-size')) || 25;
+        const cellGap = parseFloat(styles.getPropertyValue('--mini-cell-gap')) || 2;
+        const shipWidth = cellSize * ship.width + cellGap * (ship.width - 1);
+        const shipHeight = cellSize * ship.height + cellGap * (ship.height - 1);
+
+        img.style.width = shipWidth + 'px';
+        img.style.height = shipHeight + 'px';
         container.appendChild(img);
 
         // 設定初始狀態
