@@ -742,6 +742,17 @@ body {
             background-color: rgba(245, 158, 11, 0.3); /* 格仔變黃 */
             border-color: var(--warning);
         }
+
+        /* ★★★ Aurelians 專屬樣式 - 金色方格 + Cyan 發光 ★★★ */
+.fleet-unit.current.aurelians {
+            border-color: #00f0ff;
+            box-shadow: 0 0 15px #00f0ff;
+            background: rgba(0, 240, 255, 0.1);
+        }
+.fleet-unit.current.aurelians .mini-cell {
+            background-color: rgba(251, 191, 36, 0.4); /* 金色 */
+            border-color: #fbbf24;
+        }
         /* 狀態 2: 未輪到 (Pending) - 實色但暗少少 */
 .fleet-unit.pending {
             opacity: 0.6;
@@ -6171,15 +6182,22 @@ function playSound(id) {
 function renderSidebar() {
     const sidebar = document.getElementById('fleet-sidebar');
     if (!sidebar) return; // 安全檢查
-    sidebar.innerHTML = ''; 
+    sidebar.innerHTML = '';
 
     FLEET.forEach((ship, index) => {
         const container = document.createElement('div');
         container.id = `ship-unit-${index}`;
         container.classList.add('fleet-unit');
-        
+
+        // ★★★ 根據選擇的種族加入對應的 class ★★★
+        if (selectedRace === 'AURELIANS') {
+            container.classList.add('aurelians');
+        } else if (selectedRace === 'CAUSTICS') {
+            container.classList.add('caustics');
+        }
+
         container.style.gridTemplateColumns = `repeat(${ship.width}, 1fr)`;
-        
+
         const totalCells = ship.width * ship.height;
         for(let i=0; i<totalCells; i++) {
             const cell = document.createElement('div');
@@ -6194,11 +6212,11 @@ function renderSidebar() {
         img.src = ship.img;
         img.classList.add('fleet-ship-img');
         container.appendChild(img);
-        
+
         // 設定初始狀態
         if (index === 0) container.classList.add('current');
         else container.classList.add('pending');
-        
+
         sidebar.appendChild(container);
     });
 }
