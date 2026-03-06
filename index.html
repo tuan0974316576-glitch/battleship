@@ -4352,6 +4352,11 @@ function enterGameUI() {
         autoDeployBtn.style.display = 'inline-block';
     }
 
+    // ★★★ 重新渲染 Sidebar 以顯示對應種族的戰艦 ★★★
+    if (typeof renderSidebar === 'function') {
+        renderSidebar();
+    }
+
     startDeploymentTimer();
 
     // 刪除了 global-back-btn 的控制碼
