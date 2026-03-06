@@ -8175,37 +8175,10 @@ function showSuppliesNeededAnimation(race) {
     const required = parseInt(btn.getAttribute('data-required') || '0');
     const needed = required - supplies;
 
-    // 創建臨時通知元素
-    const notification = document.createElement('div');
-    notification.style.cssText = `
-        position: fixed;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        background: rgba(239, 68, 68, 0.95);
-        color: #fff;
-        padding: 30px 50px;
-        border: 2px solid #ef4444;
-        border-radius: 10px;
-        font-family: 'Black Ops One', sans-serif;
-        font-size: 24px;
-        text-align: center;
-        z-index: 10000;
-        box-shadow: 0 0 30px rgba(239, 68, 68, 0.6);
-        animation: pulse 0.5s ease-in-out;
-    `;
-    notification.innerHTML = `
-        <div style="margin-bottom: 10px;">⚠️ LOCKED ⚠️</div>
-        <div style="font-size: 16px; font-family: 'Orbitron'; letter-spacing: 2px;">${needed.toLocaleString()} MORE SUPPLIES NEEDED</div>
-    `;
-
-    document.body.appendChild(notification);
-
-    // 1.5 秒後移除
-    setTimeout(() => {
-        notification.style.animation = 'fadeOut 0.3s ease-out';
-        setTimeout(() => notification.remove(), 300);
-    }, 1500);
+    // 使用系統通知顯示
+    if (typeof showNotification === 'function') {
+        showNotification(`${needed.toLocaleString()} MORE SUPPLIES NEEDED`, 'error');
+    }
 }
 
 // ★★★ 返回按鈕處理 ★★★
