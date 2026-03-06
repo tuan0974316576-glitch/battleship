@@ -2976,7 +2976,8 @@ body {
     font-size: 12px;
     font-weight: normal;
     letter-spacing: 0.5px;
-    text-shadow: 0 0 5px rgba(229, 231, 235, 0.3);
+    opacity: 0.8;
+    text-shadow: 0 0 8px rgba(229, 231, 235, 0.6), 0 0 12px rgba(229, 231, 235, 0.4);
 }
 
 /* 設定容器背景與磨砂玻璃 */
@@ -3948,6 +3949,12 @@ function startEnemyTurn() {
     // --- 5. 流程控制 ---
 function selectMode(mode) {
     tempGameMode = mode;
+
+    // ★★★ 隱藏 Supplies 顯示 (選擇遊戲模式後) ★★★
+    const suppliesDisplay = document.getElementById('coins-display');
+    if (suppliesDisplay) {
+        suppliesDisplay.style.display = 'none';
+    }
 
     if (mode === 'PVP') {
         // ★★★ Check rank requirement: PRIVATE or above ★★★
@@ -6879,6 +6886,13 @@ function closeVocabScreen() {
     playSound('delete-sfx');
     document.getElementById('vocab-screen').style.display = 'none';
     document.getElementById('start-screen').style.display = 'flex';
+
+    // ★★★ 返回主選單時顯示 Supplies ★★★
+    const suppliesDisplay = document.getElementById('coins-display');
+    if (suppliesDisplay) {
+        suppliesDisplay.style.display = 'block';
+        updateSuppliesDisplay();
+    }
 }
 
 // ★★★ RANKING SCREEN FUNCTIONS ★★★
@@ -6887,6 +6901,13 @@ let currentRankingTab = 'total-xp'; // Default tab
 
 function openRankingScreen() {
     playSound('deploy-sfx');
+
+    // ★★★ 隱藏 Supplies 顯示 ★★★
+    const suppliesDisplay = document.getElementById('coins-display');
+    if (suppliesDisplay) {
+        suppliesDisplay.style.display = 'none';
+    }
+
     document.getElementById('start-screen').style.display = 'none';
     document.getElementById('ranking-screen').style.display = 'flex';
     currentRankingTab = 'total-xp';
@@ -6897,6 +6918,13 @@ function closeRankingScreen() {
     playSound('delete-sfx');
     document.getElementById('ranking-screen').style.display = 'none';
     document.getElementById('start-screen').style.display = 'flex';
+
+    // ★★★ 返回主選單時顯示 Supplies ★★★
+    const suppliesDisplay = document.getElementById('coins-display');
+    if (suppliesDisplay) {
+        suppliesDisplay.style.display = 'block';
+        updateSuppliesDisplay();
+    }
 }
 
 function switchRankingTab(tabName) {
@@ -7197,12 +7225,18 @@ function filterVocabList() {
 // ★ 專門用來打開 Question Bank 的函數 ★
 function openVocabScreen() {
     playSound('open-room-sfx'); // 播放打開介面的聲
-    
+
+    // ★★★ 隱藏 Supplies 顯示 ★★★
+    const suppliesDisplay = document.getElementById('coins-display');
+    if (suppliesDisplay) {
+        suppliesDisplay.style.display = 'none';
+    }
+
     document.getElementById('start-screen').style.display = 'none';
     document.getElementById('vocab-screen').style.display = 'flex';
-    
+
     // ★★★ 重點：傳入 true，開啟「靜音模式」，防止 L1 音效彈出黎 ★★★
-    renderVocabList('L1', true); 
+    renderVocabList('L1', true);
 }
 /* =========================================
    ★★★ CYBERPUNK HUD LOGIN SYSTEM (FINAL FIXED) ★★★
