@@ -8139,6 +8139,18 @@ function selectRace(race) {
         return;
     }
 
+    // 如果是 Vanguards，直接選擇（免費）
+    if (race === 'VANGUARDS') {
+        confirmRaceSelection(race);
+        return;
+    }
+
+    // 如果是 Aurelians 或 Caustics，顯示解鎖確認視窗
+    showRaceUnlockConfirmation(race);
+}
+
+// ★★★ 確認種族選擇並繼續遊戲 ★★★
+function confirmRaceSelection(race) {
     selectedRace = race;
     console.log("Race Selected:", race);
     playSound('deploy-sfx');
@@ -8165,6 +8177,128 @@ function selectRace(race) {
             console.error("createRoom function not found!");
             alert("Error: createRoom function missing.");
         }
+    }
+}
+
+// ★★★ 顯示種族解鎖確認視窗 ★★★
+function showRaceUnlockConfirmation(race) {
+    const raceName = race.charAt(0) + race.slice(1).toLowerCase();
+    const required = 15000;
+
+    // 決定邊框顏色
+    let borderColor = '#fbbf24'; // Aurelians 金色
+    if (race === 'CAUSTICS') {
+        borderColor = '#c084fc'; // Caustics 紫色
+    }
+
+    // 創建確認視窗
+    const modal = document.createElement('div');
+    modal.id = 'race-unlock-modal';
+    modal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.85);
+        backdrop-filter: blur(10px);
+        z-index: 10000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    `;
+
+    modal.innerHTML = `
+        <div style="
+            background: rgba(10, 20, 35, 0.95);
+            border: 2px solid ${borderColor};
+            border-radius: 10px;
+            padding: 40px;
+            max-width: 450px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 0 30px ${borderColor}80, inset 0 0 20px ${borderColor}20;
+            backdrop-filter: blur(15px);
+            position: relative;
+        ">
+            <div style="font-family: 'Black Ops One'; font-size: 28px; color: ${borderColor}; margin-bottom: 20px; text-shadow: 0 0 15px ${borderColor};">
+                UNLOCK ${race}?
+            </div>
+            <div style="font-family: 'Orbitron'; color: #e2e8f0; font-size: 16px; margin-bottom: 30px; line-height: 1.6;">
+                This will permanently unlock the <span style="color: ${borderColor}; font-weight: bold;">${raceName}</span> faction for <span style="color: #fbbf24; font-weight: bold;">${required.toLocaleString()} supplies</span>.
+            </div>
+            <div style="display: flex; gap: 15px; justify-content: center;">
+                <button onclick="confirmRaceUnlock('${race}')" style="
+                    background: transparent;
+                    border: 2px solid #22c55e;
+                    color: #22c55e;
+                    padding: 12px 30px;
+                    font-family: 'Orbitron';
+                    font-size: 16px;
+                    font-weight: bold;
+                    cursor: pointer;
+                    transition: all 0.3s ease;
+                    text-shadow: 0 0 10px #22c55e;
+                    box-shadow: 0 0 15px rgba(34, 197, 94, 0.3);
+                " onmouseover="this.style.background='#22c55e'; this.style.color='#000'; this.style.boxShadow='0 0 25px #22c55e';" onmouseout="this.style.background='transparent'; this.style.color='#22c55e'; this.style.boxShadow='0 0 15px rgba(34, 197, 94, 0.3)';">
+                    CONFIRM
+                </button>
+                <button onclick="closeRaceUnlockModal()" style="
+                    background: transparent;
+                    border: 2px solid #64748b;
+                    color: #94a3b8;
+                    padding: 12px 30px;
+                    font-family: 'Orbitron';
+                    font-size: 16px;
+                    font-weight: bold;
+                    cursor: pointer;
+                    transition: all 0.3s ease;
+                " onmouseover="this.style.borderColor='#94a3b8'; this.style.color='#fff';" onmouseout="this.style.borderColor='#64748b'; this.style.color='#94a3b8';">
+                    CANCEL
+                </button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+    playSound('open-room-sfx');
+}
+
+// ★★★ 確認解鎖種族 ★★★
+function confirmRaceUnlock(race) {
+    const required = 15000;
+    const supplies = window.userSupplies || 0;
+
+    // 扣除 supplies
+    userSupplies -= required;
+    window.userSupplies = userSupplies;
+
+    // 同步到 Firebase
+    const { ref, update } = window.firebaseModules;
+    if (myPlayerId && db) {
+        update(ref(db, 'users/' + myPlayerId), {
+            supplies: userSupplies
+        }).then(() => {
+            console.log(`[Supplies] Unlocked ${race}, remaining supplies: ${userSupplies}`);
+            updateSuppliesDisplay();
+        }).catch(err => {
+            console.error('[Supplies] Failed to sync unlock:', err);
+        });
+    }
+
+    // 關閉視窗
+    closeRaceUnlockModal();
+
+    // 繼續選擇種族
+    confirmRaceSelection(race);
+}
+
+// ★★★ 關閉解鎖確認視窗 ★★★
+function closeRaceUnlockModal() {
+    const modal = document.getElementById('race-unlock-modal');
+    if (modal) {
+        playSound('delete-sfx');
+        modal.remove();
     }
 }
 
