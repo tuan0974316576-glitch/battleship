@@ -3797,42 +3797,104 @@ let isTargeting = false;
 /* =========================================
        ★★★ 1. 戰艦數據 (已更新次序：T型排第3) ★★★
        ========================================= */
-    const FLEET = [
-        // 1. GHOST (1x2)
-        { 
-            width: 1, height: 2, img: '1x2.png', 
-            voiceId: 'ship-voice-0' // 綁定 ship_0 聲音
+    // ★★★ 種族戰艦映射表 ★★★
+    const RACE_SHIP_IMAGES = {
+        'VANGUARDS': {
+            ships: ['1x2.png', '1x3.png', '1x3+1.png', '1x4.png', '2x4.png'],
+            damaged: ['1x2_damaged.png', '1x3_damaged.png', '1x3+1_damaged.png', '1x4_damaged.png', '2x4_damaged.png']
         },
-        // 2. STRIKER (1x3)
-        { 
-            width: 1, height: 3, img: '1x3.png', 
-            voiceId: 'ship-voice-1' // 綁定 ship_1 聲音
+        'AURELIANS': {
+            ships: ['1x2_aurelians.png', '1+1_aurelians.png', '1+2_aurelians.png', '1+3+1_aurelians.png', '3x3_aurelians.png'],
+            damaged: ['1x2_aurelians_damaged.png', '1+1_aurelians_damaged.png', '1+2_aurelians_damaged.png', '1+3+1_aurelians_damaged.png', '3x3_aurelians_damaged.png']
         },
-        // 3. SPECTRE (3+1 "T-Shape") ★ 搬咗上黎做第 3 ★
-        { 
-            width: 2, height: 3, img: '1x3+1.png', custom: true, 
-            layoutV: [1, 0, 1, 1, 1, 0], 
-            layoutH: [0, 1, 0, 1, 1, 1],
-            voiceId: 'ship-voice-4' // ★ 關鍵：即使排第3，依然用番 ship_4 (Spectre) 把聲
-        },
-        // 4. DREADNOUGHT (1x4) ★ 搬咗落去 ★
-        { 
-            width: 1, height: 4, img: '1x4.png', 
-            voiceId: 'ship-voice-2' 
-        },
-        // 5. DESTROYER (2x4) ★ 搬咗落去 ★
-        { 
-            width: 2, height: 4, img: '2x4.png', 
-            voiceId: 'ship-voice-3' 
+        'CAUSTICS': {
+            ships: ['1x2.png', '1x3.png', '1x3+1.png', '1x4.png', '2x4.png'], // TODO: 加入 Caustics 圖片
+            damaged: ['1x2_damaged.png', '1x3_damaged.png', '1x3+1_damaged.png', '1x4_damaged.png', '2x4_damaged.png']
         }
-    ];
-const DAMAGED_IMAGES = [
-        '1x2_damaged.png',   // 1. Ghost
-        '1x3_damaged.png',   // 2. Striker
-        '1x3+1_damaged.png', // 3. Spectre (T型) ★ 跟住搬上黎
-        '1x4_damaged.png',   // 4. Dreadnought
-        '2x4_damaged.png'    // 5. Destroyer
-    ];
+    };
+
+    // ★★★ 動態生成 FLEET 配置 ★★★
+    function getFleetConfig(race = 'VANGUARDS') {
+        const images = RACE_SHIP_IMAGES[race] || RACE_SHIP_IMAGES['VANGUARDS'];
+
+        if (race === 'AURELIANS') {
+            // Aurelians 有唔同的戰艦配置
+            return [
+                // 1. 1x2 (Ghost equivalent)
+                {
+                    width: 1, height: 2, img: images.ships[0],
+                    voiceId: 'ship-voice-0'
+                },
+                // 2. 1+1 (左上+右下)
+                {
+                    width: 2, height: 2, img: images.ships[1], custom: true,
+                    layoutV: [1, 0, 0, 1],
+                    layoutH: [1, 0, 0, 1],
+                    voiceId: 'ship-voice-1'
+                },
+                // 3. 1+2 (左下1格，右邊2格)
+                {
+                    width: 2, height: 2, img: images.ships[2], custom: true,
+                    layoutV: [0, 1, 1, 1],
+                    layoutH: [1, 0, 1, 1],
+                    voiceId: 'ship-voice-4'
+                },
+                // 4. 1+3+1 (左上1格，中間3格，右下1格)
+                {
+                    width: 2, height: 3, img: images.ships[3], custom: true,
+                    layoutV: [1, 0, 1, 1, 1, 0],
+                    layoutH: [1, 0, 1, 1, 0, 1],
+                    voiceId: 'ship-voice-2'
+                },
+                // 5. 3x3 (全部格)
+                {
+                    width: 3, height: 3, img: images.ships[4],
+                    voiceId: 'ship-voice-3'
+                }
+            ];
+        } else {
+            // Vanguards / Caustics 使用標準配置
+            return [
+                // 1. GHOST (1x2)
+                {
+                    width: 1, height: 2, img: images.ships[0],
+                    voiceId: 'ship-voice-0'
+                },
+                // 2. STRIKER (1x3)
+                {
+                    width: 1, height: 3, img: images.ships[1],
+                    voiceId: 'ship-voice-1'
+                },
+                // 3. SPECTRE (3+1 "T-Shape")
+                {
+                    width: 2, height: 3, img: images.ships[2], custom: true,
+                    layoutV: [1, 0, 1, 1, 1, 0],
+                    layoutH: [0, 1, 0, 1, 1, 1],
+                    voiceId: 'ship-voice-4'
+                },
+                // 4. DREADNOUGHT (1x4)
+                {
+                    width: 1, height: 4, img: images.ships[3],
+                    voiceId: 'ship-voice-2'
+                },
+                // 5. DESTROYER (2x4)
+                {
+                    width: 2, height: 4, img: images.ships[4],
+                    voiceId: 'ship-voice-3'
+                }
+            ];
+        }
+    }
+
+    // ★★★ 動態生成 DAMAGED_IMAGES ★★★
+    function getDamagedImages(race = 'VANGUARDS') {
+        const images = RACE_SHIP_IMAGES[race] || RACE_SHIP_IMAGES['VANGUARDS'];
+        return images.damaged;
+    }
+
+    // ★★★ 初始化 FLEET 和 DAMAGED_IMAGES ★★★
+    let FLEET = getFleetConfig(selectedRace);
+    let DAMAGED_IMAGES = getDamagedImages(selectedRace);
 
    
 
@@ -8173,6 +8235,11 @@ function confirmRaceSelection(race) {
     selectedRace = race;
     console.log("Race Selected:", race);
     playSound('deploy-sfx');
+
+    // ★★★ 重新載入對應種族的戰艦配置 ★★★
+    FLEET = getFleetConfig(race);
+    DAMAGED_IMAGES = getDamagedImages(race);
+    console.log('[Race] Loaded fleet config for:', race);
 
     // 隱藏種族畫面
     document.getElementById('race-screen').style.display = 'none';
