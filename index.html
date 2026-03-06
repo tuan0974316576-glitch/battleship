@@ -97,8 +97,10 @@ console.log("Firebase Modules Loaded Successfully");
                     window.userTotalXP = (typeof userData.xp === 'number') ? userData.xp : 0;
                     window.userMastery = userData.mastery || { reading: {}, listening: {}, speaking: {} };
                     window.userSupplies = (typeof userData.supplies === 'number') ? userData.supplies : 0;
+                    window.unlockedRaces = userData.unlockedRaces || ['VANGUARDS'];
                     console.log('[Auth] Loaded XP:', window.userTotalXP);
                     console.log('[Auth] Loaded Supplies:', window.userSupplies);
+                    console.log('[Auth] Loaded Unlocked Races:', window.unlockedRaces);
 
                     // ★★★ 同步去 local variables (確保即時更新) ★★★
                     if (typeof userTotalXP !== 'undefined') {
@@ -109,6 +111,9 @@ console.log("Firebase Modules Loaded Successfully");
                     }
                     if (typeof userSupplies !== 'undefined') {
                         userSupplies = window.userSupplies;
+                    }
+                    if (typeof unlockedRaces !== 'undefined') {
+                        unlockedRaces = window.unlockedRaces;
                     }
 
                     // ★★★ 重要：即使用咗 cached name，都要再 call updateHUD 更新 XP 顯示 ★★★
@@ -136,11 +141,12 @@ console.log("Firebase Modules Loaded Successfully");
                         // Guest 自動派名
                         const autoName = window.generateGuestId ? window.generateGuestId() : "GUEST_" + u.uid.substring(0,4);
                         console.log('[Auth] Creating guest account:', autoName);
-                        // ★ 新用戶初始化 XP & Mastery
+                        // ★ 新用戶初始化 XP & Mastery & Unlocked Races
                         window.userTotalXP = 0;
                         window.userMastery = { reading: {}, listening: {}, speaking: {} };
                         window.userSupplies = 0;
-                        update(ref(db, 'users/' + u.uid), { displayName: autoName, lastLogin: Date.now(), xp: 0, supplies: 0 }).then(() => {
+                        window.unlockedRaces = ['VANGUARDS'];
+                        update(ref(db, 'users/' + u.uid), { displayName: autoName, lastLogin: Date.now(), xp: 0, supplies: 0, unlockedRaces: ['VANGUARDS'] }).then(() => {
                             console.log('[Auth] Guest account created successfully');
                             localStorage.setItem('battleship_username', autoName);
                             if(typeof updateHUD === 'function') updateHUD(autoName);
@@ -8128,24 +8134,37 @@ async function selectSkill(skill) {
 
 // ★★★ 新增：種族選擇函數 ★★★
 let selectedRace = 'VANGUARDS'; // 預設種族
+let unlockedRaces = ['VANGUARDS']; // 預設解鎖 Vanguards
+window.unlockedRaces = unlockedRaces;
 
 function selectRace(race) {
     const btn = document.getElementById(`race-btn-${race.toLowerCase()}`);
+    const supplies = window.userSupplies || 0;
 
-    // 檢查是否鎖定
-    if (btn && btn.classList.contains('locked')) {
-        playSound('wrong-sfx');
-        showSuppliesNeededAnimation(race);
-        return;
-    }
-
-    // 如果是 Vanguards，直接選擇（免費）
+    // 如果是 Vanguards，直接選擇（免費且預設解鎖）
     if (race === 'VANGUARDS') {
         confirmRaceSelection(race);
         return;
     }
 
-    // 如果是 Aurelians 或 Caustics，顯示解鎖確認視窗
+    // 檢查是否已經解鎖
+    const isUnlocked = unlockedRaces.includes(race);
+
+    if (isUnlocked) {
+        // 已解鎖，直接選擇
+        confirmRaceSelection(race);
+        return;
+    }
+
+    // 未解鎖，檢查 supplies
+    if (supplies < 15000) {
+        // 不夠 supplies
+        playSound('wrong-sfx');
+        showSuppliesNeededAnimation(race);
+        return;
+    }
+
+    // 夠 supplies，顯示解鎖確認視窗
     showRaceUnlockConfirmation(race);
 }
 
@@ -8274,14 +8293,22 @@ function confirmRaceUnlock(race) {
     userSupplies -= required;
     window.userSupplies = userSupplies;
 
+    // 加入到已解鎖列表
+    if (!unlockedRaces.includes(race)) {
+        unlockedRaces.push(race);
+        window.unlockedRaces = unlockedRaces;
+    }
+
     // 同步到 Firebase
     const { ref, update } = window.firebaseModules;
     if (myPlayerId && db) {
         update(ref(db, 'users/' + myPlayerId), {
-            supplies: userSupplies
+            supplies: userSupplies,
+            unlockedRaces: unlockedRaces
         }).then(() => {
             console.log(`[Supplies] Unlocked ${race}, remaining supplies: ${userSupplies}`);
             updateSuppliesDisplay();
+            updateRaceButtons(); // 更新按鈕狀態
         }).catch(err => {
             console.error('[Supplies] Failed to sync unlock:', err);
         });
@@ -8305,31 +8332,26 @@ function closeRaceUnlockModal() {
 
 // ★★★ 更新種族按鈕鎖定狀態 ★★★
 function updateRaceButtons() {
-    const supplies = window.userSupplies || 0;
-
-    // Vanguards - 永遠解鎖 (預設種族)
+    // Vanguards - 永遠解鎖且光亮
     const vanguardsBtn = document.getElementById('race-btn-vanguards');
     if (vanguardsBtn) {
         vanguardsBtn.classList.remove('locked');
-        vanguardsBtn.setAttribute('data-required', '0');
     }
 
-    // Aurelians - 需要 15000 supplies
+    // Aurelians - 根據解鎖狀態決定光暗
     const aureliansBtn = document.getElementById('race-btn-aurelians');
     if (aureliansBtn) {
-        aureliansBtn.setAttribute('data-required', '15000');
-        if (supplies >= 15000) {
+        if (unlockedRaces.includes('AURELIANS')) {
             aureliansBtn.classList.remove('locked');
         } else {
             aureliansBtn.classList.add('locked');
         }
     }
 
-    // Caustics - 需要 15000 supplies
+    // Caustics - 根據解鎖狀態決定光暗
     const causticsBtn = document.getElementById('race-btn-caustics');
     if (causticsBtn) {
-        causticsBtn.setAttribute('data-required', '15000');
-        if (supplies >= 15000) {
+        if (unlockedRaces.includes('CAUSTICS')) {
             causticsBtn.classList.remove('locked');
         } else {
             causticsBtn.classList.add('locked');
