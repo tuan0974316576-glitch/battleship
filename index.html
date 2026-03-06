@@ -1086,15 +1086,15 @@ body {
         /* 2. 將側邊欄改為「橫向排列」並放在頂部 */
 #fleet-sidebar {
         display: flex; /* ★ 必須加呢句！強制變回 Flex 橫排，覆蓋上面的 Grid ★ */
-        flex-direction: row !important; 
-        width: 100%;      
-        max-width: 380px; 
-        overflow-x: auto; 
-        margin-bottom: 15px; 
+        flex-direction: row !important;
+        width: 100%;
+        max-width: 380px;
+        overflow-x: hidden;
+        margin-bottom: 15px;
         padding: 10px 5px;
-        gap: 8px; 
-        min-width: auto; 
-        justify-content: center; 
+        gap: 8px;
+        min-width: auto;
+        justify-content: center;
     }
 
         /* 3. 調整每隻船仔的大小 (稍微縮細以適應橫排) */
