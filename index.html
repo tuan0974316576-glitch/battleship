@@ -2969,26 +2969,14 @@ body {
     z-index: 20000;
     display: none;
     font-family: 'Orbitron', sans-serif;
-    background: rgba(15, 23, 42, 0.9);
-    border: 2px solid #0ea5e9;
-    border-radius: 8px;
-    padding: 10px 20px;
-    backdrop-filter: blur(10px);
-    box-shadow: 0 0 15px rgba(14, 165, 233, 0.4), inset 0 0 20px rgba(14, 165, 233, 0.1);
-    animation: coins-glow-pulse 2s infinite alternate ease-in-out;
-}
-
-@keyframes coins-glow-pulse {
-    from { box-shadow: 0 0 10px rgba(14, 165, 233, 0.3), inset 0 0 15px rgba(14, 165, 233, 0.1); }
-    to { box-shadow: 0 0 20px rgba(14, 165, 233, 0.6), inset 0 0 25px rgba(14, 165, 233, 0.2); }
 }
 
 #coins-display .coins-amount {
-    color: #0ea5e9;
-    font-size: 18px;
-    font-weight: bold;
-    text-shadow: 0 0 10px rgba(14, 165, 233, 0.8);
-    letter-spacing: 2px;
+    color: #e5e7eb;
+    font-size: 12px;
+    font-weight: normal;
+    letter-spacing: 0.5px;
+    text-shadow: 0 0 5px rgba(229, 231, 235, 0.3);
 }
 
 /* 設定容器背景與磨砂玻璃 */
@@ -4220,6 +4208,12 @@ function selectLevel(level) {
     console.log(`Level ${level} selected. Deck size: ${sessionDeck.length}`);
     playSound('deploy-sfx');
 
+    // ★★★ 隱藏 Supplies 顯示 (進入 Level 選擇後) ★★★
+    const suppliesDisplay = document.getElementById('coins-display');
+    if (suppliesDisplay) {
+        suppliesDisplay.style.display = 'none';
+    }
+
     // ★★★ 關鍵修正：直接隱藏 Level 畫面，千萬不要呼叫 closeLevelScreen() ★★★
     // closeLevelScreen() 係俾「返回鍵」用的，它會錯誤地帶你返去上一頁 (Skill Screen)
     document.getElementById('level-screen').style.display = 'none';
@@ -4266,6 +4260,12 @@ function enterGameUI() {
 
     document.getElementById('start-screen').style.display = 'none';
     document.getElementById('lobby-screen').style.display = 'none';
+
+    // ★★★ 隱藏 Supplies 顯示 (進入遊戲時) ★★★
+    const suppliesDisplay = document.getElementById('coins-display');
+    if (suppliesDisplay) {
+        suppliesDisplay.style.display = 'none';
+    }
 
     const gameUI = document.getElementById('game-ui');
     gameUI.style.display = 'flex';
@@ -8213,6 +8213,19 @@ function handleRaceBack() {
     playSound('delete-sfx');
     document.getElementById('race-screen').style.display = 'none';
     document.getElementById('skill-screen').style.display = 'flex';
+}
+
+function handleSkillBack() {
+    playSound('delete-sfx');
+    document.getElementById('skill-screen').style.display = 'none';
+
+    if (tempGameMode === 'AI') {
+        // AI: 返回主選單
+        showMainMenu();
+    } else {
+        // PVP: 返回 Level 選擇 (因為流程是 Level -> Skill)
+        document.getElementById('level-screen').style.display = 'flex';
+    }
 }
 
 // --- 2. 玩家說話 (Speech-to-Text) - 用於 Speaking Mode ---
