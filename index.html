@@ -6121,6 +6121,28 @@ function checkMyShipDestruction(hitIdx) {
 
     let enemyFleetData = [];
 
+    const SIDEBAR_SHIP_IMAGE_ADJUSTMENTS = {
+        VANGUARDS: {
+            '1x2.png': { scaleX: 1.08, scaleY: 1.02, offsetX: -1, offsetY: 0 },
+            '1x3.png': { scaleX: 1.08, scaleY: 1.02, offsetX: -1, offsetY: 0 },
+            '1x3+1.png': { scaleX: 1.08, scaleY: 1.06, offsetX: -1, offsetY: -1 }
+        },
+        AURELIANS: {
+            '1x2_aurelians.png': { scaleX: 1.08, scaleY: 1.02, offsetX: -1, offsetY: 0 }
+        },
+        CAUSTICS: {
+            '1x2.png': { scaleX: 1.08, scaleY: 1.02, offsetX: -1, offsetY: 0 },
+            '1x3.png': { scaleX: 1.08, scaleY: 1.02, offsetX: -1, offsetY: 0 },
+            '1x3+1.png': { scaleX: 1.08, scaleY: 1.06, offsetX: -1, offsetY: -1 }
+        }
+    };
+
+    function getSidebarShipImageAdjustment(shipImg) {
+        const raceAdjustments = SIDEBAR_SHIP_IMAGE_ADJUSTMENTS[selectedRace] || {};
+        const fileName = shipImg.split('/').pop();
+        return raceAdjustments[fileName] || null;
+    }
+
     function placeEnemyShips() {
         enemyFleetData = []; // 清空舊數據
         let p = 0;
@@ -6230,9 +6252,19 @@ function renderSidebar() {
         const cellGap = parseFloat(styles.getPropertyValue('--mini-cell-gap')) || 2;
         const shipWidth = cellSize * ship.width + cellGap * (ship.width - 1);
         const shipHeight = cellSize * ship.height + cellGap * (ship.height - 1);
+        const imageAdjustment = getSidebarShipImageAdjustment(ship.img);
 
         img.style.width = shipWidth + 'px';
         img.style.height = shipHeight + 'px';
+
+        if (imageAdjustment) {
+            const adjustedWidth = shipWidth * (imageAdjustment.scaleX || 1);
+            const adjustedHeight = shipHeight * (imageAdjustment.scaleY || 1);
+            img.style.width = adjustedWidth + 'px';
+            img.style.height = adjustedHeight + 'px';
+            img.style.left = (3 + (imageAdjustment.offsetX || 0)) + 'px';
+            img.style.top = (3 + (imageAdjustment.offsetY || 0)) + 'px';
+        }
         container.appendChild(img);
 
         // 設定初始狀態
