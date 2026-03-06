@@ -748,15 +748,15 @@ body {
             border-color: var(--warning);
         }
 
-        /* ★★★ Aurelians 專屬樣式 - 金色方格 + Cyan 發光 ★★★ */
+        /* ★★★ Aurelians 專屬樣式 - PaleGoldenrod 方格 + Cyan 發光 ★★★ */
 .fleet-unit.current.aurelians {
             border-color: #00f0ff;
             box-shadow: 0 0 15px #00f0ff;
             background: rgba(0, 240, 255, 0.1);
         }
 .fleet-unit.current.aurelians .mini-cell {
-            background-color: rgba(251, 191, 36, 0.4); /* 金色 */
-            border-color: #fbbf24;
+            background-color: rgba(238, 232, 170, 0.4); /* PaleGoldenrod */
+            border-color: #EEE8AA;
         }
         /* 狀態 2: 未輪到 (Pending) - 實色但暗少少 */
 .fleet-unit.pending {
@@ -2814,12 +2814,12 @@ body {
 }
 
 #race-btn-aurelians {
-    text-shadow: 0 0 10px #fbbf24;
-    box-shadow: 0 0 15px rgba(251, 191, 36, 0.3);
+    text-shadow: 0 0 10px #EEE8AA;
+    box-shadow: 0 0 15px rgba(238, 232, 170, 0.3);
 }
 
 #race-btn-aurelians:not(.locked):hover {
-    box-shadow: 0 0 30px rgba(251, 191, 36, 0.6), inset 0 0 20px rgba(251, 191, 36, 0.1);
+    box-shadow: 0 0 30px rgba(238, 232, 170, 0.6), inset 0 0 20px rgba(238, 232, 170, 0.1);
 }
 
 #race-btn-caustics {
@@ -3374,7 +3374,7 @@ body {
             </div>
         </button>
 
-        <button id="race-btn-aurelians" class="race-btn" onclick="selectRace('AURELIANS')" style="border-color: #fbbf24; color: #fbbf24; width: 300px; height: 80px;">
+        <button id="race-btn-aurelians" class="race-btn" onclick="selectRace('AURELIANS')" style="border-color: #EEE8AA; color: #EEE8AA; width: 300px; height: 80px;">
             <div style="display:flex; flex-direction:column; align-items:center;">
                 <span style="font-size:24px;">AURELIANS</span>
                 <span style="font-size:10px; opacity:0.7;">GOLDEN EMPIRE</span>
@@ -8305,7 +8305,7 @@ function showRaceUnlockConfirmation(race) {
     const required = 15000;
 
     // 決定邊框顏色
-    let borderColor = '#fbbf24'; // Aurelians 金色
+    let borderColor = '#EEE8AA'; // Aurelians PaleGoldenrod
     if (race === 'CAUSTICS') {
         borderColor = '#c084fc'; // Caustics 紫色
     }
@@ -8345,7 +8345,7 @@ function showRaceUnlockConfirmation(race) {
                 UNLOCK ${race}?
             </div>
             <div style="font-family: 'Orbitron'; color: #e2e8f0; font-size: 16px; margin-bottom: 30px; line-height: 1.6;">
-                This will permanently unlock the <span style="color: ${borderColor}; font-weight: bold;">${raceName}</span> faction for <span style="color: #fbbf24; font-weight: bold;">${required.toLocaleString()} supplies</span>.
+                This will permanently unlock the <span style="color: ${borderColor}; font-weight: bold;">${raceName}</span> faction for <span style="color: #EEE8AA; font-weight: bold;">${required.toLocaleString()} supplies</span>.
             </div>
             <div style="display: flex; gap: 15px; justify-content: center;">
                 <button onclick="closeRaceUnlockModal()" style="
