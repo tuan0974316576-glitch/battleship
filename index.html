@@ -309,6 +309,22 @@ body {
             to { transform: translate(-50%, -50%) rotate(360deg); }
         }
 
+        /* ★★★ Energy Gain Animation ★★★ */
+        @keyframes energyPop {
+            0% {
+                transform: translate(-50%, -50%) scale(0.5);
+                opacity: 1;
+            }
+            50% {
+                transform: translate(-50%, -80%) scale(1.2);
+                opacity: 1;
+            }
+            100% {
+                transform: translate(-50%, -120%) scale(0.8);
+                opacity: 0;
+            }
+        }
+
 /* --- 標題畫面 (Start Screen) --- */
 #start-screen {
     position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 200;
@@ -1055,6 +1071,22 @@ body {
             height: 30px;
             background: rgba(255, 255, 255, 0.2);
             margin: 0 15px;
+        }
+
+        /* ★★★ 左邊：Energy 顯示 ★★★ */
+        #energy-display {
+            text-align: center;
+            min-width: 50px;
+        }
+
+        #energy-count {
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 900;
+            font-size: 28px;
+            color: #fbbf24;
+            text-shadow: 0 0 5px #fbbf24, 0 0 15px rgba(251, 191, 36, 0.4);
+            line-height: 1;
+            letter-spacing: 1px;
         }
 
         /* 右邊：回合數 */
@@ -3456,12 +3488,19 @@ body {
         </div>
 <div id="enemy-board" class="board-container">
             <div class="board-label" style="color: var(--danger);">ENEMY SECTOR</div>
-            
+
             <div id="status-panel">
-                <div id="enemy-fleet-indicator"></div>
-                
+                <div id="energy-display">
+                    <div style="font-size: 10px; color: #94a3b8;">ENERGY</div>
+                    <div id="energy-count" style="font-size: 28px; font-weight: 900; color: #fbbf24;">0</div>
+                </div>
+
                 <div class="panel-divider"></div>
-                
+
+                <div id="enemy-fleet-indicator"></div>
+
+                <div class="panel-divider"></div>
+
                 <div id="turn-display">
                     <div style="font-size: 10px; color: #94a3b8;">TURN</div>
                     <div id="turn-count">1</div>
@@ -3798,6 +3837,7 @@ let battleLog = [];
     let lastProcessedTimestamp = 0; // ★ 新增：防止重複處理同一手棋
 let battleUnsubscribe = null; // ★ 新增：專門管理戰鬥中的監聽器
 let turnCounter = 0; // 回合計數器
+let playerEnergy = 0; // ★★★ 玩家 Energy ★★★
 let isTargeting = false;
     // --- 1. Firebase 設定 (已填入你的資料) ---
     const firebaseConfig = {
@@ -4641,16 +4681,21 @@ function initPVPListeners() {
                     playSound('hit-sfx');
                     triggerAnimation(cell, 'orange');
                     myDamage++;
-                    
+
+                    // ★★★ AURELIANS: 戰艦被擊中 +2 energy ★★★
+                    if (selectedRace === 'AURELIANS' && typeof addEnergy === 'function') {
+                        addEnergy(2, 'Ship Hit');
+                    }
+
                     // ★★★ PVP 關鍵修改：先檢查有無爆船，再決定播邊個聲 ★★★
-                    const isDestroyed = checkMyShipDestruction(idx); 
-                    
+                    const isDestroyed = checkMyShipDestruction(idx);
+
                     if (isDestroyed) {
                         playSound('unit-lost-sfx'); // 爆船：播 Unit Lost
                     } else {
                         playUnderAttackAlert();     // 未爆：播 Under Attack
                     }
-                    
+
                     if (checkGameOver()) return;
                 } else {
                     // --- Miss Logic ---
@@ -5616,6 +5661,11 @@ function handleCorrectAnswer() {
     window.userSupplies = userSupplies;
     console.log(`[Supplies] Earned ${suppliesGained} supplies, total: ${userSupplies}`);
 
+    // ★★★ ENERGY SYSTEM: 正確答題 +1 energy (所有種族) ★★★
+    if (typeof addEnergy === 'function') {
+        addEnergy(1, 'Correct Answer');
+    }
+
     // ★★★ PHASE 5: Track session XP ★★★
     sessionAnsweringXP += xpGained;
 
@@ -5878,13 +5928,18 @@ function aiFire() {
             playSound('hit-sfx');
             triggerAnimation(cell, 'orange');
             myDamage++;
-            
+
+            // ★★★ AURELIANS: 戰艦被擊中 +2 energy ★★★
+            if (selectedRace === 'AURELIANS' && typeof addEnergy === 'function') {
+                addEnergy(2, 'Ship Hit');
+            }
+
             // 加入智能追擊
             addSmartTargets(t);
-            
+
             // ★★★ 關鍵邏輯：先檢查有無爆船，再決定播邊個聲 ★★★
             // checkMyShipDestruction 必須要回傳 true/false 先有效
-            const isDestroyed = checkMyShipDestruction(t); 
+            const isDestroyed = checkMyShipDestruction(t);
 
             if (isDestroyed) {
                 playSound('unit-lost-sfx'); // 爆船：播 Unit Lost
@@ -5893,7 +5948,7 @@ function aiFire() {
             }
 
             if (checkGameOver()) {
-                isGameOver = true; 
+                isGameOver = true;
             }
         } else {
             // 打失
@@ -5914,7 +5969,12 @@ function startPlayerTurn() {
         // ★ 新增：回合數 +1 ★
         turnCounter++;
         document.getElementById('turn-count').innerText = turnCounter;
-        
+
+        // ★★★ VANGUARDS 每個 turn 自動 +1 energy ★★★
+        if (selectedRace === 'VANGUARDS') {
+            addEnergy(1, 'Turn Start');
+        }
+
         // 切換場景
         currentPhase = 'PLAYER_TURN';
         switchScene('PLAYER');
@@ -6121,6 +6181,49 @@ function checkMyShipDestruction(hitIdx) {
                 cell.classList.add('cell-destroyed');
             });
         }
+    }
+
+    // ★★★ ENERGY 系統函數 ★★★
+    function updateEnergyDisplay() {
+        const energyDisplay = document.getElementById('energy-count');
+        if (energyDisplay) {
+            energyDisplay.innerText = playerEnergy;
+        }
+    }
+
+    function addEnergy(amount, reason) {
+        playerEnergy += amount;
+        console.log(`[Energy] +${amount} (${reason}) → Total: ${playerEnergy}`);
+        updateEnergyDisplay();
+
+        // ★ 可選：顯示 +Energy 動畫 ★
+        showEnergyGainAnimation(amount);
+    }
+
+    function showEnergyGainAnimation(amount) {
+        const energyDisplay = document.getElementById('energy-count');
+        if (!energyDisplay) return;
+
+        const popup = document.createElement('div');
+        popup.innerText = `+${amount}`;
+        popup.style.cssText = `
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 20px;
+            font-weight: 900;
+            color: #fbbf24;
+            text-shadow: 0 0 10px #fbbf24;
+            pointer-events: none;
+            animation: energyPop 0.8s ease-out forwards;
+            z-index: 1000;
+        `;
+
+        energyDisplay.parentElement.style.position = 'relative';
+        energyDisplay.parentElement.appendChild(popup);
+
+        setTimeout(() => popup.remove(), 800);
     }
 
     let enemyFleetData = [];
@@ -6675,8 +6778,12 @@ function resetGame() {
     if (typeof turnCounter !== 'undefined') {
         turnCounter = 0;
         const turnDisplay = document.getElementById('turn-count');
-        if(turnDisplay) turnDisplay.innerText = "1"; 
+        if(turnDisplay) turnDisplay.innerText = "1";
     }
+
+    // ★★★ 重置 Energy ★★★
+    playerEnergy = 0;
+    updateEnergyDisplay();
 
     createGrid('player-grid');
     createGrid('enemy-grid');
