@@ -8344,6 +8344,12 @@ function confirmRaceSelection(race) {
         // ★★★ 載入 AI 對手的受損圖片 ★★★
         ENEMY_DAMAGED_IMAGES = getDamagedImages(enemyRace);
 
+        // ★★★ 重新擺放 AI 戰艦（使用正確的種族配置）★★★
+        enemyGrid = Array(100).fill(0); // 清空棋盤
+        if (typeof placeEnemyShips === 'function') {
+            placeEnemyShips();
+        }
+
         enterGameUI();
     } else {
         // --- PVP 模式：執行開房！ ---
