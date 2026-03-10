@@ -6192,11 +6192,32 @@ function checkMyShipDestruction(hitIdx) {
     }
 
     function addEnergy(amount, reason) {
-        playerEnergy += amount;
-        console.log(`[Energy] +${amount} (${reason}) → Total: ${playerEnergy}`);
-        updateEnergyDisplay();
+        const startEnergy = playerEnergy;
+        const targetEnergy = playerEnergy + amount;
 
-        // ★ 可選：顯示 +Energy 動畫 ★
+        console.log(`[Energy] +${amount} (${reason}) → Total: ${targetEnergy}`);
+
+        // ★★★ 數字遞增動畫 ★★★
+        const duration = 500; // 動畫持續時間 (ms)
+        const steps = Math.min(amount, 20); // 最多 20 步，避免太慢
+        const stepDuration = duration / steps;
+        const increment = amount / steps;
+
+        let currentStep = 0;
+        const animationInterval = setInterval(() => {
+            currentStep++;
+            playerEnergy = Math.round(startEnergy + (increment * currentStep));
+
+            if (currentStep >= steps) {
+                playerEnergy = targetEnergy; // 確保最終值正確
+                updateEnergyDisplay();
+                clearInterval(animationInterval);
+            } else {
+                updateEnergyDisplay();
+            }
+        }, stepDuration);
+
+        // ★ 顯示 +Energy 彈出動畫 ★
         showEnergyGainAnimation(amount);
     }
 
