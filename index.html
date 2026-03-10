@@ -3914,6 +3914,7 @@ let isTargeting = false;
     // ★★★ 初始化 FLEET 和 DAMAGED_IMAGES ★★★
     let FLEET = getFleetConfig('VANGUARDS'); // 預設使用 Vanguards
     let DAMAGED_IMAGES = getDamagedImages('VANGUARDS');
+    let ENEMY_DAMAGED_IMAGES = getDamagedImages('VANGUARDS'); // ★★★ AI 對手的受損圖片 ★★★
 
    
 
@@ -6066,9 +6067,12 @@ function checkMyShipDestruction(hitIdx) {
     // ★ 2.0 版：根據戰艦形狀生成方塊 ★
     function initEnemyFleetIndicator() {
         const container = document.getElementById('enemy-fleet-indicator');
-        container.innerHTML = ''; 
+        container.innerHTML = '';
 
-        FLEET.forEach((ship, index) => {
+        // ★★★ 使用 AI 對手的種族配置 ★★★
+        const enemyFleet = (gameMode === 'AI') ? getFleetConfig(enemyRace) : FLEET;
+
+        enemyFleet.forEach((ship, index) => {
             const shipBlock = document.createElement('div');
             shipBlock.id = `indicator-ship-${index}`; 
             shipBlock.classList.add('enemy-ship-block');
@@ -6145,19 +6149,23 @@ function checkMyShipDestruction(hitIdx) {
 
     function placeEnemyShips() {
         enemyFleetData = []; // 清空舊數據
+
+        // ★★★ 使用 AI 對手的種族配置 ★★★
+        const enemyFleet = (gameMode === 'AI') ? getFleetConfig(enemyRace) : FLEET;
+
         let p = 0;
-        while (p < FLEET.length) {
+        while (p < enemyFleet.length) {
             let r = Math.floor(Math.random() * 100);
             let v = Math.random() > 0.5;
-            let idxs = getShipIndices(r, FLEET[p], v);
+            let idxs = getShipIndices(r, enemyFleet[p], v);
             if (idxs && !idxs.some(x => enemyGrid[x] === 1)) {
                 idxs.forEach(x => enemyGrid[x] = 1);
-                
+
                 // ★ 儲存敵人船隻資料 (加入 shipId 以便配對圖片) ★
                 enemyFleetData.push({
                     shipId: p, // 記住這是第幾號船 (0-3)
                     indices: idxs,
-                    conf: FLEET[p],
+                    conf: enemyFleet[p],
                     rootIndex: r,
                     isVertical: v,
                     revealed: false
@@ -6980,12 +6988,13 @@ function revealEnemyShip(ship) {
 
     // --- 4. 建立圖片 ---
     const img = document.createElement('img');
-    
-    // 圖片來源設定
-    if (typeof DAMAGED_IMAGES !== 'undefined' && DAMAGED_IMAGES[ship.shipId]) {
-        img.src = DAMAGED_IMAGES[ship.shipId];
+
+    // ★★★ 圖片來源設定：AI 模式使用 ENEMY_DAMAGED_IMAGES ★★★
+    const damagedImages = (gameMode === 'AI') ? ENEMY_DAMAGED_IMAGES : DAMAGED_IMAGES;
+    if (typeof damagedImages !== 'undefined' && damagedImages[ship.shipId]) {
+        img.src = damagedImages[ship.shipId];
     } else {
-        img.src = ship.conf.img; 
+        img.src = ship.conf.img;
     }
     
     img.classList.add('enemy-ship-revealed'); 
@@ -8272,7 +8281,8 @@ async function selectSkill(skill) {
 }
 
 // ★★★ 新增：種族選擇函數 ★★★
-let selectedRace = 'VANGUARDS'; // 預設種族
+let selectedRace = 'VANGUARDS'; // 預設種族（玩家）
+let enemyRace = 'VANGUARDS'; // AI 對手種族
 let unlockedRaces = ['VANGUARDS']; // 預設解鎖 Vanguards
 window.unlockedRaces = unlockedRaces;
 
@@ -8323,8 +8333,17 @@ function confirmRaceSelection(race) {
 
     // 核心分流邏輯
     if (tempGameMode === 'AI') {
-        // --- AI 模式：開始遊戲 ---
+        // --- AI 模式：隨機選擇 AI 種族並開始遊戲 ---
         gameMode = 'AI';
+
+        // ★★★ 隨機選擇 AI 對手種族 ★★★
+        const availableRaces = ['VANGUARDS', 'AURELIANS'];
+        enemyRace = availableRaces[Math.floor(Math.random() * availableRaces.length)];
+        console.log('[AI Race] Enemy race selected:', enemyRace);
+
+        // ★★★ 載入 AI 對手的受損圖片 ★★★
+        ENEMY_DAMAGED_IMAGES = getDamagedImages(enemyRace);
+
         enterGameUI();
     } else {
         // --- PVP 模式：執行開房！ ---
