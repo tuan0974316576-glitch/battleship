@@ -3123,6 +3123,15 @@ body {
     text-shadow: 0 0 10px rgba(14, 165, 233, 1);
 }
 
+.kb-key.kb-active {
+    transform: translateY(2px) scale(0.95);
+    box-shadow: 0 1px 4px rgba(14, 165, 233, 0.5), inset 0 2px 12px rgba(0, 0, 0, 0.5);
+    background: linear-gradient(135deg, rgba(14, 165, 233, 0.6), rgba(6, 182, 212, 0.5));
+    border-color: rgba(14, 165, 233, 1);
+    color: #fff;
+    text-shadow: 0 0 10px rgba(14, 165, 233, 1);
+}
+
 .kb-key:hover {
     background: linear-gradient(135deg, rgba(14, 165, 233, 0.25), rgba(6, 182, 212, 0.15));
     border-color: rgba(14, 165, 233, 0.6);
@@ -3138,6 +3147,13 @@ body {
 }
 
 .kb-backspace:active {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.6), rgba(220, 38, 38, 0.5));
+    border-color: rgba(239, 68, 68, 1);
+    color: #fff;
+    text-shadow: 0 0 10px rgba(239, 68, 68, 1);
+}
+
+.kb-backspace.kb-active {
     background: linear-gradient(135deg, rgba(239, 68, 68, 0.6), rgba(220, 38, 38, 0.5));
     border-color: rgba(239, 68, 68, 1);
     color: #fff;
@@ -3160,6 +3176,13 @@ body {
     text-shadow: 0 0 10px rgba(148, 163, 184, 1);
 }
 
+.kb-space.kb-active {
+    background: linear-gradient(135deg, rgba(148, 163, 184, 0.6), rgba(100, 116, 139, 0.5));
+    border-color: rgba(148, 163, 184, 1);
+    color: #fff;
+    text-shadow: 0 0 10px rgba(148, 163, 184, 1);
+}
+
 .kb-enter {
     min-width: 80px;
     background: linear-gradient(135deg, rgba(34, 197, 94, 0.15), rgba(22, 163, 74, 0.1));
@@ -3170,6 +3193,13 @@ body {
 }
 
 .kb-enter:active {
+    background: linear-gradient(135deg, rgba(34, 197, 94, 0.6), rgba(22, 163, 74, 0.5));
+    border-color: rgba(34, 197, 94, 1);
+    color: #fff;
+    text-shadow: 0 0 10px rgba(34, 197, 94, 1);
+}
+
+.kb-enter.kb-active {
     background: linear-gradient(135deg, rgba(34, 197, 94, 0.6), rgba(22, 163, 74, 0.5));
     border-color: rgba(34, 197, 94, 1);
     color: #fff;
@@ -8982,6 +9012,25 @@ document.addEventListener('DOMContentLoaded', function() {
                 if(typeof playSound === 'function') playSound('enter-sfx');
             }
         });
+
+        // ★★★ Add touch animation for tablets (manual :active state) ★★★
+        virtualKeyboard.addEventListener('touchstart', function(e) {
+            const key = e.target.closest('.kb-key');
+            if (!key) return;
+            key.classList.add('kb-active');
+        }, { passive: true });
+
+        virtualKeyboard.addEventListener('touchend', function(e) {
+            const key = e.target.closest('.kb-key');
+            if (!key) return;
+            setTimeout(() => key.classList.remove('kb-active'), 100);
+        }, { passive: true });
+
+        virtualKeyboard.addEventListener('touchcancel', function(e) {
+            const key = e.target.closest('.kb-key');
+            if (!key) return;
+            key.classList.remove('kb-active');
+        }, { passive: true });
     }
 });
 
