@@ -5427,9 +5427,7 @@ if (currentPracticeMode === 'SPEAKING') {
 
     // ★★★ INPUT & VIRTUAL KEYBOARD CONTROL ★★★
     const virtualKeyboard = document.getElementById('virtual-keyboard');
-    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) ||
-                     ('ontouchstart' in window) ||
-                     (navigator.maxTouchPoints > 0);
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
     if (isMobile && (currentPracticeMode === 'READING' || currentPracticeMode === 'LISTENING')) {
         // Mobile: Show virtual keyboard, keep input off-screen and readonly
