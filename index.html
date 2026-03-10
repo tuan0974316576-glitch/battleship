@@ -5415,6 +5415,13 @@ if (currentPracticeMode === 'SPEAKING') {
             console.log('[Keyboard] Tablet detected, using larger buttons');
         }
 
+        // ★★★ 調整答題框位置，避免被鍵盤遮住 ★★★
+        const modal = document.getElementById('launch-modal');
+        if (modal) {
+            modal.style.alignItems = 'flex-start';
+            modal.style.paddingTop = '5vh';
+        }
+
         // Lock body scroll to prevent page scrolling
         document.body.style.overflow = 'hidden';
         document.body.style.position = 'fixed';
