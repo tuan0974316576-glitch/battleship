@@ -4078,6 +4078,7 @@ let isTargeting = false;
 
     // ★★★ PHASE 5: SESSION XP TRACKING ★★★
     let sessionAnsweringXP = 0; // Tracks XP gained from answering questions in current match
+    let sessionSupplies = 0; // Tracks supplies gained from answering questions in current match
 
     let activeVocabList = [];
     let sessionDeck = [];
@@ -4438,6 +4439,7 @@ function enterGameUI() {
 
     // ★ PHASE 5: Reset session XP counter
     sessionAnsweringXP = 0;
+    sessionSupplies = 0;
 
     // ★★★ ANTI-FARMING: Reset turn count ★★★
     currentTurnCount = 0;
@@ -5737,8 +5739,9 @@ function handleCorrectAnswer() {
         addEnergy(1, 'Correct Answer');
     }
 
-    // ★★★ PHASE 5: Track session XP ★★★
+    // ★★★ PHASE 5: Track session XP and Supplies ★★★
     sessionAnsweringXP += xpGained;
+    sessionSupplies += suppliesGained;
 
     // Update mastery for this word
     userMastery[masteryKey][selectedLevel][wordId] = {
@@ -6514,8 +6517,8 @@ function calculateAndDisplaySettlement(isVictory, isSurrender = false) {
     // Calculate total session XP
     const totalSessionXP = sessionAnsweringXP + matchBonus;
 
-    // ★★★ Calculate Supplies Earned ★★★
-    const suppliesEarned = sessionAnsweringXP; // 1 supply per 1 XP from answering
+    // ★★★ Supplies Earned (already tracked in sessionSupplies) ★★★
+    const suppliesEarned = sessionSupplies;
 
     // ★★★ ANTI-FARMING: Check if match is valid (enemy HP <= 5, i.e., dealt 16+ damage) ★★★
     const enemyRemainingHP = TOTAL_HP - enemyDamage;
