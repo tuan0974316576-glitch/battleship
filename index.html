@@ -3636,6 +3636,10 @@ body {
 
             <div style="display: flex; flex-direction: column; gap: 6px; font-family: 'Orbitron'; font-size: 16px;">
                 <div style="display: flex; justify-content: space-between; padding: 6px 8px; background: rgba(0,0,0,0.3); border-radius: 5px;">
+                    <span style="color: #94a3b8;">Supplies Earned:</span>
+                    <span id="settlement-supplies" style="color: #fbbf24; font-weight: bold;">+0</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; padding: 6px 8px; background: rgba(0,0,0,0.3); border-radius: 5px;">
                     <span style="color: #94a3b8;">Answering XP:</span>
                     <span id="settlement-answering-xp" style="color: #0ea5e9; font-weight: bold;">+0</span>
                 </div>
@@ -6510,12 +6514,16 @@ function calculateAndDisplaySettlement(isVictory, isSurrender = false) {
     // Calculate total session XP
     const totalSessionXP = sessionAnsweringXP + matchBonus;
 
+    // ★★★ Calculate Supplies Earned ★★★
+    const suppliesEarned = sessionAnsweringXP; // 1 supply per 1 XP from answering
+
     // ★★★ ANTI-FARMING: Check if match is valid (enemy HP <= 5, i.e., dealt 16+ damage) ★★★
     const enemyRemainingHP = TOTAL_HP - enemyDamage;
     const isValidMatch = enemyRemainingHP <= 5;
     console.log(`[Settlement] Enemy damage: ${enemyDamage}/${TOTAL_HP}, Remaining HP: ${enemyRemainingHP}, Valid match: ${isValidMatch}`);
 
     // Update UI
+    const suppliesEl = document.getElementById('settlement-supplies');
     const matchBonusLabelEl = document.getElementById('settlement-match-bonus-label');
     const answeringXpEl = document.getElementById('settlement-answering-xp');
     const matchBonusEl = document.getElementById('settlement-match-bonus');
@@ -6533,6 +6541,7 @@ function calculateAndDisplaySettlement(isVictory, isSurrender = false) {
     }
 
     if (answeringXpEl) answeringXpEl.innerText = `+${sessionAnsweringXP}`;
+    if (suppliesEl) suppliesEl.innerText = `+${suppliesEarned}`;
     if (matchBonusEl) {
         matchBonusEl.innerText = `+${matchBonus}`;
         if (isPerfect && isVictory) {
