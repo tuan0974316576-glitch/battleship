@@ -5427,9 +5427,7 @@ if (currentPracticeMode === 'SPEAKING') {
 
     // ★★★ INPUT & VIRTUAL KEYBOARD CONTROL ★★★
     const virtualKeyboard = document.getElementById('virtual-keyboard');
-    // 檢測手機/平板：iOS 或 Android 或大螢幕 touch device
-    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) ||
-                     (navigator.maxTouchPoints > 0 && window.innerWidth < 1200);
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
     if (isMobile && (currentPracticeMode === 'READING' || currentPracticeMode === 'LISTENING')) {
         // Mobile: Show virtual keyboard, keep input off-screen and readonly
@@ -8960,26 +8958,6 @@ function stopMatrixEffect() {
 
 // ★★★ VIRTUAL KEYBOARD EVENT LISTENERS ★★★
 document.addEventListener('DOMContentLoaded', function() {
-    // ★★★ ORIENTATION LOCK: 平板橫向，手機直向 ★★★
-    if (screen.orientation && screen.orientation.lock) {
-        const screenWidth = window.innerWidth || screen.width;
-        const isTablet = screenWidth >= 768;
-
-        try {
-            if (isTablet) {
-                screen.orientation.lock('landscape').catch(err => {
-                    console.log('[Orientation] Landscape lock not supported:', err);
-                });
-            } else {
-                screen.orientation.lock('portrait').catch(err => {
-                    console.log('[Orientation] Portrait lock not supported:', err);
-                });
-            }
-        } catch (err) {
-            console.log('[Orientation] Lock not available:', err);
-        }
-    }
-
     const virtualKeyboard = document.getElementById('virtual-keyboard');
     const hiddenInput = document.getElementById('hidden-input');
 
