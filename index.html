@@ -8960,6 +8960,26 @@ function stopMatrixEffect() {
 
 // ★★★ VIRTUAL KEYBOARD EVENT LISTENERS ★★★
 document.addEventListener('DOMContentLoaded', function() {
+    // ★★★ ORIENTATION LOCK: 平板橫向，手機直向 ★★★
+    if (screen.orientation && screen.orientation.lock) {
+        const screenWidth = window.innerWidth || screen.width;
+        const isTablet = screenWidth >= 768;
+
+        try {
+            if (isTablet) {
+                screen.orientation.lock('landscape').catch(err => {
+                    console.log('[Orientation] Landscape lock not supported:', err);
+                });
+            } else {
+                screen.orientation.lock('portrait').catch(err => {
+                    console.log('[Orientation] Portrait lock not supported:', err);
+                });
+            }
+        } catch (err) {
+            console.log('[Orientation] Lock not available:', err);
+        }
+    }
+
     const virtualKeyboard = document.getElementById('virtual-keyboard');
     const hiddenInput = document.getElementById('hidden-input');
 
