@@ -8158,10 +8158,18 @@ function showMainMenu() {
     }
 
     // ★★★ 顯示 Supplies UI ★★★
+    // ★★★ 關鍵修復：如果 splash screen 仲顯示緊，就唔好顯示 SUPPLIES ★★★
+    const splash = document.getElementById('splash-screen');
     const suppliesDisplay = document.getElementById('coins-display');
     if(suppliesDisplay) {
-        suppliesDisplay.style.display = 'block';
-        updateSuppliesDisplay();
+        // 只有當 splash screen 已經隱藏時，先顯示 SUPPLIES
+        if (!splash || splash.style.display === 'none') {
+            suppliesDisplay.style.display = 'block';
+            updateSuppliesDisplay();
+        } else {
+            console.log('[showMainMenu] Splash screen still visible, hiding supplies');
+            suppliesDisplay.style.display = 'none';
+        }
     }
 
     if(statusText) {
@@ -8192,15 +8200,34 @@ window.startExperience = function() {
     }
     // 1. 播放音樂
     playBgm();
-    
+
     // 2. 播放音效
     if(typeof playSound === 'function') playSound('deploy-sfx');
+
+    // ★★★ 關鍵修復：確保 SUPPLIES 在 TAP TO START 畫面不會顯示 ★★★
+    // 因為 onAuthStateChanged 可能會在 splash screen 顯示時觸發 showMainMenu()
+    // 導致 SUPPLIES 提早出現在 TAP TO START 畫面
+    const suppliesDisplay = document.getElementById('coins-display');
+    if (suppliesDisplay) {
+        suppliesDisplay.style.display = 'none';
+    }
 
     // 3. 淡出 Splash Screen
     const splash = document.getElementById('splash-screen');
     splash.style.opacity = '0';
     setTimeout(() => {
         splash.style.display = 'none';
+
+        // ★★★ 關鍵修復：Splash screen 消失後，如果用戶已經 login，顯示 SUPPLIES ★★★
+        if (window.isFirebaseAuthenticated && window.myPlayerId) {
+            const suppliesDisplay = document.getElementById('coins-display');
+            if (suppliesDisplay) {
+                suppliesDisplay.style.display = 'block';
+                if (typeof updateSuppliesDisplay === 'function') {
+                    updateSuppliesDisplay();
+                }
+            }
+        }
     }, 500);
 
     // ★★★ 關鍵新增：顯示遊戲內容大箱 ★★★
