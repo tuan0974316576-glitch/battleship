@@ -7419,7 +7419,7 @@ async function loadTotalXPRanking() {
             else if (index >= 3 && index <= 9) rankColor = '#cd7f32';
 
             html += `
-                <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px 15px; background: ${isCurrentUser ? 'rgba(255, 255, 255, 0.1)' : 'rgba(15, 23, 42, 0.5)'}; border: 1px solid ${isCurrentUser ? 'rgba(255, 255, 255, 0.4)' : 'rgba(100, 116, 139, 0.2)'}; border-radius: 3px;">
+                <div class="ranking-item" style="display: flex; align-items: center; justify-content: space-between; padding: 12px 15px; background: ${isCurrentUser ? 'rgba(255, 255, 255, 0.1)' : 'rgba(15, 23, 42, 0.5)'}; border: 1px solid ${isCurrentUser ? 'rgba(255, 255, 255, 0.4)' : 'rgba(100, 116, 139, 0.2)'}; border-radius: 3px; opacity: 0;">
                     <div style="display: flex; align-items: center; gap: 15px; flex: 1;">
                         <div style="display: flex; align-items: center; gap: 8px;">
                             <div style="font-family: 'Black Ops One'; font-size: 16px; color: ${rankColor}; min-width: 50px; text-align: center;">
@@ -7444,6 +7444,12 @@ async function loadTotalXPRanking() {
         });
 
         rankingList.innerHTML = html;
+
+        // ★★★ Trigger staggered fadeIn animation ★★★
+        const rankingItems = document.querySelectorAll('.ranking-item');
+        rankingItems.forEach((item, index) => {
+            item.style.animation = `fadeIn 0.3s ease-out ${index * 0.05}s forwards`;
+        });
 
     } catch (error) {
         console.error('[Ranking] Error loading total XP data:', error);
@@ -7515,7 +7521,7 @@ async function loadPVPWinRateRanking() {
             else if (index >= 3 && index <= 9) rankColor = '#cd7f32';
 
             html += `
-                <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px 15px; background: ${isCurrentUser ? 'rgba(255, 255, 255, 0.1)' : 'rgba(15, 23, 42, 0.5)'}; border: 1px solid ${isCurrentUser ? 'rgba(255, 255, 255, 0.4)' : 'rgba(100, 116, 139, 0.2)'}; border-radius: 3px;">
+                <div class="ranking-item" style="display: flex; align-items: center; justify-content: space-between; padding: 12px 15px; background: ${isCurrentUser ? 'rgba(255, 255, 255, 0.1)' : 'rgba(15, 23, 42, 0.5)'}; border: 1px solid ${isCurrentUser ? 'rgba(255, 255, 255, 0.4)' : 'rgba(100, 116, 139, 0.2)'}; border-radius: 3px; opacity: 0;">
                     <div style="display: flex; align-items: center; gap: 15px; flex: 1;">
                         <div style="display: flex; align-items: center; gap: 8px;">
                             <div style="font-family: 'Black Ops One'; font-size: 16px; color: ${rankColor}; min-width: 50px; text-align: center;">
@@ -7540,6 +7546,12 @@ async function loadPVPWinRateRanking() {
         });
 
         rankingList.innerHTML = html;
+
+        // ★★★ Trigger staggered fadeIn animation ★★★
+        const rankingItems = document.querySelectorAll('.ranking-item');
+        rankingItems.forEach((item, index) => {
+            item.style.animation = `fadeIn 0.3s ease-out ${index * 0.05}s forwards`;
+        });
 
     } catch (error) {
         console.error('[Ranking] Error loading PVP win rate data:', error);
