@@ -188,6 +188,10 @@ console.log("Firebase Modules Loaded Successfully");
             if (typeof userSupplies !== 'undefined') userSupplies = 0;
             console.log('[Auth] Cleared XP and Mastery data');
 
+            // ★★★ HIDE SUPPLIES DISPLAY on logout ★★★
+            const suppliesDisplay = document.getElementById('coins-display');
+            if (suppliesDisplay) suppliesDisplay.style.display = 'none';
+
             // ★ 清除可能殘留嘅 cached username (確保下次唔會誤跳主選單)
             localStorage.removeItem('battleship_username');
 
