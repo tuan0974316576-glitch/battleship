@@ -551,12 +551,31 @@ body {
 
         .cell {
             width: 35px; height: 35px;
-            background-color: rgba(0, 0, 0, 0.3); 
-            border: 1px solid rgba(14, 165, 233, 0.2); 
+            background-color: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(14, 165, 233, 0.2);
             border-radius: 4px;
             cursor: pointer;
             display: flex; align-items: center; justify-content: center;
             font-size: 18px; position: relative;
+        }
+
+        /* ★★★ RACE-SPECIFIC BOARD STYLES ★★★ */
+        /* VANGUARDS: Silver-white borders */
+        #player-board.race-vanguards .cell {
+            border-color: rgba(192, 192, 192, 0.4);
+        }
+
+        #player-board.race-vanguards .game-grid {
+            box-shadow: 0 0 20px rgba(192, 192, 192, 0.5), inset 0 0 15px rgba(192, 192, 192, 0.1);
+        }
+
+        /* AURELIANS: Goldenrod borders, cyan grid glow */
+        #player-board.race-aurelians .cell {
+            border-color: rgba(218, 165, 32, 0.4);
+        }
+
+        #player-board.race-aurelians .game-grid {
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.5), inset 0 0 15px rgba(0, 255, 255, 0.1);
         }
 
         #enemy-board .cell { border-color: rgba(239, 68, 68, 0.3); }
@@ -8581,6 +8600,16 @@ function confirmRaceSelection(race) {
     FLEET = getFleetConfig(race);
     DAMAGED_IMAGES = getDamagedImages(race);
     console.log('[Race] Loaded fleet config for:', race);
+
+    // ★★★ UPDATE PLAYER BOARD STYLING BASED ON RACE ★★★
+    const playerBoard = document.getElementById('player-board');
+    if (playerBoard) {
+        // Remove all race classes
+        playerBoard.classList.remove('race-vanguards', 'race-aurelians', 'race-caustics');
+        // Add current race class
+        playerBoard.classList.add(`race-${race.toLowerCase()}`);
+        console.log('[Race] Updated player board styling for:', race);
+    }
 
     // 隱藏種族畫面
     document.getElementById('race-screen').style.display = 'none';
