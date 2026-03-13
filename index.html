@@ -1616,34 +1616,65 @@ body {
 }
 
 /* ★★★ RANKING CONTAINER (Scrollable) ★★★ */
+/* ★★★ RANKING CONTAINER (High-Tech White Theme - 仿 Code List 風格) ★★★ */
 .ranking-container {
     width: 90%;
     max-width: 800px;
     height: 60vh;
     max-height: 500px;
-    overflow-y: auto;
-    background: rgba(15, 23, 42, 0.5);
-    border: 1px solid rgba(100, 116, 139, 0.3);
+    background: rgba(0, 0, 0, 0.6); /* 深黑背景，跟 Code List 一樣 */
+    border: 2px solid #ffffff; /* 白色框 */
+    border-top: 10px solid #ffffff; /* 頂部粗白色條 */
     border-radius: 5px;
-    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 0 30px rgba(255, 255, 255, 0.2); /* 白色發光 */
+    position: relative;
+    overflow: hidden;
+    padding: 0; /* 移除 padding，讓內部元素自己控制 */
 }
 
-.ranking-container::-webkit-scrollbar {
+/* 標題列 (RANK / OPERATOR / STATS) */
+.ranking-list-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 20px;
+    background: rgba(255, 255, 255, 0.1); /* 白色半透明背景 */
+    border-bottom: 1px solid #ffffff;
+    font-family: 'Orbitron';
+    color: #ffffff;
+    font-size: 14px;
+    letter-spacing: 2px;
+    font-weight: bold;
+}
+
+/* 內部列表區域 (可捲動) */
+#ranking-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 15px;
+    scrollbar-width: thin;
+    scrollbar-color: #ffffff #0f172a;
+}
+
+/* Webkit 捲軸樣式 */
+#ranking-list::-webkit-scrollbar {
     width: 8px;
 }
 
-.ranking-container::-webkit-scrollbar-track {
-    background: rgba(15, 23, 42, 0.8);
+#ranking-list::-webkit-scrollbar-track {
+    background: #0f172a;
     border-radius: 4px;
 }
 
-.ranking-container::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.3);
+#ranking-list::-webkit-scrollbar-thumb {
+    background: #ffffff; /* 白色捲軸 */
     border-radius: 4px;
 }
 
-.ranking-container::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.5);
+#ranking-list::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.8);
 }
 
 /* --- AI 語音讀取中的特效 --- */
@@ -3407,6 +3438,16 @@ body {
 
     <!-- Ranking List Container -->
     <div class="ranking-container">
+        <div class="ranking-list-header">
+            <div style="display: flex; align-items: center; gap: 15px; flex: 1;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <div style="min-width: 50px; text-align: center;">RANK</div>
+                    <div style="width: 24px;"></div> <!-- Icon placeholder -->
+                </div>
+                <div style="flex: 1;">OPERATOR</div>
+            </div>
+            <div style="text-align: right;">STATS</div>
+        </div>
         <div id="ranking-list" style="display: flex; flex-direction: column; gap: 10px;">
             <!-- Ranking entries will be populated here -->
             <div style="text-align: center; color: #64748b; padding: 40px; font-family: 'Orbitron'; font-size: 12px;">
@@ -3415,7 +3456,7 @@ body {
         </div>
     </div>
 
-    <button class="btn" onclick="closeRankingScreen()" style="margin-top: 30px; width: 150px; border-color: #64748b; color: #94a3b8;">&lt; BACK</button>
+    <button class="btn" onclick="closeRankingScreen()" style="margin-top: 30px; width: 150px;">&lt; BACK</button>
 </div>
 
 <div id="skill-screen" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 250; background: rgba(0,0,0,0.9); flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(5px);">
@@ -3445,7 +3486,7 @@ body {
         </button>
     </div>
 
-    <button class="btn" onclick="playSound('delete-sfx'); backToMainMenu()" style="margin-top: 30px; border-color: #64748b; color: #94a3b8;">&lt; BACK</button>
+    <button class="btn" onclick="playSound('delete-sfx'); backToMainMenu()" style="margin-top: 30px;">&lt; BACK</button>
 </div>
 
 <div id="race-screen" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 250; background: rgba(0,0,0,0.9); flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(5px);">
@@ -3475,7 +3516,7 @@ body {
         </button>
     </div>
 
-    <button class="btn" onclick="playSound('delete-sfx'); handleRaceBack()" style="margin-top: 30px; border-color: #64748b; color: #94a3b8;">&lt; BACK</button>
+    <button class="btn" onclick="playSound('delete-sfx'); handleRaceBack()" style="margin-top: 30px;">&lt; BACK</button>
 </div>
 <div id="level-screen" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 250; background: rgba(0,0,0,0.9); flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(5px);">
         <h2 style="font-family: 'Black Ops One'; color: var(--primary); font-size: 40px; margin-bottom: 30px; text-shadow: 0 0 20px var(--primary);">SELECT DIFFICULTY</h2>
@@ -3489,7 +3530,7 @@ body {
             <button class="level-btn" onclick="selectLevel('L5_STAR')">LEVEL 5*</button>
         </div>
 
-<button class="btn" onclick="playSound('delete-sfx'); closeLevelScreen()" style="margin-top: 30px; border-color: #64748b; color: #94a3b8;">&lt; BACK</button>
+<button class="btn" onclick="playSound('delete-sfx'); closeLevelScreen()" style="margin-top: 30px;">&lt; BACK</button>
     </div>
 <div id="lobby-screen" style="display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index: 150; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(5px);">
     <h2 style="font-family: 'Black Ops One'; color: var(--primary); font-size: 40px;">MULTIPLAYER LOBBY</h2>
@@ -3505,7 +3546,7 @@ body {
         <br>
         <button class="btn" onclick="joinRoom()" style="width: 100%;">JOIN MISSION</button>
 
-        <button class="btn" onclick="confirmExit()" style="width: 100%; margin-top: 15px; border-color: #64748b; color: #94a3b8;">&lt; BACK</button>
+        <button class="btn" onclick="confirmExit()" style="width: 100%; margin-top: 15px;">&lt; BACK</button>
     </div>
     <div id="lobby-msg" style="color: var(--danger); margin-top: 20px; height: 20px;"></div>
 </div>
