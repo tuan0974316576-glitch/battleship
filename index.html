@@ -3391,6 +3391,50 @@ body {
     height: 3.4vw;
     font-size: 2.1vw;
 }
+
+/* ★★★ AURELIANS QUIZ THEME: Golden UI with Cyan accents ★★★ */
+/* Apply to launch modal when player uses Aurelians */
+#launch-modal.aurelians-theme .modal-content {
+    border: 2px solid #FAFAD2;
+    box-shadow: 0 0 60px rgba(250, 250, 210, 0.6);
+}
+
+#launch-modal.aurelians-theme .vocab-hint {
+    color: #FAFAD2;
+    text-shadow: 0 0 10px #FAFAD2;
+}
+
+#launch-modal.aurelians-theme #q-display {
+    color: #FAFAD2 !important;
+}
+
+#launch-modal.aurelians-theme #timer-bar {
+    background: linear-gradient(90deg, #06b6d4, #22d3ee);
+}
+
+#launch-modal.aurelians-theme #msg-area {
+    color: #06b6d4 !important;
+}
+
+#launch-modal.aurelians-theme #hidden-input {
+    color: #FAFAD2;
+}
+
+/* Listening mode speaker button */
+#launch-modal.aurelians-theme .cyber-speaker-btn {
+    border-color: #FAFAD2;
+    box-shadow: 0 0 20px rgba(250, 250, 210, 0.4);
+}
+
+/* Sentence container with blanks */
+#launch-modal.aurelians-theme .listening-blank {
+    color: #FAFAD2;
+}
+
+/* Matrix effect canvas (if needed) */
+#launch-modal.aurelians-theme #matrix-canvas {
+    opacity: 0.3;
+}
     </style>
 
 </head>
@@ -5528,6 +5572,14 @@ function openLaunchModal(index) {
 
     // ★★★ 關鍵：先顯示視窗，再執行後面的 focus，確保鍵盤彈出 ★★★
     modal.style.display = "flex";
+
+    // ★★★ Apply Aurelians theme if player is using Aurelians ★★★
+    if (selectedRace === 'AURELIANS') {
+        modal.classList.add('aurelians-theme');
+    } else {
+        modal.classList.remove('aurelians-theme');
+    }
+
     startMatrixEffect();
 
     // ★★★ 核心：根據模式切換介面 ★★★
