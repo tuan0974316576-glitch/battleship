@@ -5277,13 +5277,14 @@ function startBattle() {
     playSound('deploy-sfx');
 
     if (gameMode === 'AI') {
+        updateEnemyBoardLabel(enemyRace); // ★ Update AI opponent label ★
         startPlayerTurn();
     } else {
         const { ref, update, onValue, off } = window.firebaseModules;
         const updates = {};
         const field = (playerRole === 'host') ? 'hostBoard' : 'guestBoard';
         updates[field] = myGrid;
-        
+
         const myShipsForSending = FLEET.map((s, index) => ({
             shipId: index,
             indices: s.indices,
@@ -5293,7 +5294,8 @@ function startBattle() {
         }));
         updates[field + 'Ships'] = myShipsForSending;
         updates[playerRole + 'Ready'] = true;
-        
+        updates[playerRole + 'Race'] = selectedRace; // ★ 儲存玩家種族 ★
+
         update(ref(db, 'rooms/' + currentRoomId), updates);
         document.getElementById('game-status').innerHTML = "WAITING FOR OPPONENT...";
 
@@ -5329,6 +5331,13 @@ function startBattle() {
                     battleUnsubscribe = null;
                 }
 
+                // ★★★ Get opponent race and update label ★★★
+                const opponentRace = playerRole === 'host' ? data.guestRace : data.hostRace;
+                if (opponentRace) {
+                    enemyRace = opponentRace; // Store for later use
+                    updateEnemyBoardLabel(opponentRace);
+                }
+
                 // ★★★ Task 5: Get opponent ID and update their rank badge ★★★
                 const opponentId = playerRole === 'host' ? data.guest : data.host;
                 currentOpponentId = opponentId; // ★★★ Store for settlement ★★★
@@ -5350,7 +5359,16 @@ function startBattle() {
             }
         });
     }
-}    
+}
+
+// ★★★ Update enemy board label with race name ★★★
+function updateEnemyBoardLabel(race) {
+    const label = document.querySelector('#enemy-board .board-label');
+    if (label) {
+        label.innerText = `${race} FLEET`;
+    }
+}
+
 function switchScene(sceneName) {
         document.getElementById('player-board').classList.remove('active');
         document.getElementById('enemy-board').classList.remove('active');
