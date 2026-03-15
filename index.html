@@ -7738,10 +7738,17 @@ let techVoice = null;
 // A. 預先載入靚聲
 function loadVoices() {
     const voices = synth.getVoices();
-    techVoice = voices.find(v => v.name.includes('Google US English')) || 
-                voices.find(v => v.name.includes('Zira')) || 
+    // ★ 優先選擇英文語音，避免系統語言干擾 ★
+    techVoice = voices.find(v => v.lang === 'en-US') ||
+                voices.find(v => v.lang === 'en-GB') ||
+                voices.find(v => v.name.includes('Google US English')) ||
+                voices.find(v => v.name.includes('Zira')) ||
                 voices.find(v => v.name.includes('Samantha')) ||
                 voices.find(v => v.lang.startsWith('en'));
+
+    if (techVoice) {
+        console.log('Selected voice:', techVoice.name, techVoice.lang);
+    }
 }
 
 if (speechSynthesis.onvoiceschanged !== undefined) {
@@ -9201,15 +9208,20 @@ function startMatrixEffect() {
     function draw() {
         // ★ 微調 1：背景遮蓋度 (0.08) - 數值越細，拖尾越長
         // 比之前的 0.1 稍微長一點點，增加流動感
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.08)'; 
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.08)';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        // ★ 微調 2：主體亮度 (0.65) - 攞個中間值
-        // 比之前的 0.3 光一倍，但比原本的 1.0 柔和
-        const mainColor = 'rgba(14, 165, 233, 0.65)'; 
-        
-        // ★ 微調 3：閃光亮度 (0.8) - 唔好死白，帶少少透
-        const flashColor = 'rgba(255, 255, 255, 0.8)';
+        // ★ 根據種族選擇顏色 ★
+        let mainColor, flashColor;
+        if (typeof selectedRace !== 'undefined' && selectedRace === 'AURELIANS') {
+            // Aurelians: 金色
+            mainColor = 'rgba(250, 250, 210, 0.65)';
+            flashColor = 'rgba(255, 255, 255, 0.8)';
+        } else {
+            // 其他種族: 藍色
+            mainColor = 'rgba(14, 165, 233, 0.65)';
+            flashColor = 'rgba(255, 255, 255, 0.8)';
+        }
 
         ctx.font = fontSize + 'px "Orbitron", monospace';
 
@@ -9221,11 +9233,11 @@ function startMatrixEffect() {
             // ★ 微調 4：閃爍機率 (0.975) - 即係 2.5% 機會閃
             // 比之前的 0.5% 多啲生氣，但唔會閃盲眼
             if (Math.random() > 0.975) {
-                ctx.fillStyle = flashColor; 
+                ctx.fillStyle = flashColor;
             } else {
                 ctx.fillStyle = mainColor;
             }
-            
+
             ctx.fillText(text, x, y);
 
             // 隨機重置
@@ -9629,6 +9641,9 @@ function speakText(text, element = null) {
     document.querySelectorAll('.vocab-row.speaking').forEach(el => el.classList.remove('speaking'));
 
     const utterance = new SpeechSynthesisUtterance(text);
+
+    // ★★★ CRITICAL: Force English language to prevent system language interference ★★★
+    utterance.lang = 'en-US';
 
     // 3. 設定語音參數 (整合音量設定)
     // 即使你未加音量設定，這段代碼也會自動用預設值，不會報錯
